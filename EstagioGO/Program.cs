@@ -1,6 +1,10 @@
 using EstagioGO.Data;
+using EstagioGO.Middleware;
 using EstagioGO.Models.Identity;
+using EstagioGO.Services;
+using EstagioGO.Services.Email;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +41,8 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+builder.Services.AddSingleton<IEmailSender, EmailSender>();
+
 // Políticas de autorização
 builder.Services.AddAuthorization(options =>
 {
@@ -57,9 +63,25 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<UserClaimsPrincipalFactory<ApplicationUser, ApplicationRole>, CustomClaimsPrincipalFactory>();
 
 builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages(); // 👈 ESSA LINHA FOI ADICIONADA (CORREÇÃO)
+builder.Services.AddRazorPages();
 
 var app = builder.Build();
+
+// Executar o seed de dados para criar o administrador padrão
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    try
+    {
+        await SeedData.InitializeAsync(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ocorreu um erro durante o seed de dados");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -69,7 +91,7 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    // O valor HSTS padrão é de 30 dias. Você pode querer alterar isso para cenários de produção.
     app.UseHsts();
 }
 
@@ -78,12 +100,34 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// Middleware para forçar alteração de senha (substitui o FirstAccessMiddleware)
+app.UseForcePasswordChangeMiddleware();
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.MapRazorPages(); // Agora funcionará porque os serviços foram registrados
+app.MapRazorPages();
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapRazorPages();
+
+    // Bloquear acesso direto à página de registro
+    endpoints.MapGet("/Identity/Account/Register", context =>
+    {
+        context.Response.Redirect("/Identity/Account/Login");
+        return Task.CompletedTask;
+    });
+
+    endpoints.MapPost("/Identity/Account/Register", context =>
+    {
+        context.Response.Redirect("/Identity/Account/Login");
+        return Task.CompletedTask;
+    });
+});
 
 app.Run();

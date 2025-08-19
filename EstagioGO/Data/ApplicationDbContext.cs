@@ -28,7 +28,6 @@ namespace EstagioGO.Data
                     Name = "Administrador",
                     NormalizedName = "ADMINISTRADOR",
                     Descricao = "Acesso total ao sistema",
-                    DataCriacao = DateTime.Now
                 },
                 new ApplicationRole
                 {
@@ -36,7 +35,6 @@ namespace EstagioGO.Data
                     Name = "Coordenador",
                     NormalizedName = "COORDENADOR",
                     Descricao = "Gestão completa dos estagiários",
-                    DataCriacao = DateTime.Now
                 },
                 new ApplicationRole
                 {
@@ -44,7 +42,6 @@ namespace EstagioGO.Data
                     Name = "Supervisor",
                     NormalizedName = "SUPERVISOR",
                     Descricao = "Avaliação e acompanhamento dos estagiários",
-                    DataCriacao = DateTime.Now
                 },
                 new ApplicationRole
                 {
@@ -52,7 +49,6 @@ namespace EstagioGO.Data
                     Name = "Estagiario",
                     NormalizedName = "ESTAGIARIO",
                     Descricao = "Visualização do próprio perfil e registros",
-                    DataCriacao = DateTime.Now
                 }
             );
         }

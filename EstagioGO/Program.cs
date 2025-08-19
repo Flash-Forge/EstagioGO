@@ -1,4 +1,5 @@
 using EstagioGO.Data;
+using EstagioGO.Models.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,33 +14,50 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// Substitua AddDefaultIdentity por AddIdentity com suas classes personalizadas
+// Configuração completa do Identity
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 {
-    // Configura��es de senha
+    // Configurações de senha
     options.Password.RequiredLength = 8;
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
     options.Password.RequireNonAlphanumeric = true;
 
-    // Configura��es de bloqueio
+    // Configurações de bloqueio
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
     options.Lockout.MaxFailedAccessAttempts = 5;
 
-    // Configura��es de usu�rio
+    // Configurações de usuário
     options.User.RequireUniqueEmail = true;
 
-    // Configura��es de login
+    // Configurações de login
     options.SignIn.RequireConfirmedAccount = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// Adicione o servi�o de claims personalizado (se criou CustomClaimsPrincipalFactory)
-// builder.Services.AddScoped<UserClaimsPrincipalFactory<ApplicationUser, ApplicationRole>, CustomClaimsPrincipalFactory>();
+// Políticas de autorização
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("PodeGerenciarEstagiarios", policy =>
+        policy.RequireRole("Administrador", "Coordenador"));
+
+    options.AddPolicy("PodeRegistrarFrequencia", policy =>
+        policy.RequireRole("Administrador", "Coordenador", "Supervisor"));
+
+    options.AddPolicy("PodeAvaliarEstagiarios", policy =>
+        policy.RequireRole("Administrador", "Coordenador", "Supervisor"));
+
+    options.AddPolicy("PodeVerRelatorios", policy =>
+        policy.RequireRole("Administrador", "Coordenador"));
+});
+
+// Adicione o serviço de claims personalizado
+builder.Services.AddScoped<UserClaimsPrincipalFactory<ApplicationUser, ApplicationRole>, CustomClaimsPrincipalFactory>();
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages(); // 👈 ESSA LINHA FOI ADICIONADA (CORREÇÃO)
 
 var app = builder.Build();
 
@@ -66,6 +84,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.MapRazorPages();
+app.MapRazorPages(); // Agora funcionará porque os serviços foram registrados
 
 app.Run();

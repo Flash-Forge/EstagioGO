@@ -7,8 +7,6 @@ public class ApplicationUser : IdentityUser
     public string Cargo { get; set; }
     public DateTime DataCadastro { get; set; } = DateTime.Now;
     public bool Ativo { get; set; } = true;
-
-    // 👇 ADICIONE ESTA LINHA 👇
     public bool PrimeiroAcessoConcluido { get; set; } = false;
 
     // Relacionamentos

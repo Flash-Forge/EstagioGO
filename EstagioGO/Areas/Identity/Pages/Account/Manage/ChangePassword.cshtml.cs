@@ -1,10 +1,8 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using EstagioGO.Data;
 
 namespace EstagioGO.Areas.Identity.Pages.Account.Manage
 {
@@ -25,7 +23,7 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
         public InputModel Input { get; set; }
 
         [TempData]
-        public string StatusMessage { get; set; }
+        public string StatusMessage { get; set; } = string.Empty;
 
         public class InputModel
         {
@@ -35,19 +33,33 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
             public string OldPassword { get; set; }
 
             [Required]
-            [StringLength(100, ErrorMessage = "A {0} deve ter pelo menos {2} e no máximo {1} caracteres.", MinimumLength = 8)]
+            [StringLength(100, ErrorMessage = "A {0} deve ter pelo menos {2} e no máximo {1} caracteres.", MinimumLength = 6)]
             [DataType(DataType.Password)]
             [Display(Name = "Nova senha")]
             public string NewPassword { get; set; }
 
             [DataType(DataType.Password)]
-            [Display(Name = "Confirme a nova senha")]
+            [Display(Name = "Confirmar nova senha")]
             [Compare("NewPassword", ErrorMessage = "A nova senha e a confirmação não coincidem.")]
             public string ConfirmPassword { get; set; }
         }
 
-        public void OnGet()
+        public async Task<IActionResult> OnGetAsync()
         {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound($"Não foi possível carregar o usuário com ID '{_userManager.GetUserId(User)}'.");
+            }
+
+            // Verifique se é o primeiro acesso
+            if (!user.PrimeiroAcessoConcluido)
+            {
+                ViewData["Title"] = "Primeiro Acesso - Alterar Senha";
+                ViewData["IsFirstAccess"] = true;
+            }
+
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -60,7 +72,7 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"Não foi possível carregar o usuário com ID '{_userManager.GetUserId(User)}'.");
             }
 
             var changePasswordResult = await _userManager.ChangePasswordAsync(user, Input.OldPassword, Input.NewPassword);
@@ -73,15 +85,25 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            // Se é uma alteração forçada (primeiro acesso), marque como concluído
-            if (Request.Query["forceChange"] == "true")
+            // Verifica se é o primeiro acesso
+            bool isFirstAccess = !user.PrimeiroAcessoConcluido;
+
+            // Marcar o primeiro acesso como concluído
+            if (isFirstAccess)
             {
                 user.PrimeiroAcessoConcluido = true;
                 await _userManager.UpdateAsync(user);
             }
 
             await _signInManager.RefreshSignInAsync(user);
-            StatusMessage = "Sua senha foi alterada.";
+
+            StatusMessage = "Sua senha foi alterada com sucesso.";
+
+            // Redirecionar para a página inicial após o primeiro acesso
+            if (isFirstAccess)
+            {
+                return RedirectToPage("/Index");
+            }
 
             return RedirectToPage();
         }

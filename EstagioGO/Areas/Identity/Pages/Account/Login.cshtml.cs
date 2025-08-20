@@ -83,14 +83,36 @@ namespace EstagioGO.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
+                // Adicione estes logs para diagnóstico detalhado
+                _logger.LogInformation("Tentativa de login para: {Email}", Input.Email);
+                _logger.LogInformation("Configuração RequireConfirmedAccount: {RequireConfirmedAccount}",
+                    _signInManager.Options.SignIn.RequireConfirmedAccount);
+
+                var user = await _userManager.FindByEmailAsync(Input.Email);
+                if (user != null)
+                {
+                    _logger.LogInformation("Usuário encontrado. ID: {UserId}", user.Id);
+                    _logger.LogInformation("Email confirmado: {EmailConfirmed}", user.EmailConfirmed);
+                    _logger.LogInformation("Conta bloqueada: {LockedOut}", await _userManager.IsLockedOutAsync(user));
+                    _logger.LogInformation("Tem senha: {HasPassword}", await _userManager.HasPasswordAsync(user));
+
+                    // Verifique se a senha está correta
+                    var passwordCheck = await _userManager.CheckPasswordAsync(user, Input.Password);
+                    _logger.LogInformation("Senha correta: {PasswordCorrect}", passwordCheck);
+                }
+                else
+                {
+                    _logger.LogWarning("Usuário não encontrado para o email: {Email}", Input.Email);
+                }
+
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("User logged in.");
+                    _logger.LogInformation("Login bem-sucedido para {Email}", Input.Email);
 
-                    // Verificar se é o primeiro acesso (precisa alterar senha)
-                    var user = await _userManager.FindByEmailAsync(Input.Email);
-                    if (user != null && !user.PrimeiroAcessoConcluido)
+                    // Verificar se é o primeiro acesso
+                    var currentUser = await _userManager.FindByEmailAsync(Input.Email);
+                    if (currentUser != null && !currentUser.PrimeiroAcessoConcluido)
                     {
                         _logger.LogInformation("Usuário precisa alterar a senha padrão");
 
@@ -103,7 +125,7 @@ namespace EstagioGO.Areas.Identity.Pages.Account
                         });
 
                         // Redirecionar para alteração de senha
-                        return LocalRedirect("/Identity/Account/ChangePassword?forceChange=true");
+                        return LocalRedirect("/Identity/Account/Manage/ChangePassword?forceChange=true");
                     }
 
                     return LocalRedirect(returnUrl ?? Url.Content("~/"));
@@ -111,15 +133,17 @@ namespace EstagioGO.Areas.Identity.Pages.Account
 
                 if (result.RequiresTwoFactor)
                 {
+                    _logger.LogInformation("Login requer autenticação de dois fatores para {Email}", Input.Email);
                     return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
                 }
                 if (result.IsLockedOut)
                 {
-                    _logger.LogWarning("User account locked out.");
+                    _logger.LogWarning("Conta bloqueada para {Email}", Input.Email);
                     return RedirectToPage("./Lockout");
                 }
                 else
                 {
+                    _logger.LogWarning("Falha no login para {Email}", Input.Email);
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                     return Page();
                 }

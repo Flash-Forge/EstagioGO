@@ -1,8 +1,15 @@
-﻿@if (!string.IsNullOrEmpty(Model.StatusMessage))
+﻿@model string
+
+@if (!string.IsNullOrEmpty(Model))
 {
-    var statusMessageClass = Model.StatusMessage.StartsWith("Error") ? "danger" : "success";
-    <div class="alert alert-@statusMessageClass alert-dismissible" role="alert">
-        @Model.StatusMessage
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="alert alert-info alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        @Model
     </div>
+}
+else
+{
+    <!-- StatusMessage vazio ou nulo (não renderiza nada) -->
 }

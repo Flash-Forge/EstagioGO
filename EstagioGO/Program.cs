@@ -1,6 +1,6 @@
 using EstagioGO.Data;
+using EstagioGO.Filters;
 using EstagioGO.Middleware;
-using EstagioGO.Models.Identity;
 using EstagioGO.Services;
 using EstagioGO.Services.Email;
 using Microsoft.AspNetCore.Identity;
@@ -36,7 +36,7 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     options.User.RequireUniqueEmail = true;
 
     // Configurações de login
-    options.SignIn.RequireConfirmedAccount = true;
+    options.SignIn.RequireConfirmedAccount = false;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
@@ -59,10 +59,14 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("Administrador", "Coordenador"));
 });
 
-// Adicione o serviço de claims personalizado
-builder.Services.AddScoped<UserClaimsPrincipalFactory<ApplicationUser, ApplicationRole>, CustomClaimsPrincipalFactory>();
+// Adicione o filtro de primeiro acesso
+builder.Services.AddScoped<FirstAccessFilter>();
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<FirstAccessFilter>(); // Adicione o filtro globalmente
+});
+
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
@@ -71,14 +75,36 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var loggerFactory = services.GetRequiredService<ILoggerFactory>();
+    var logger = loggerFactory.CreateLogger("SeedData");
 
     try
     {
+        logger.LogInformation("Iniciando o seed de dados...");
         await SeedData.InitializeAsync(services);
+        logger.LogInformation("Seed de dados concluído com sucesso.");
+
+        // Verificação pós-seed
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var adminUser = await userManager.FindByEmailAsync("admin@estagio.com");
+
+        if (adminUser != null)
+        {
+            logger.LogInformation("Administrador padrão encontrado com ID: {UserId}", adminUser.Id);
+            logger.LogInformation("Email confirmado: {Confirmed}", adminUser.EmailConfirmed);
+            logger.LogInformation("Primeiro acesso concluído: {Completed}", adminUser.PrimeiroAcessoConcluido);
+
+            // Verifique se a senha está correta
+            var passwordCheck = await userManager.CheckPasswordAsync(adminUser, "Admin@123");
+            logger.LogInformation("Senha padrão funciona: {PasswordWorks}", passwordCheck);
+        }
+        else
+        {
+            logger.LogError("ERRO CRÍTICO: Administrador padrão NÃO foi criado!");
+        }
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "Ocorreu um erro durante o seed de dados");
     }
 }
@@ -87,11 +113,12 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
+    app.UseDeveloperExceptionPage();
 }
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // O valor HSTS padrão é de 30 dias. Você pode querer alterar isso para cenários de produção.
+    // The default HSTS value is 30 days. You may want to change this for production scenarios.
     app.UseHsts();
 }
 
@@ -100,34 +127,27 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Middleware para forçar alteração de senha (substitui o FirstAccessMiddleware)
-app.UseForcePasswordChangeMiddleware();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
+// No .NET 8, NÃO use app.UseEndpoints() - isso está obsoleto
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapRazorPages();
 
-app.UseEndpoints(endpoints =>
+// Bloquear acesso direto à página de registro
+app.MapGet("/Identity/Account/Register", context =>
 {
-    endpoints.MapRazorPages();
+    context.Response.Redirect("/Identity/Account/Login");
+    return Task.CompletedTask;
+});
 
-    // Bloquear acesso direto à página de registro
-    endpoints.MapGet("/Identity/Account/Register", context =>
-    {
-        context.Response.Redirect("/Identity/Account/Login");
-        return Task.CompletedTask;
-    });
-
-    endpoints.MapPost("/Identity/Account/Register", context =>
-    {
-        context.Response.Redirect("/Identity/Account/Login");
-        return Task.CompletedTask;
-    });
+app.MapPost("/Identity/Account/Register", context =>
+{
+    context.Response.Redirect("/Identity/Account/Login");
+    return Task.CompletedTask;
 });
 
 app.Run();

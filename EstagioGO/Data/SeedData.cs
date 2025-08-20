@@ -9,33 +9,52 @@ namespace EstagioGO.Data
 {
     public static class SeedData
     {
-        // Classe interna para uso com ILogger (resolve o erro CS0718)
         private class SeedDataLogger { }
 
         public static async Task InitializeAsync(IServiceProvider serviceProvider)
         {
-            var logger = serviceProvider.GetRequiredService<ILogger<SeedDataLogger>>();
+            var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger<SeedDataLogger>();
+
+            logger.LogInformation("Iniciando seed de dados...");
 
             using (var scope = serviceProvider.CreateScope())
             {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+
+                try
+                {
+                    // Garanta que o banco de dados existe
+                    await dbContext.Database.EnsureCreatedAsync();
+                    logger.LogInformation("Banco de dados garantido como criado.");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Erro ao garantir criação do banco de dados");
+                }
 
                 // Criar os papéis (roles) se não existirem
                 string[] roleNames = { "Administrador", "Coordenador", "Supervisor", "Estagiario" };
                 foreach (var roleName in roleNames)
                 {
-                    var roleExist = await roleManager.RoleExistsAsync(roleName);
-                    if (!roleExist)
+                    try
                     {
-                        await roleManager.CreateAsync(new ApplicationRole
+                        var roleExist = await roleManager.RoleExistsAsync(roleName);
+                        if (!roleExist)
                         {
-                            Name = roleName,
-                            NormalizedName = roleName.ToUpper(),
-                            Descricao = ObterDescricaoRole(roleName),
-                            DataCriacao = DateTime.Now
-                        });
-                        logger.LogInformation($"Papel '{roleName}' criado com sucesso.");
+                            await roleManager.CreateAsync(new ApplicationRole(roleName)
+                            {
+                                Descricao = ObterDescricaoRole(roleName),
+                                DataCriacao = DateTime.Now
+                            });
+                            logger.LogInformation($"Papel '{roleName}' criado com sucesso.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, $"Erro ao criar papel '{roleName}'");
                     }
                 }
 
@@ -43,77 +62,79 @@ namespace EstagioGO.Data
                 string adminEmail = "admin@estagio.com";
                 string adminPassword = "Admin@123";
 
-                var adminUser = await userManager.FindByEmailAsync(adminEmail);
-                if (adminUser == null)
+                try
                 {
-                    adminUser = new ApplicationUser
+                    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+                    if (adminUser == null)
                     {
-                        UserName = adminEmail,
-                        Email = adminEmail,
-                        NomeCompleto = "Administrador Padrão",
-                        Ativo = true,
-                        DataCadastro = DateTime.Now,
-                        PrimeiroAcessoConcluido = false
-                    };
+                        logger.LogInformation("Criando administrador padrão...");
 
-                    var result = await userManager.CreateAsync(adminUser, adminPassword);
-                    if (result.Succeeded)
-                    {
-                        await userManager.AddToRoleAsync(adminUser, "Administrador");
-
-                        // 👇 CORREÇÃO: Use GenerateEmailConfirmationTokenAsync, NÃO GetEmailConfirmationTokenAsync 👇
-                        var token = await userManager.GenerateEmailConfirmationTokenAsync(adminUser);
-                        var confirmResult = await userManager.ConfirmEmailAsync(adminUser, token);
-
-                        if (confirmResult.Succeeded)
+                        adminUser = new ApplicationUser
                         {
-                            logger.LogInformation("Administrador padrão criado e email confirmado com sucesso.");
+                            UserName = adminEmail,
+                            Email = adminEmail,
+                            EmailConfirmed = true,
+                            NomeCompleto = "Administrador Padrão",
+                            Cargo = "Administrador",
+                            DataCadastro = DateTime.Now,
+                            Ativo = true,
+                            PrimeiroAcessoConcluido = false // FORÇAR alteração de senha no primeiro acesso
+                        };
+
+                        var result = await userManager.CreateAsync(adminUser, adminPassword);
+
+                        if (!result.Succeeded)
+                        {
+                            logger.LogError("Falha ao criar administrador padrão:");
+                            foreach (var error in result.Errors)
+                            {
+                                logger.LogError($"- {error.Code}: {error.Description}");
+                            }
                         }
                         else
                         {
-                            logger.LogError("Falha ao confirmar email do administrador padrão.");
-                            foreach (var error in confirmResult.Errors)
+                            logger.LogInformation("Administrador padrão criado com sucesso.");
+
+                            // Adicione ao papel de Administrador
+                            var roleResult = await userManager.AddToRoleAsync(adminUser, "Administrador");
+                            if (!roleResult.Succeeded)
                             {
-                                logger.LogError($"Erro de confirmação: {error.Description}");
+                                logger.LogError("Falha ao adicionar administrador ao papel:");
+                                foreach (var error in roleResult.Errors)
+                                {
+                                    logger.LogError($"- {error.Description}");
+                                }
+                            }
+                            else
+                            {
+                                logger.LogInformation("Administrador adicionado ao papel com sucesso.");
                             }
                         }
                     }
                     else
                     {
-                        logger.LogError("Falha ao criar administrador padrão.");
-                        foreach (var error in result.Errors)
+                        logger.LogInformation("Administrador padrão já existe.");
+
+                        // Garanta que o email está confirmado e o primeiro acesso não foi concluído
+                        if (!adminUser.EmailConfirmed)
                         {
-                            logger.LogError($"Erro de criação: {error.Description}");
+                            adminUser.EmailConfirmed = true;
                         }
-                    }
-                }
-                else
-                {
-                    // Se o usuário já existe, garantir que ele tem o papel de Administrador
-                    if (!await userManager.IsInRoleAsync(adminUser, "Administrador"))
-                    {
-                        await userManager.AddToRoleAsync(adminUser, "Administrador");
-                        logger.LogInformation("Administrador padrão atualizado com o papel de Administrador.");
-                    }
 
-                    // Garantir que o email está confirmado
-                    // 👇 CORREÇÃO: Verifique se o email já está confirmado 👇
-                    if (!await userManager.IsEmailConfirmedAsync(adminUser))
-                    {
-                        var token = await userManager.GenerateEmailConfirmationTokenAsync(adminUser);
-                        await userManager.ConfirmEmailAsync(adminUser, token);
-                        logger.LogInformation("Email do administrador padrão foi confirmado.");
-                    }
-
-                    // Garantir que a flag PrimeiroAcessoConcluido está correta
-                    if (adminUser.PrimeiroAcessoConcluido)
-                    {
+                        // Sempre garanta que o primeiro acesso não foi concluído para forçar alteração de senha
                         adminUser.PrimeiroAcessoConcluido = false;
                         await userManager.UpdateAsync(adminUser);
-                        logger.LogInformation("Flag PrimeiroAcessoConcluido foi redefinida para o administrador padrão.");
+
+                        logger.LogInformation("Administrador atualizado para forçar alteração de senha no próximo login.");
                     }
                 }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Erro crítico ao criar/atualizar administrador padrão");
+                }
             }
+
+            logger.LogInformation("Seed de dados concluído.");
         }
 
         private static string ObterDescricaoRole(string roleName)

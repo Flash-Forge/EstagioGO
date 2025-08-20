@@ -1,0 +1,96 @@
+﻿@model IEnumerable<UserManagementViewModel>
+
+@{
+    ViewData["Title"] = "Gerenciamento de Usuários";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>@ViewData["Title"]</h1>
+        <a asp-action="CreateUser" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Novo Usuário
+        </a>
+    </div>
+
+    <!-- Mensagens de sucesso e erro existentes -->
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nome Completo</th>
+                            <th>Email</th>
+                            <th>Papel</th>
+                            <th>Data de Cadastro</th>
+                            <th>Status</th>
+                            <th>Primeiro Acesso</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            var isDefaultAdmin = user.Email.Equals("admin@estagio.com", StringComparison.OrdinalIgnoreCase);
+
+                            <tr>
+                                <td>@user.NomeCompleto</td>
+                                <td>@user.Email</td>
+                                <td>
+                                    <span class="badge bg-primary">@user.Role</span>
+                                </td>
+                                <td>@user.DataCadastro.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    @if (user.Ativo)
+                                    {
+                                        <span class="badge bg-success">Ativo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Inativo</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (user.PrimeiroAcessoConcluido)
+                                    {
+                                        <span class="badge bg-success">Concluído</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning">Pendente</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        @if (isDefaultAdmin)
+                                        {
+                                            <a asp-action="ViewAdmin" class="btn btn-sm btn-outline-info" title="Visualizar administrador padrão">
+                                                <i class="bi bi-eye"></i> Visualizar
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-primary" disabled title="Não é possível editar o administrador padrão">
+                                                <i class="bi bi-pencil"></i> Editar
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" disabled title="Não é possível excluir o administrador padrão">
+                                                <i class="bi bi-trash"></i> Excluir
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <a asp-action="EditUser" asp-route-id="@user.Id" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil"></i> Editar
+                                            </a>
+                                            <a asp-action="DeleteUser" asp-route-id="@user.Id" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i> Excluir
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

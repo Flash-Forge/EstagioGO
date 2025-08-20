@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using EstagioGO.Constants;
+using EstagioGO.Data;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using EstagioGO.Data;
 
 namespace EstagioGO.Data
 {
@@ -59,7 +60,7 @@ namespace EstagioGO.Data
                 }
 
                 // Criar administrador padrão
-                string adminEmail = "admin@estagio.com";
+                string adminEmail = AppConstants.DefaultAdminEmail;
                 string adminPassword = "Admin@123";
 
                 try

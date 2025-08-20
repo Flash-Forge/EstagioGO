@@ -1,3 +1,4 @@
+using EstagioGO.Constants;
 using EstagioGO.Data;
 using EstagioGO.Filters;
 using EstagioGO.Services;
@@ -85,7 +86,7 @@ using (var scope = app.Services.CreateScope())
 
         // Verificação pós-seed
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-        var adminUser = await userManager.FindByEmailAsync("admin@estagio.com");
+        var adminUser = await userManager.FindByEmailAsync(AppConstants.DefaultAdminEmail);
 
         if (adminUser != null)
         {
@@ -128,6 +129,11 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "admin",
+    pattern: "Admin/{action=UserManagement}/{id?}",
+    defaults: new { controller = "Admin" });
 
 // No .NET 8, NÃO use app.UseEndpoints() - isso está obsoleto
 app.MapControllerRoute(

@@ -1,0 +1,82 @@
+﻿@model ApplicationUser
+
+@{
+    ViewData["Title"] = "Detalhes do Administrador Padrão";
+    var isDefaultAdmin = Model.Email.Equals("admin@estagio.com", StringComparison.OrdinalIgnoreCase);
+}
+
+<div class="container mt-4">
+    <h1>@ViewData["Title"]</h1>
+
+    <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle"></i> Este é o usuário administrador padrão do sistema e não pode ser editado ou excluído.
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Informações do Usuário</h5>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">
+                    @Html.DisplayNameFor(model => model.NomeCompleto)
+                </dt>
+                <dd class="col-sm-9">
+                    @Html.DisplayFor(model => model.NomeCompleto)
+                </dd>
+
+                <dt class="col-sm-3">
+                    @Html.DisplayNameFor(model => model.Email)
+                </dt>
+                <dd class="col-sm-9">
+                    @Html.DisplayFor(model => model.Email)
+                </dd>
+
+                <dt class="col-sm-3">
+                    @Html.DisplayNameFor(model => model.Cargo)
+                </dt>
+                <dd class="col-sm-9">
+                    @Html.DisplayFor(model => model.Cargo)
+                </dd>
+
+                <dt class="col-sm-3">
+                    Data de Cadastro
+                </dt>
+                <dd class="col-sm-9">
+                    @Html.DisplayFor(model => model.DataCadastro)
+                </dd>
+
+                <dt class="col-sm-3">
+                    Status
+                </dt>
+                <dd class="col-sm-9">
+                    @if (Model.Ativo)
+                    {
+                        <span class="badge bg-success">Ativo</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Inativo</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3">
+                    Primeiro Acesso
+                </dt>
+                <dd class="col-sm-9">
+                    @if (Model.PrimeiroAcessoConcluido)
+                    {
+                        <span class="badge bg-success">Concluído</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning">Pendente</span>
+                    }
+                </dd>
+            </dl>
+        </div>
+        <div class="card-footer">
+            <a asp-action="UserManagement" class="btn btn-secondary">Voltar</a>
+        </div>
+    </div>
+</div>

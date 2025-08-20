@@ -92,7 +92,16 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
             if (isFirstAccess)
             {
                 user.PrimeiroAcessoConcluido = true;
-                await _userManager.UpdateAsync(user);
+                var updateResult = await _userManager.UpdateAsync(user);
+
+                if (!updateResult.Succeeded)
+                {
+                    foreach (var error in updateResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                    return Page();
+                }
             }
 
             await _signInManager.RefreshSignInAsync(user);
@@ -102,7 +111,7 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
             // Redirecionar para a página inicial após o primeiro acesso
             if (isFirstAccess)
             {
-                return RedirectToPage("/Index");
+                return LocalRedirect("~/");
             }
 
             return RedirectToPage();

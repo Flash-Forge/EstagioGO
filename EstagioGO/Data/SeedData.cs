@@ -115,17 +115,18 @@ namespace EstagioGO.Data
                     {
                         logger.LogInformation("Administrador padrão já existe.");
 
-                        // Garanta que o email está confirmado e o primeiro acesso não foi concluído
+                        // Apenas garantir que o email está confirmado - NÃO alterar PrimeiroAcessoConcluido
                         if (!adminUser.EmailConfirmed)
                         {
                             adminUser.EmailConfirmed = true;
+                            await userManager.UpdateAsync(adminUser);
+                            logger.LogInformation("Email do administrador padrão foi confirmado.");
                         }
 
-                        // Sempre garanta que o primeiro acesso não foi concluído para forçar alteração de senha
-                        adminUser.PrimeiroAcessoConcluido = false;
-                        await userManager.UpdateAsync(adminUser);
-
-                        logger.LogInformation("Administrador atualizado para forçar alteração de senha no próximo login.");
+                        // REMOVER esta parte que causa o problema:
+                        // adminUser.PrimeiroAcessoConcluido = false;
+                        // await userManager.UpdateAsync(adminUser);
+                        // logger.LogInformation("Administrador atualizado para forçar alteração de senha no próximo login.");
                     }
                 }
                 catch (Exception ex)

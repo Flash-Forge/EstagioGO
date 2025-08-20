@@ -1,6 +1,5 @@
 using EstagioGO.Data;
 using EstagioGO.Filters;
-using EstagioGO.Middleware;
 using EstagioGO.Services;
 using EstagioGO.Services.Email;
 using Microsoft.AspNetCore.Identity;

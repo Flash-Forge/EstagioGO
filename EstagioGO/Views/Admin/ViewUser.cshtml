@@ -1,16 +1,19 @@
-﻿@model ApplicationUser
+﻿@model UserDetailViewModel
 
 @{
-    ViewData["Title"] = "Detalhes do Administrador Padrão";
+    ViewData["Title"] = "Detalhes do Usuário";
     var isDefaultAdmin = Model.Email.Equals("admin@estagio.com", StringComparison.OrdinalIgnoreCase);
 }
 
 <div class="container mt-4">
     <h1>@ViewData["Title"]</h1>
 
-    <div class="alert alert-info" role="alert">
-        <i class="bi bi-info-circle"></i> Este é o usuário administrador padrão do sistema e não pode ser editado ou excluído.
-    </div>
+    @if (isDefaultAdmin)
+    {
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle"></i> Este é o usuário administrador padrão do sistema.
+        </div>
+    }
 
     <div class="card">
         <div class="card-header">
@@ -40,10 +43,17 @@
                 </dd>
 
                 <dt class="col-sm-3">
+                    Papel
+                </dt>
+                <dd class="col-sm-9">
+                    <span class="badge bg-primary">@Model.Role</span>
+                </dd>
+
+                <dt class="col-sm-3">
                     Data de Cadastro
                 </dt>
                 <dd class="col-sm-9">
-                    @Html.DisplayFor(model => model.DataCadastro)
+                    @Model.DataCadastro.ToString("dd/MM/yyyy HH:mm")
                 </dd>
 
                 <dt class="col-sm-3">
@@ -76,7 +86,12 @@
             </dl>
         </div>
         <div class="card-footer">
-            <a asp-action="UserManagement" class="btn btn-secondary">Voltar</a>
+            <a asp-action="UserManagement" class="btn btn-secondary">Voltar para a Lista</a>
+
+            @if (!isDefaultAdmin)
+            {
+                <a asp-action="EditUser" asp-route-id="@Model.Id" class="btn btn-primary ms-2">Editar</a>
+            }
         </div>
     </div>
 </div>

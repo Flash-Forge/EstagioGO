@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace EstagioGO.Views.Admin
 {
-    public class ViewAdminModel : PageModel
+    public class ViewUserModel : PageModel
     {
         public void OnGet()
         {

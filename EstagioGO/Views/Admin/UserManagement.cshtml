@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Gerenciamento de Usuários";
+    var defaultAdminEmail = "admin@estagio.com"; // Ou use a constante se configurada
 }
 
 <div class="container mt-4">
@@ -32,7 +33,7 @@
                     <tbody>
                         @foreach (var user in Model)
                         {
-                            var isDefaultAdmin = user.Email.Equals("admin@estagio.com", StringComparison.OrdinalIgnoreCase);
+                            var isDefaultAdmin = user.Email.Equals(defaultAdminEmail, StringComparison.OrdinalIgnoreCase);
 
                             <tr>
                                 <td>@user.NomeCompleto</td>
@@ -63,11 +64,13 @@
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
+                                        <!-- Botão de Visualização para TODOS os usuários -->
+                                        <a asp-action="ViewUser" asp-route-id="@user.Id" class="btn btn-sm btn-outline-info" title="Visualizar usuário">
+                                            <i class="bi bi-eye"></i> Visualizar
+                                        </a>
+
                                         @if (isDefaultAdmin)
                                         {
-                                            <a asp-action="ViewAdmin" class="btn btn-sm btn-outline-info" title="Visualizar administrador padrão">
-                                                <i class="bi bi-eye"></i> Visualizar
-                                            </a>
                                             <button class="btn btn-sm btn-outline-primary" disabled title="Não é possível editar o administrador padrão">
                                                 <i class="bi bi-pencil"></i> Editar
                                             </button>

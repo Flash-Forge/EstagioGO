@@ -74,7 +74,7 @@ namespace EstagioGO.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateUser(CreateUserViewModel model)
         {
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 model.Roles = _roleManager.Roles
                     .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })

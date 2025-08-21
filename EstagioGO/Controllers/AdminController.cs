@@ -238,6 +238,38 @@ namespace EstagioGO.Controllers
             return View(model);
         }
 
+        // GET: Visualizar usuário
+        public async Task<IActionResult> ViewUser(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return NotFound();
+            }
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // Obter a role do usuário
+            var userRoles = await _userManager.GetRolesAsync(user);
+
+            var model = new UserDetailViewModel
+            {
+                Id = user.Id,
+                NomeCompleto = user.NomeCompleto,
+                Email = user.Email,
+                Cargo = user.Cargo,
+                Role = userRoles.FirstOrDefault(),
+                DataCadastro = user.DataCadastro,
+                Ativo = user.Ativo,
+                PrimeiroAcessoConcluido = user.PrimeiroAcessoConcluido
+            };
+
+            return View(model);
+        }
+
         // GET: Deletar usuário
         public async Task<IActionResult> DeleteUser(string id)
         {

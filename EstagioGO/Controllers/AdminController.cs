@@ -183,11 +183,20 @@ namespace EstagioGO.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditUser(string id, EditUserViewModel model)
         {
-            // Impedir a edição do usuário administrador padrão
-            var userToCheck = await _userManager.FindByIdAsync(id);
-            if (userToCheck != null && userToCheck.Email.Equals("admin@estagio.com", StringComparison.OrdinalIgnoreCase))
+            // Verificar primeiro se o modelo é válido
+            if (ModelState.IsValid)
             {
-                TempData["ErrorMessage"] = "Não é possível editar o usuário administrador padrão.";
+                model.Roles = _roleManager.Roles
+                    .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
+                    .ToList();
+                return View(model);
+            }
+
+            // Agora verificar se é o administrador padrão
+            var userToCheck = await _userManager.FindByIdAsync(id);
+            if (userToCheck != null && userToCheck.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["ErrorMessage"] = AppConstants.DefaultAdminEditError;
                 return RedirectToAction(nameof(UserManagement));
             }
 
@@ -196,20 +205,13 @@ namespace EstagioGO.Controllers
                 return NotFound();
             }
 
-            if (!ModelState.IsValid)
-            {
-                model.Roles = _roleManager.Roles
-                    .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
-                    .ToList();
-                return View(model);
-            }
-
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound();
             }
 
+            // Atualizar propriedades do usuário
             user.NomeCompleto = model.NomeCompleto;
             user.Cargo = model.Role;
             user.Ativo = model.Ativo;
@@ -217,15 +219,46 @@ namespace EstagioGO.Controllers
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
-                // Atualizar roles
+                // Atualizar roles - primeiro obter roles atuais
                 var currentRoles = await _userManager.GetRolesAsync(user);
-                await _userManager.RemoveFromRolesAsync(user, currentRoles);
-                await _userManager.AddToRoleAsync(user, model.Role);
+
+                // Remover todas as roles atuais
+                if (currentRoles.Any())
+                {
+                    var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                    if (!removeResult.Succeeded)
+                    {
+                        // Se falhar ao remover roles, adicionar erros ao ModelState
+                        foreach (var error in removeResult.Errors)
+                        {
+                            ModelState.AddModelError(string.Empty, error.Description);
+                        }
+                        model.Roles = _roleManager.Roles
+                            .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
+                            .ToList();
+                        return View(model);
+                    }
+                }
+
+                // Adicionar a nova role
+                var addRoleResult = await _userManager.AddToRoleAsync(user, model.Role);
+                if (!addRoleResult.Succeeded)
+                {
+                    foreach (var error in addRoleResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                    model.Roles = _roleManager.Roles
+                        .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
+                        .ToList();
+                    return View(model);
+                }
 
                 TempData["SuccessMessage"] = $"Usuário {user.NomeCompleto} atualizado com sucesso.";
                 return RedirectToAction(nameof(UserManagement));
             }
 
+            // Se a atualização do usuário falhar
             foreach (var error in result.Errors)
             {
                 ModelState.AddModelError(string.Empty, error.Description);

@@ -186,10 +186,10 @@ namespace EstagioGO.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Nome = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Matricula = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Curso = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    InstituicaoEnsino = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Nome = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Matricula = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Curso = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    InstituicaoEnsino = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     DataInicio = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DataTermino = table.Column<DateTime>(type: "datetime2", nullable: true),
                     SupervisorId = table.Column<string>(type: "nvarchar(450)", nullable: false),

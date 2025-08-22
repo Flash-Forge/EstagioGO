@@ -1,0 +1,96 @@
+﻿@model IEnumerable<EstagioGO.Models.Domain.Estagiario>
+
+@{
+    ViewData["Title"] = "Estagiários";
+}
+
+<h1>Estagiários</h1>
+
+<p>
+    <a asp-action="Create">Cadastrar Novo Estagiário</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Nome)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Matricula)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Curso)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.InstituicaoEnsino)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DataInicio)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DataTermino)
+            </th>
+            <th>
+                Supervisor
+            </th>
+            <th>
+                Coordenador
+            </th>
+            <th>
+                Usuário
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Ativo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DataCadastro)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Nome)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Matricula)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Curso)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.InstituicaoEnsino)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DataInicio)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DataTermino)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Supervisor.NomeCompleto)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Coordenador.NomeCompleto)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.User.NomeCompleto)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Ativo)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DataCadastro)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Editar</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">Detalhes</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">Excluir</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

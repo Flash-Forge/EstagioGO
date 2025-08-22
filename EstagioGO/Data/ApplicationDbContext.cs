@@ -77,6 +77,10 @@ namespace EstagioGO.Data
                 .HasForeignKey<Estagiario>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<Estagiario>()
+                .HasIndex(e => e.UserId)
+                .IsUnique();
+
             builder.Entity<Frequencia>()
                 .HasOne(f => f.Estagiario)
                 .WithMany(e => e.Frequencias)

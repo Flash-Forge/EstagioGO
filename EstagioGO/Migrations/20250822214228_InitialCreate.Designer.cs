@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EstagioGO.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250820164443_InitialCreate")]
+    [Migration("20250822214228_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -233,7 +233,8 @@ namespace EstagioGO.Migrations
 
                     b.Property<string>("Curso")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime>("DataCadastro")
                         .HasColumnType("datetime2");
@@ -246,15 +247,18 @@ namespace EstagioGO.Migrations
 
                     b.Property<string>("InstituicaoEnsino")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("Matricula")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Nome")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("SupervisorId")
                         .IsRequired()

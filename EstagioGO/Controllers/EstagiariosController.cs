@@ -1,0 +1,293 @@
+﻿using EstagioGO.Data;
+using EstagioGO.Models.Domain;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+
+namespace EstagioGO.Controllers
+{
+    public class EstagiariosController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+
+        public EstagiariosController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        {
+            _context = context;
+            _userManager = userManager;
+        }
+
+        // GET: Estagiarios
+        public async Task<IActionResult> Index()
+        {
+            var estagiarios = await _context.Estagiarios
+                .Include(e => e.Supervisor)
+                .Include(e => e.Coordenador)
+                .Include(e => e.User)
+                .ToListAsync();
+            return View(estagiarios);
+        }
+
+        // GET: Estagiarios/Details/5
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var estagiario = await _context.Estagiarios
+                .Include(e => e.Supervisor)
+                .Include(e => e.Coordenador)
+                .Include(e => e.User)
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (estagiario == null)
+            {
+                return NotFound();
+            }
+
+            return View(estagiario);
+        }
+
+        // GET: Estagiarios/Create
+        public async Task<IActionResult> Create()
+        {
+            await CarregarViewBags();
+            return View();
+        }
+
+        // POST: Estagiarios/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Estagiario estagiario)
+        {
+            // Remover a validação das propriedades de navegação
+            ModelState.Remove("User");
+            ModelState.Remove("Supervisor");
+            ModelState.Remove("Coordenador");
+            ModelState.Remove("Frequencias");
+            ModelState.Remove("Avaliacoes");
+
+            // DEBUG: Log dos valores recebidos
+            Debug.WriteLine($"=== DADOS RECEBIDOS ===");
+            Debug.WriteLine($"Nome: {estagiario.Nome}");
+            Debug.WriteLine($"Matricula: {estagiario.Matricula}");
+            Debug.WriteLine($"UserId: {estagiario.UserId}");
+            Debug.WriteLine($"SupervisorId: {estagiario.SupervisorId}");
+            Debug.WriteLine($"CoordenadorId: {estagiario.CoordenadorId}");
+
+            // Verificar se o ModelState é válido antes de qualquer coisa
+            if (!ModelState.IsValid)
+            {
+                Debug.WriteLine("=== ERROS DE VALIDAÇÃO ===");
+                foreach (var key in ModelState.Keys)
+                {
+                    var state = ModelState[key];
+                    foreach (var error in state.Errors)
+                    {
+                        Debug.WriteLine($"{key}: {error.ErrorMessage}");
+                    }
+                }
+
+                await CarregarViewBags();
+                return View(estagiario);
+            }
+
+            // Verificar se o UserId já está em uso
+            bool usuarioJaVinculado = await _context.Estagiarios.AnyAsync(e => e.UserId == estagiario.UserId);
+            Debug.WriteLine($"Usuário já vinculado: {usuarioJaVinculado}");
+
+            if (usuarioJaVinculado)
+            {
+                ModelState.AddModelError("UserId", "Este usuário já está vinculado a outro estagiário.");
+                Debug.WriteLine("Erro: Usuário já vinculado");
+
+                await CarregarViewBags();
+                return View(estagiario);
+            }
+
+            try
+            {
+                // A data de cadastro é definida automaticamente
+                estagiario.DataCadastro = DateTime.Now;
+
+                _context.Add(estagiario);
+                await _context.SaveChangesAsync();
+
+                Debug.WriteLine("Estagiário salvo com sucesso!");
+                TempData["SuccessMessage"] = "Estagiário cadastrado com sucesso!";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException ex)
+            {
+                Debug.WriteLine($"Erro ao salvar no banco de dados: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Debug.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+                }
+
+                ModelState.AddModelError("", "Não foi possível salvar o estagiário. Verifique os dados e tente novamente.");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Erro inesperado: {ex.Message}");
+                ModelState.AddModelError("", "Ocorreu um erro inesperado. Tente novamente.");
+            }
+
+            await CarregarViewBags();
+            return View(estagiario);
+        }
+
+        // GET: Estagiarios/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var estagiario = await _context.Estagiarios.FindAsync(id);
+            if (estagiario == null)
+            {
+                return NotFound();
+            }
+
+            await CarregarViewBags();
+            return View(estagiario);
+        }
+        // POST: Estagiarios/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, Estagiario estagiario)
+        {
+            // Remover a validação das propriedades de navegação
+            ModelState.Remove("User");
+            ModelState.Remove("Supervisor");
+            ModelState.Remove("Coordenador");
+            ModelState.Remove("Frequencias");
+            ModelState.Remove("Avaliacoes");
+
+            if (id != estagiario.Id)
+            {
+                return NotFound();
+            }
+
+            // Verificar se o UserId já está em uso por outro estagiário
+            if (await _context.Estagiarios.AnyAsync(e => e.UserId == estagiario.UserId && e.Id != id))
+            {
+                ModelState.AddModelError("UserId", "Este usuário já está vinculado a outro estagiário.");
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(estagiario);
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = "Estagiário atualizado com sucesso!";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!EstagiarioExists(estagiario.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+
+            await CarregarViewBags();
+            return View(estagiario);
+        }
+
+        // GET: Estagiarios/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var estagiario = await _context.Estagiarios
+                .Include(e => e.Supervisor)
+                .Include(e => e.Coordenador)
+                .Include(e => e.User)
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (estagiario == null)
+            {
+                return NotFound();
+            }
+
+            return View(estagiario);
+        }
+
+        // POST: Estagiarios/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var estagiario = await _context.Estagiarios.FindAsync(id);
+            _context.Estagiarios.Remove(estagiario);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Estagiário excluído com sucesso!";
+            return RedirectToAction(nameof(Index));
+        }
+
+        private bool EstagiarioExists(int id)
+        {
+            return _context.Estagiarios.Any(e => e.Id == id);
+        }
+
+        private async Task CarregarViewBags()
+        {
+            try
+            {
+                // Buscar supervisores (usuários com role "Supervisor")
+                var supervisores = await _userManager.GetUsersInRoleAsync("Supervisor");
+                ViewBag.SupervisorId = new SelectList(supervisores, "Id", "NomeCompleto");
+
+                // Buscar coordenadores (usuários com role "Coordenador")
+                var coordenadores = await _userManager.GetUsersInRoleAsync("Coordenador");
+                ViewBag.CoordenadorId = new SelectList(coordenadores, "Id", "NomeCompleto");
+
+                // Buscar usuários com role "Estagiario" para o campo UserId
+                var estagiariosUsers = await _userManager.GetUsersInRoleAsync("Estagiario");
+
+                // Obter IDs de usuários já vinculados
+                var usuariosVinculados = await _context.Estagiarios
+                    .Where(e => e.UserId != null)
+                    .Select(e => e.UserId)
+                    .ToListAsync();
+
+                // Filtrar usuários não vinculados
+                var usuariosDisponiveis = estagiariosUsers
+                    .Where(u => !usuariosVinculados.Contains(u.Id))
+                    .ToList();
+
+                ViewBag.UserId = new SelectList(usuariosDisponiveis, "Id", "NomeCompleto");
+
+                Debug.WriteLine($"Usuários disponíveis: {usuariosDisponiveis.Count}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Erro ao carregar ViewBags: {ex.Message}");
+                // Garantir que as ViewBags não sejam nulas
+                ViewBag.SupervisorId = new SelectList(new List<ApplicationUser>(), "Id", "NomeCompleto");
+                ViewBag.CoordenadorId = new SelectList(new List<ApplicationUser>(), "Id", "NomeCompleto");
+                ViewBag.UserId = new SelectList(new List<ApplicationUser>(), "Id", "NomeCompleto");
+            }
+        }
+    }
+}

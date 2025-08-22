@@ -1,0 +1,96 @@
+﻿@model EstagioGO.Models.Domain.Estagiario
+
+@{
+    ViewData["Title"] = "Cadastrar Estagiário";
+}
+
+<h1>Cadastrar Estagiário</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create">
+            <div asp-validation-summary="All" class="text-danger"></div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Nome" class="control-label"></label>
+                <input asp-for="Nome" class="form-control" />
+                <span asp-validation-for="Nome" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Matricula" class="control-label"></label>
+                <input asp-for="Matricula" class="form-control" />
+                <span asp-validation-for="Matricula" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Curso" class="control-label"></label>
+                <input asp-for="Curso" class="form-control" />
+                <span asp-validation-for="Curso" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="InstituicaoEnsino" class="control-label"></label>
+                <input asp-for="InstituicaoEnsino" class="form-control" />
+                <span asp-validation-for="InstituicaoEnsino" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="DataInicio" class="control-label"></label>
+                <input asp-for="DataInicio" type="date" class="form-control" />
+                <span asp-validation-for="DataInicio" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="DataTermino" class="control-label"></label>
+                <input asp-for="DataTermino" type="date" class="form-control" />
+                <span asp-validation-for="DataTermino" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="SupervisorId" class="control-label">Supervisor</label>
+                <select asp-for="SupervisorId" class="form-control" asp-items="ViewBag.SupervisorId">
+                    <option value="">-- Selecione o Supervisor --</option>
+                </select>
+                <span asp-validation-for="SupervisorId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="CoordenadorId" class="control-label">Coordenador</label>
+                <select asp-for="CoordenadorId" class="form-control" asp-items="ViewBag.CoordenadorId">
+                    <option value="">-- Selecione o Coordenador --</option>
+                </select>
+                <span asp-validation-for="CoordenadorId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="UserId" class="control-label">Usuário do Sistema</label>
+                <select asp-for="UserId" class="form-control" asp-items="ViewBag.UserId">
+                    <option value="">-- Selecione o Usuário --</option>
+                </select>
+                <span asp-validation-for="UserId" class="text-danger"></span>
+                <small class="form-text text-muted">
+                    Selecione um usuário com perfil de Estagiário para vincular ao cadastro.
+                </small>
+            </div>
+
+            <div class="form-group form-check mb-3">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="Ativo" /> @Html.DisplayNameFor(model => model.Ativo)
+                </label>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Cadastrar" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Voltar para a lista</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -36,5 +36,11 @@ namespace EstagioGO.Models.Domain
 
         // Relacionamentos com itens de avaliação
         public ICollection<ItemAvaliacao> ItensAvaliacao { get; set; } = new List<ItemAvaliacao>();
+
+        // Propriedade de navegação para o período de avaliação (se aplicável)
+        public int? PeriodoAvaliacaoId { get; set; }
+
+        [ForeignKey("PeriodoAvaliacaoId")]
+        public PeriodoAvaliacao PeriodoAvaliacao { get; set; }
     }
 }

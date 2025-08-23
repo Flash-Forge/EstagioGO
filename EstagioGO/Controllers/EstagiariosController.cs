@@ -147,18 +147,12 @@ namespace EstagioGO.Controllers
         // GET: Estagiarios/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var estagiario = await _context.Estagiarios.FindAsync(id);
-            if (estagiario == null)
-            {
-                return NotFound();
-            }
+            if (estagiario == null) return NotFound();
 
-            await CarregarViewBags();
+            await CarregarViewBags(estagiario.UserId); // Passa o UserId atual
             return View(estagiario);
         }
         // POST: Estagiarios/Edit/5
@@ -178,11 +172,18 @@ namespace EstagioGO.Controllers
                 return NotFound();
             }
 
-            // Verificar se o UserId já está em uso por outro estagiário
-            if (await _context.Estagiarios.AnyAsync(e => e.UserId == estagiario.UserId && e.Id != id))
+            // Buscar o estagiário existente para preservar o UserId original
+            var estagiarioExistente = await _context.Estagiarios
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            if (estagiarioExistente == null)
             {
-                ModelState.AddModelError("UserId", "Este usuário já está vinculado a outro estagiário.");
+                return NotFound();
             }
+
+            // Manter o UserId original, ignorando qualquer alteração
+            estagiario.UserId = estagiarioExistente.UserId;
 
             if (ModelState.IsValid)
             {
@@ -207,7 +208,7 @@ namespace EstagioGO.Controllers
                 }
             }
 
-            await CarregarViewBags();
+            await CarregarViewBags(estagiario.UserId);
             return View(estagiario);
         }
 
@@ -250,7 +251,7 @@ namespace EstagioGO.Controllers
             return _context.Estagiarios.Any(e => e.Id == id);
         }
 
-        private async Task CarregarViewBags()
+        private async Task CarregarViewBags(string userIdAtual = null)
         {
             try
             {
@@ -265,16 +266,27 @@ namespace EstagioGO.Controllers
                 // Buscar usuários com role "Estagiario" para o campo UserId
                 var estagiariosUsers = await _userManager.GetUsersInRoleAsync("Estagiario");
 
-                // Obter IDs de usuários já vinculados
+                // Obter IDs de usuários já vinculados a outros estagiários
                 var usuariosVinculados = await _context.Estagiarios
-                    .Where(e => e.UserId != null)
+                    .Where(e => e.UserId != null && e.UserId != userIdAtual) // Exclui o usuário atual da lista de vinculados
                     .Select(e => e.UserId)
                     .ToListAsync();
 
-                // Filtrar usuários não vinculados
+                // Filtrar usuários não vinculados (incluindo o usuário atual se estiver editando)
                 var usuariosDisponiveis = estagiariosUsers
                     .Where(u => !usuariosVinculados.Contains(u.Id))
                     .ToList();
+
+                // Se estiver editando, garantir que o usuário atual está na lista
+                if (!string.IsNullOrEmpty(userIdAtual))
+                {
+                    var usuarioAtual = estagiariosUsers.FirstOrDefault(u => u.Id == userIdAtual);
+                    if (usuarioAtual != null && !usuariosDisponiveis.Any(u => u.Id == userIdAtual))
+                    {
+                        usuariosDisponiveis.Add(usuarioAtual);
+                        ViewBag.NomeUsuario = usuarioAtual.NomeCompleto;
+                    }
+                }
 
                 ViewBag.UserId = new SelectList(usuariosDisponiveis, "Id", "NomeCompleto");
 

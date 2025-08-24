@@ -1,90 +1,43 @@
 ﻿@model IEnumerable<EstagioGO.Models.Domain.Estagiario>
-
 @{
     ViewData["Title"] = "Estagiários";
 }
 
 <h1>Estagiários</h1>
+<a asp-action="Create" class="btn btn-primary mb-3">Cadastrar Novo Estagiário</a>
 
-<p>
-    <a asp-action="Create">Cadastrar Novo Estagiário</a>
-</p>
-<table class="table">
+<table id="estagiarios-table" class="table table-striped table-hover nowrap" style="width:100%">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Nome)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Matricula)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Curso)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.InstituicaoEnsino)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DataInicio)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DataTermino)
-            </th>
-            <th>
-                Supervisor
-            </th>
-            <th>
-                Coordenador
-            </th>
-            <th>
-                Usuário
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Ativo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DataCadastro)
-            </th>
-            <th></th>
+            <th>@Html.DisplayNameFor(m => m.Nome)</th>
+            <th>@Html.DisplayNameFor(m => m.Matricula)</th>
+            <th>@Html.DisplayNameFor(m => m.Curso)</th>
+            <th>@Html.DisplayNameFor(m => m.InstituicaoEnsino)</th>
+            <th>@Html.DisplayNameFor(m => m.DataInicio)</th>
+            <th>@Html.DisplayNameFor(m => m.DataTermino)</th>
+            <th>Supervisor</th>
+            <th>Coordenador</th>
+            <th>Usuário</th>
+            <th>@Html.DisplayNameFor(m => m.Ativo)</th>
+            <th>@Html.DisplayNameFor(m => m.DataCadastro)</th>
+            <th>Ações</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var item in Model)
         {
             <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Nome)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Matricula)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Curso)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.InstituicaoEnsino)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.DataInicio)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.DataTermino)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Supervisor.NomeCompleto)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Coordenador.NomeCompleto)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.User.NomeCompleto)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Ativo)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.DataCadastro)
-                </td>
+                <td>@item.Nome</td>
+                <td>@item.Matricula</td>
+                <td>@item.Curso</td>
+                <td>@item.InstituicaoEnsino</td>
+                <td>@item.DataInicio</td>
+                <td>@item.DataTermino</td>
+                <td>@item.Supervisor.NomeCompleto</td>
+                <td>@item.Coordenador.NomeCompleto</td>
+                <td>@item.User.NomeCompleto</td>
+                <td>@(item.Ativo ? "Sim" : "Não")</td>
+                <td>@item.DataCadastro</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.Id">Editar</a> |
                     <a asp-action="Details" asp-route-id="@item.Id">Detalhes</a> |
@@ -94,3 +47,23 @@
         }
     </tbody>
 </table>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#estagiarios-table').DataTable({
+                responsive: true,
+                autoWidth: false,
+                dom: 'Bfrtip',
+                buttons: [
+                    { extend: 'excelHtml5', text: '<i class="bi bi-file-earmark-excel"></i> Excel' },
+                    { extend: 'csvHtml5',   text: '<i class="bi bi-file-earmark-spreadsheet"></i> CSV' },
+                    { extend: 'pdfHtml5',   text: '<i class="bi bi-file-earmark-pdf"></i> PDF' }
+                ],
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
+                }
+            });
+        });
+    </script>
+}

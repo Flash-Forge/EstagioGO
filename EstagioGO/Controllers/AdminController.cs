@@ -150,7 +150,7 @@ namespace EstagioGO.Controllers
             }
 
             // Impedir a edição do usuário administrador padrão
-            if (user.Email.Equals("admin@estagio.com", StringComparison.OrdinalIgnoreCase))
+            if (user.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase))
             {
                 TempData["ErrorMessage"] = "Não é possível editar o usuário administrador padrão.";
                 return RedirectToAction(nameof(UserManagement));
@@ -178,13 +178,12 @@ namespace EstagioGO.Controllers
             return View(model);
         }
 
-        // POST: Editar usuário
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditUser(string id, EditUserViewModel model)
         {
             // Verificar primeiro se o modelo é válido
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 model.Roles = _roleManager.Roles
                     .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
@@ -192,7 +191,7 @@ namespace EstagioGO.Controllers
                 return View(model);
             }
 
-            // Agora verificar se é o administrador padrão
+            // Verificar se é o administrador padrão
             var userToCheck = await _userManager.FindByIdAsync(id);
             if (userToCheck != null && userToCheck.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase))
             {
@@ -211,50 +210,76 @@ namespace EstagioGO.Controllers
                 return NotFound();
             }
 
+            // Verificar se o email foi alterado
+            bool emailAlterado = user.Email != model.Email;
+            bool primeiroAcessoPendente = !user.PrimeiroAcessoConcluido;
+
+            // Verificar se o novo email já existe para outro usuário
+            if (emailAlterado)
+            {
+                var usuarioComEmail = await _userManager.FindByEmailAsync(model.Email);
+                if (usuarioComEmail != null && usuarioComEmail.Id != user.Id)
+                {
+                    ModelState.AddModelError("Email", "Este email já está em uso por outro usuário.");
+                    model.Roles = _roleManager.Roles
+                        .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
+                        .ToList();
+                    return View(model);
+                }
+            }
+
             // Atualizar propriedades do usuário
             user.NomeCompleto = model.NomeCompleto;
             user.Cargo = model.Role;
             user.Ativo = model.Ativo;
 
+            // Se o email foi alterado, atualizar o email
+            if (emailAlterado)
+            {
+                user.Email = model.Email;
+                user.UserName = model.Email;
+                user.NormalizedEmail = _userManager.NormalizeEmail(model.Email);
+                user.NormalizedUserName = _userManager.NormalizeName(model.Email);
+            }
+
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
+                // Se o email foi alterado e o primeiro acesso ainda não foi concluído,
+                // gerar uma nova senha temporária e enviar por email
+                if (emailAlterado && primeiroAcessoPendente)
+                {
+                    var novaSenha = GenerateTemporaryPassword();
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                    var passwordResult = await _userManager.ResetPasswordAsync(user, token, novaSenha);
+
+                    if (passwordResult.Succeeded)
+                    {
+                        await SendCredentialsEmail(user, novaSenha);
+                        TempData["SuccessMessage"] = $"Usuário {user.NomeCompleto} atualizado com sucesso. Uma nova senha foi enviada para o email.";
+                    }
+                    else
+                    {
+                        TempData["WarningMessage"] = $"Usuário {user.NomeCompleto} atualizado, mas houve um erro ao redefinir a senha.";
+                    }
+                }
+                else
+                {
+                    TempData["SuccessMessage"] = $"Usuário {user.NomeCompleto} atualizado com sucesso.";
+                }
+
                 // Atualizar roles - primeiro obter roles atuais
                 var currentRoles = await _userManager.GetRolesAsync(user);
 
                 // Remover todas as roles atuais
                 if (currentRoles.Any())
                 {
-                    var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
-                    if (!removeResult.Succeeded)
-                    {
-                        // Se falhar ao remover roles, adicionar erros ao ModelState
-                        foreach (var error in removeResult.Errors)
-                        {
-                            ModelState.AddModelError(string.Empty, error.Description);
-                        }
-                        model.Roles = _roleManager.Roles
-                            .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
-                            .ToList();
-                        return View(model);
-                    }
+                    await _userManager.RemoveFromRolesAsync(user, currentRoles);
                 }
 
                 // Adicionar a nova role
-                var addRoleResult = await _userManager.AddToRoleAsync(user, model.Role);
-                if (!addRoleResult.Succeeded)
-                {
-                    foreach (var error in addRoleResult.Errors)
-                    {
-                        ModelState.AddModelError(string.Empty, error.Description);
-                    }
-                    model.Roles = _roleManager.Roles
-                        .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
-                        .ToList();
-                    return View(model);
-                }
+                await _userManager.AddToRoleAsync(user, model.Role);
 
-                TempData["SuccessMessage"] = $"Usuário {user.NomeCompleto} atualizado com sucesso.";
                 return RedirectToAction(nameof(UserManagement));
             }
 
@@ -393,16 +418,20 @@ namespace EstagioGO.Controllers
 
         private async Task SendCredentialsEmail(ApplicationUser user, string password)
         {
-            var subject = "Suas credenciais no Sistema de Gestão de Estágios";
+            var subject = "Suas credenciais de acesso foram atualizadas";
             var message = $@"
-                <h3>Bem-vindo ao Sistema de Gestão de Estágios</h3>
-                <p>Suas credenciais de acesso foram criadas:</p>
-                <p><strong>Email:</strong> {user.Email}</p>
-                <p><strong>Senha temporária:</strong> {password}</p>
-                <p><strong>Importante:</strong> Você será solicitado a alterar sua senha no primeiro acesso.</p>
-                <br>
-                <p>Acesse o sistema em: {Url.Action("Login", "Account", new { area = "Identity" }, Request.Scheme)}</p>
-            ";
+        <h3>Suas credenciais de acesso foram atualizadas</h3>
+        <p>Prezado(a) {user.NomeCompleto},</p>
+        <p>Suas credenciais de acesso ao Sistema de Gestão de Estágios foram atualizadas:</p>
+        <p><strong>Email:</strong> {user.Email}</p>
+        <p><strong>Senha temporária:</strong> {password}</p>
+        <p><strong>Importante:</strong> Você deve usar esta senha para fazer seu primeiro acesso ao sistema.</p>
+        <p>Após o primeiro acesso, você será solicitado a criar uma nova senha.</p>
+        <br>
+        <p>Acesse o sistema em: <a href='{Url.Action("Login", "Account", new { area = "Identity" }, Request.Scheme)}'>{Url.Action("Login", "Account", new { area = "Identity" }, Request.Scheme)}</a></p>
+        <br>
+        <p>Atenciosamente,<br>Equipe de Gestão de Estágios</p>
+    ";
 
             await _emailSender.SendEmailAsync(user.Email, subject, message);
         }

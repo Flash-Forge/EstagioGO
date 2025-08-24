@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Editar Usuário";
+    var isDefaultAdmin = Model.Email.Equals("admin@estagio.com", StringComparison.OrdinalIgnoreCase);
 }
 
 <div class="container mt-4">
@@ -23,7 +24,16 @@
 
                 <div class="form-group mb-3">
                     <label asp-for="Email" class="control-label"></label>
-                    <input asp-for="Email" class="form-control" readonly />
+                    @if (isDefaultAdmin)
+                    {
+                        <input asp-for="Email" class="form-control" readonly />
+                        <small class="form-text text-muted">O email do administrador padrão não pode ser alterado.</small>
+                    }
+                    else
+                    {
+                        <input asp-for="Email" class="form-control" />
+                        <small class="form-text text-muted">Ao alterar o email, uma nova senha será enviada se o primeiro acesso ainda não foi concluído.</small>
+                    }
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
 

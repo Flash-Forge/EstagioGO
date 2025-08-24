@@ -178,25 +178,28 @@ namespace EstagioGO.Controllers
             return View(model);
         }
 
+
+        // POST: Editar usuário
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditUser(string id, EditUserViewModel model)
         {
-            // Verificar primeiro se o modelo é válido
+            // Preencher Roles antes de qualquer verificação
+            model.Roles = _roleManager.Roles
+                .Select(r => new SelectListItem
+                {
+                    Value = r.Name,
+                    Text = r.Name,
+                    Selected = r.Name == model.Role
+                })
+                .ToList();
+
+            // Remover a validação da propriedade Roles do ModelState
+            ModelState.Remove("Roles");
+
             if (!ModelState.IsValid)
             {
-                model.Roles = _roleManager.Roles
-                    .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
-                    .ToList();
                 return View(model);
-            }
-
-            // Verificar se é o administrador padrão
-            var userToCheck = await _userManager.FindByIdAsync(id);
-            if (userToCheck != null && userToCheck.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase))
-            {
-                TempData["ErrorMessage"] = AppConstants.DefaultAdminEditError;
-                return RedirectToAction(nameof(UserManagement));
             }
 
             if (id != model.Id)
@@ -210,6 +213,13 @@ namespace EstagioGO.Controllers
                 return NotFound();
             }
 
+            // Verificar se é o administrador padrão
+            if (user.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["ErrorMessage"] = AppConstants.DefaultAdminEditError;
+                return RedirectToAction(nameof(UserManagement));
+            }
+
             // Verificar se o email foi alterado
             bool emailAlterado = user.Email != model.Email;
             bool primeiroAcessoPendente = !user.PrimeiroAcessoConcluido;
@@ -221,9 +231,6 @@ namespace EstagioGO.Controllers
                 if (usuarioComEmail != null && usuarioComEmail.Id != user.Id)
                 {
                     ModelState.AddModelError("Email", "Este email já está em uso por outro usuário.");
-                    model.Roles = _roleManager.Roles
-                        .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
-                        .ToList();
                     return View(model);
                 }
             }
@@ -245,8 +252,15 @@ namespace EstagioGO.Controllers
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
-                // Se o email foi alterado e o primeiro acesso ainda não foi concluído,
-                // gerar uma nova senha temporária e enviar por email
+                // Atualizar roles
+                var currentRoles = await _userManager.GetRolesAsync(user);
+                if (currentRoles.Any())
+                {
+                    await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                }
+                await _userManager.AddToRoleAsync(user, model.Role);
+
+                // Enviar nova senha apenas se o email foi alterado E primeiro acesso pendente
                 if (emailAlterado && primeiroAcessoPendente)
                 {
                     var novaSenha = GenerateTemporaryPassword();
@@ -268,18 +282,6 @@ namespace EstagioGO.Controllers
                     TempData["SuccessMessage"] = $"Usuário {user.NomeCompleto} atualizado com sucesso.";
                 }
 
-                // Atualizar roles - primeiro obter roles atuais
-                var currentRoles = await _userManager.GetRolesAsync(user);
-
-                // Remover todas as roles atuais
-                if (currentRoles.Any())
-                {
-                    await _userManager.RemoveFromRolesAsync(user, currentRoles);
-                }
-
-                // Adicionar a nova role
-                await _userManager.AddToRoleAsync(user, model.Role);
-
                 return RedirectToAction(nameof(UserManagement));
             }
 
@@ -288,10 +290,6 @@ namespace EstagioGO.Controllers
             {
                 ModelState.AddModelError(string.Empty, error.Description);
             }
-
-            model.Roles = _roleManager.Roles
-                .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
-                .ToList();
 
             return View(model);
         }

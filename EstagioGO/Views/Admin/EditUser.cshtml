@@ -8,8 +8,14 @@
 <div class="container mt-4">
     <h1>@ViewData["Title"]</h1>
 
-    <!-- Adicionar validação completa -->
-    <div asp-validation-summary="All" class="alert alert-danger"></div>
+    <!-- Mostrar o container de erro apenas se houver erros -->
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">Erros de Validação</h4>
+            <div asp-validation-summary="All" class="text-danger"></div>
+        </div>
+    }
 
     <div class="row">
         <div class="col-md-8">
@@ -40,7 +46,6 @@
                 <div class="form-group mb-3">
                     <label asp-for="Role" class="control-label"></label>
                     <select asp-for="Role" asp-items="Model.Roles" class="form-control">
-                        <option value="">-- Selecione um papel --</option>
                     </select>
                     <span asp-validation-for="Role" class="text-danger"></span>
                 </div>

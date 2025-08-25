@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
 
 namespace EstagioGO.Models.Domain
 {
-    public class Frequencia
+    public class Frequencia : IValidatableObject
     {
         public int Id { get; set; }
 
@@ -27,13 +29,15 @@ namespace EstagioGO.Models.Domain
         [Required(ErrorMessage = "O campo Presente é obrigatório")]
         public bool Presente { get; set; }
 
+        [AllowNull]
         [StringLength(500, ErrorMessage = "A observação não pode ter mais de 500 caracteres")]
-        public string Observacao { get; set; }
+        public string? Observacao { get; set; }
 
+        [AllowNull]
         public int? JustificativaId { get; set; }
 
         [ForeignKey("JustificativaId")]
-        public Justificativa Justificativa { get; set; }
+        public Justificativa? Justificativa { get; set; }
 
         [Display(Name = "Data de Registro")]
         public DateTime DataRegistro { get; set; } = DateTime.Now;
@@ -44,7 +48,15 @@ namespace EstagioGO.Models.Domain
         [ForeignKey("RegistradoPorId")]
         public ApplicationUser RegistradoPor { get; set; }
 
-        // Validação adicional para garantir que se Presente=false, haja uma justificativa
-        public bool IsValid => Presente || (!Presente && JustificativaId.HasValue);
+        // Validação condicional: Se presente == false, justificativa obrigatória
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (!Presente && !JustificativaId.HasValue)
+            {
+                yield return new ValidationResult(
+                    "Justificativa é obrigatória quando o estagiário está ausente.",
+                    new[] { nameof(JustificativaId) });
+            }
+        }
     }
 }

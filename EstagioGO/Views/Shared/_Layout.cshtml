@@ -47,7 +47,7 @@
                             }
 
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Frequencias" asp-action="Index">Frequência</a>
+                                <a class="nav-link text-dark" asp-controller="Frequencia" asp-action="Index">Frequência</a>
                             </li>
 
                             if (User.IsInRole("Administrador") || User.IsInRole("Coordenador"))
@@ -77,6 +77,8 @@
                                     </ul>
                                 </li>
                             }
+
+
                         }
                     </ul>
                     <partial name="_LoginPartial" />

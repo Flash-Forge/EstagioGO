@@ -1,10 +1,34 @@
 ﻿@model CreateUserViewModel
 @{
     ViewData["Title"] = "Criar Novo Usuário";
+
+    // Determinar o texto do botão com base no contexto
+    var contexto = ViewBag.Contexto as string;
+    var textoBotao = "Criar Usuário";
+    var titulo = "Criar Novo Usuário";
+
+    if (!string.IsNullOrEmpty(contexto))
+    {
+        if (contexto == "estagiario")
+        {
+            textoBotao = "Criar Usuário Estagiário";
+            titulo = "Criar Usuário Estagiário";
+        }
+        else if (contexto == "supervisor")
+        {
+            textoBotao = "Criar Usuário Supervisor";
+            titulo = "Criar Usuário Supervisor";
+        }
+        else if (contexto == "coordenador")
+        {
+            textoBotao = "Criar Usuário Coordenador";
+            titulo = "Criar Usuário Coordenador";
+        }
+    }
 }
 
 <div class="container mt-4">
-    <h1>@ViewData["Title"]</h1>
+    <h1>@titulo</h1>
 
     <div class="row">
         <div class="col-md-8">
@@ -31,7 +55,7 @@
                     <span asp-validation-for="Role" class="text-danger"></span>
                 </div>
                 <div class="form-group mt-4">
-                    <input type="submit" value="Criar Usuário" class="btn btn-primary" />
+                    <input type="submit" value="@textoBotao" class="btn btn-primary" />
                     <a asp-action="UserManagement" class="btn btn-secondary ms-2">Cancelar</a>
                 </div>
             </form>

@@ -93,4 +93,19 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        $(document).ready(function () {
+            // Validação das datas no cliente
+            $('form').submit(function (e) {
+                const inicio = new Date($('#DataInicio').val());
+                const termino = new Date($('#DataTermino').val());
+
+                if (inicio >= termino) {
+                    e.preventDefault();
+                    alert('A data de início não pode ser posterior ou igual à data de término.');
+                    return false;
+                }
+            });
+        });
+    </script>
 }

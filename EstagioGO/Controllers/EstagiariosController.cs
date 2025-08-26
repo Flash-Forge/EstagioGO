@@ -58,7 +58,15 @@ namespace EstagioGO.Controllers
         // GET: Estagiarios/Create
         public async Task<IActionResult> Create()
         {
-            await CarregarViewBags();
+            var (recursosDisponiveis, mensagemErro, redirecionarPara) = await CarregarViewBags();
+
+            if (!recursosDisponiveis)
+            {
+                ViewBag.MensagemSemRecursos = mensagemErro;
+                ViewBag.RedirecionarPara = redirecionarPara;
+                return View("SemRecursos");
+            }
+
             return View();
         }
 
@@ -81,6 +89,13 @@ namespace EstagioGO.Controllers
             Debug.WriteLine($"UserId: {estagiario.UserId}");
             Debug.WriteLine($"SupervisorId: {estagiario.SupervisorId}");
             Debug.WriteLine($"CoordenadorId: {estagiario.CoordenadorId}");
+
+            // Validação das datas
+            if (estagiario.DataInicio >= estagiario.DataTermino)
+            {
+                ModelState.AddModelError("DataInicio", "A data de início não pode ser posterior ou igual à data de término.");
+                ModelState.AddModelError("DataTermino", "A data de término deve ser posterior à data de início.");
+            }
 
             // Verificar se o ModelState é válido antes de qualquer coisa
             if (!ModelState.IsValid)
@@ -152,9 +167,18 @@ namespace EstagioGO.Controllers
             var estagiario = await _context.Estagiarios.FindAsync(id);
             if (estagiario == null) return NotFound();
 
-            await CarregarViewBags(estagiario.UserId); // Passa o UserId atual
+            var (recursosDisponiveis, mensagemErro, redirecionarPara) = await CarregarViewBags(estagiario.UserId);
+
+            if (!recursosDisponiveis)
+            {
+                ViewBag.MensagemSemRecursos = mensagemErro;
+                ViewBag.RedirecionarPara = redirecionarPara;
+                return View("SemRecursos");
+            }
+
             return View(estagiario);
         }
+
         // POST: Estagiarios/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -166,6 +190,13 @@ namespace EstagioGO.Controllers
             ModelState.Remove("Coordenador");
             ModelState.Remove("Frequencias");
             ModelState.Remove("Avaliacoes");
+
+            // Validação das datas
+            if (estagiario.DataInicio >= estagiario.DataTermino)
+            {
+                ModelState.AddModelError("DataInicio", "A data de início não pode ser posterior ou igual à data de término.");
+                ModelState.AddModelError("DataTermino", "A data de término deve ser posterior à data de início.");
+            }
 
             if (id != estagiario.Id)
             {
@@ -251,28 +282,48 @@ namespace EstagioGO.Controllers
             return _context.Estagiarios.Any(e => e.Id == id);
         }
 
-        private async Task CarregarViewBags(string userIdAtual = null)
+        private async Task<(bool recursosDisponiveis, string mensagemErro, string redirecionarPara)> CarregarViewBags(string userIdAtual = null)
         {
             try
             {
-                // Buscar supervisores (usuários com role "Supervisor")
+                // Buscar supervisores
                 var supervisores = await _userManager.GetUsersInRoleAsync("Supervisor");
+                if (!supervisores.Any())
+                {
+                    return (false,
+                           "Não há supervisores cadastrados. Você será redirecionado para criar um usuário supervisor.",
+                           Url.Action("CreateUser", "Admin", new { contexto = "supervisor" }));
+                }
                 ViewBag.SupervisorId = new SelectList(supervisores, "Id", "NomeCompleto");
 
-                // Buscar coordenadores (usuários com role "Coordenador")
+                // Buscar coordenadores
                 var coordenadores = await _userManager.GetUsersInRoleAsync("Coordenador");
+                if (!coordenadores.Any())
+                {
+                    return (false,
+                           "Não há coordenadores cadastrados. Você será redirecionado para criar um usuário coordenador.",
+                           Url.Action("CreateUser", "Admin", new { contexto = "coordenador" }));
+                }
                 ViewBag.CoordenadorId = new SelectList(coordenadores, "Id", "NomeCompleto");
 
-                // Buscar usuários com role "Estagiario" para o campo UserId
+                // Buscar usuários com role "Estagiario"
                 var estagiariosUsers = await _userManager.GetUsersInRoleAsync("Estagiario");
 
-                // Obter IDs de usuários já vinculados a outros estagiários
+                // Verificar se há usuários com role de estagiário
+                if (!estagiariosUsers.Any())
+                {
+                    return (false,
+                           "Não há usuários com perfil de Estagiário cadastrados. Você será redirecionado para criar um usuário estagiário.",
+                           Url.Action("CreateUser", "Admin", new { contexto = "estagiario" }));
+                }
+
+                // Obter IDs de usuários já vinculados
                 var usuariosVinculados = await _context.Estagiarios
-                    .Where(e => e.UserId != null && e.UserId != userIdAtual) // Exclui o usuário atual da lista de vinculados
+                    .Where(e => e.UserId != null && e.UserId != userIdAtual)
                     .Select(e => e.UserId)
                     .ToListAsync();
 
-                // Filtrar usuários não vinculados (incluindo o usuário atual se estiver editando)
+                // Filtrar usuários não vinculados
                 var usuariosDisponiveis = estagiariosUsers
                     .Where(u => !usuariosVinculados.Contains(u.Id))
                     .ToList();
@@ -284,21 +335,28 @@ namespace EstagioGO.Controllers
                     if (usuarioAtual != null && !usuariosDisponiveis.Any(u => u.Id == userIdAtual))
                     {
                         usuariosDisponiveis.Add(usuarioAtual);
-                        ViewBag.NomeUsuario = usuarioAtual.NomeCompleto;
                     }
+                }
+
+                // Verificar se há usuários disponíveis para vincular
+                if (!usuariosDisponiveis.Any())
+                {
+                    return (false,
+                           "Não há usuários disponíveis com perfil de Estagiário. Todos os usuários estagiários já estão vinculados a outros cadastros. Você será redirecionado para criar um novo usuário estagiário.",
+                           Url.Action("CreateUser", "Admin", new { contexto = "estagiario" }));
                 }
 
                 ViewBag.UserId = new SelectList(usuariosDisponiveis, "Id", "NomeCompleto");
 
-                Debug.WriteLine($"Usuários disponíveis: {usuariosDisponiveis.Count}");
+                return (true, null, null);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Erro ao carregar ViewBags: {ex.Message}");
-                // Garantir que as ViewBags não sejam nulas
                 ViewBag.SupervisorId = new SelectList(new List<ApplicationUser>(), "Id", "NomeCompleto");
                 ViewBag.CoordenadorId = new SelectList(new List<ApplicationUser>(), "Id", "NomeCompleto");
                 ViewBag.UserId = new SelectList(new List<ApplicationUser>(), "Id", "NomeCompleto");
+                return (false, "Ocorreu um erro ao carregar os dados. Tente novamente.", null);
             }
         }
     }

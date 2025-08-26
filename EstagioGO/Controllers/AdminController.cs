@@ -58,7 +58,7 @@ namespace EstagioGO.Controllers
         }
 
         // GET: Criar novo usuário
-        public IActionResult CreateUser()
+        public IActionResult CreateUser(string contexto)
         {
             var model = new CreateUserViewModel
             {
@@ -66,6 +66,19 @@ namespace EstagioGO.Controllers
                     .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
                     .ToList()
             };
+
+            // Pré-selecionar a role com base no contexto
+            if (!string.IsNullOrEmpty(contexto))
+            {
+                if (contexto == "supervisor")
+                    model.Role = "Supervisor";
+                else if (contexto == "coordenador")
+                    model.Role = "Coordenador";
+                else if (contexto == "estagiario")
+                    model.Role = "Estagiario";
+            }
+
+            ViewBag.Contexto = contexto;
             return View(model);
         }
 

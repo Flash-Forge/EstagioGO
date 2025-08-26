@@ -1,0 +1,78 @@
+﻿@model IEnumerable<EstagioGO.Models.Domain.Frequencia>
+
+@{
+    ViewData["Title"] = "Meu Controle de Frequência";
+}
+
+<h2>Meu Controle de Frequência</h2>
+
+<div class="alert alert-info">
+    <strong>Estagiário:</strong> @ViewBag.EstagiarioNome
+</div>
+
+<div class="mb-3">
+    <a asp-action="Create" class="btn btn-success">Bater Ponto</a>
+</div>
+
+<div id="calendar" class="mt-3"></div>
+
+<h3 class="mt-4">Meus Registros Recentes</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Data</th>
+            <th>Entrada</th>
+            <th>Saída</th>
+            <th>Presente</th>
+            <th>Observação</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Data.ToString("dd/MM/yyyy")</td>
+                <td>@(item.HoraEntrada?.ToString(@"hh\:mm"))</td>
+                <td>@(item.HoraSaida?.ToString(@"hh\:mm"))</td>
+                <td>@(item.Presente ? "Sim" : "Não")</td>
+                <td>@item.Observacao</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/index.global.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/index.global.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+            var estagiarioId = @ViewBag.EstagiarioId;
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                height: 400,
+                events: [],
+                eventDisplay: 'background'
+            });
+
+            calendar.render();
+
+            if (estagiarioId) {
+                fetch(`/Frequencia/GetFrequenciasParaCalendario?estagiarioId=${estagiarioId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const eventos = data.map(f => ({
+                            start: f.date,
+                            allDay: true,
+                            display: 'background',
+                            color: f.presente ? 'green' : 'red'
+                        }));
+
+                        eventos.forEach(evento => calendar.addEvent(evento));
+                    });
+            }
+        });
+    </script>
+}

@@ -1,16 +1,18 @@
 ﻿@model EstagioGO.Models.Domain.Frequencia
-
 @{
     ViewData["Title"] = "Registrar Frequência";
     var isEstagiario = User.IsInRole("Estagiario");
+    var isSupervisor = User.IsInRole("Supervisor");
+    var isCoordenador = User.IsInRole("Coordenador");
+    var isAdministrador = User.IsInRole("Administrador");
 }
 
 <h1>Registrar Frequência</h1>
 
 <hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
+    <div class="col-md-6">
+        <form asp-action="Create" id="frequenciaForm">
             <div asp-validation-summary="All" class="text-danger"></div>
 
             @if (isEstagiario)
@@ -20,52 +22,71 @@
                     <label class="control-label">Estagiário</label>
                     <input class="form-control" value="@ViewBag.EstagiarioNome" readonly />
                 </div>
+
+                <input type="hidden" asp-for="Presente" value="true" />
             }
             else
             {
                 <div class="form-group mb-3">
                     <label asp-for="EstagiarioId" class="control-label"></label>
-                    <select asp-for="EstagiarioId" class="form-control" asp-items="ViewBag.EstagiarioId">
+                    <select asp-for="EstagiarioId" class="form-control" asp-items="ViewBag.EstagiarioId" id="estagiarioSelect">
                         <option value="">-- Selecione o Estagiário --</option>
                     </select>
                     <span asp-validation-for="EstagiarioId" class="text-danger"></span>
                 </div>
+
+                <div class="form-group mb-3">
+                    <label class="control-label">O estagiário estava presente?</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" asp-for="Presente" value="true" id="presenteSim" checked>
+                        <label class="form-check-label" for="presenteSim">
+                            Sim
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" asp-for="Presente" value="false" id="presenteNao">
+                        <label class="form-check-label" for="presenteNao">
+                            Não
+                        </label>
+                    </div>
+                </div>
             }
 
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label asp-for="Data" class="control-label"></label>
                 <input asp-for="Data" class="form-control" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
                 <span asp-validation-for="Data" class="text-danger"></span>
             </div>
 
-            <div class="form-group">
-                <label asp-for="HoraEntrada" class="control-label"></label>
-                <input asp-for="HoraEntrada" class="form-control" type="time" />
-                <span asp-validation-for="HoraEntrada" class="text-danger"></span>
+            <div id="camposPresenca">
+                <div class="form-group mb-3">
+                    <label asp-for="HoraEntrada" class="control-label"></label>
+                    <input asp-for="HoraEntrada" class="form-control" type="time" required />
+                    <span asp-validation-for="HoraEntrada" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="HoraSaida" class="control-label"></label>
+                    <input asp-for="HoraSaida" class="form-control" type="time" required />
+                    <span asp-validation-for="HoraSaida" class="text-danger"></span>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label asp-for="HoraSaida" class="control-label"></label>
-                <input asp-for="HoraSaida" class="form-control" type="time" />
-                <span asp-validation-for="HoraSaida" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Observacao" class="control-label"></label>
-                <input asp-for="Observacao" class="form-control" />
-                <span asp-validation-for="Observacao" class="text-danger"></span>
-            </div>
-
-            @if (!isEstagiario)
-            {
-                <div class="form-group">
-                    <label asp-for="JustificativaId" class="control-label"></label>
+            <div id="camposAusencia" style="display: none;">
+                <div class="form-group mb-3">
+                    <label asp-for="JustificativaId" class="control-label">Justificativa (Opcional)</label>
                     <select asp-for="JustificativaId" class="form-control" asp-items="ViewBag.JustificativaId">
-                        <option value="">-- Selecione uma justificativa --</option>
+                        <option value="">-- Selecione uma justificativa (opcional) --</option>
                     </select>
                     <span asp-validation-for="JustificativaId" class="text-danger"></span>
                 </div>
-            }
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Observacao" class="control-label">Observações (Opcional)</label>
+                <textarea asp-for="Observacao" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Observacao" class="text-danger"></span>
+            </div>
 
             <div class="form-group mt-3">
                 <input type="submit" value="Registrar" class="btn btn-primary" />
@@ -81,15 +102,50 @@
     }
 
     <script>
-        // Validação cliente para hora de saída não ser anterior à hora de entrada
-        document.querySelector('form').addEventListener('submit', function (e) {
-            const horaEntrada = document.getElementById('HoraEntrada').value;
-            const horaSaida = document.getElementById('HoraSaida').value;
+        // Controle da exibição dos campos baseado na presença
+        document.addEventListener('DOMContentLoaded', function() {
+            const presenteSim = document.getElementById('presenteSim');
+            const presenteNao = document.getElementById('presenteNao');
+            const camposPresenca = document.getElementById('camposPresenca');
+            const camposAusencia = document.getElementById('camposAusencia');
 
-            if (horaEntrada && horaSaida && horaEntrada > horaSaida) {
-                e.preventDefault();
-                alert('A hora de saída não pode ser anterior à hora de entrada.');
+            function toggleCampos() {
+                if (presenteSim && presenteSim.checked) {
+                    camposPresenca.style.display = 'block';
+                    if (camposAusencia) camposAusencia.style.display = 'none';
+
+                    // Tornar campos de hora obrigatórios
+                    document.querySelector('#HoraEntrada').setAttribute('required', 'required');
+                    document.querySelector('#HoraSaida').setAttribute('required', 'required');
+                } else if (presenteNao && presenteNao.checked) {
+                    camposPresenca.style.display = 'none';
+                    if (camposAusencia) camposAusencia.style.display = 'block';
+
+                    // Remover obrigatoriedade dos campos de hora
+                    document.querySelector('#HoraEntrada').removeAttribute('required');
+                    document.querySelector('#HoraSaida').removeAttribute('required');
+                }
             }
+
+            // Adicionar event listeners apenas se os elementos existirem
+            if (presenteSim && presenteNao) {
+                presenteSim.addEventListener('change', toggleCampos);
+                presenteNao.addEventListener('change', toggleCampos);
+
+                // Inicializar estado
+                toggleCampos();
+            }
+
+            // Validação cliente para hora de saída não ser anterior à hora de entrada
+            document.querySelector('form').addEventListener('submit', function (e) {
+                const horaEntrada = document.getElementById('HoraEntrada').value;
+                const horaSaida = document.getElementById('HoraSaida').value;
+
+                if (horaEntrada && horaSaida && horaEntrada > horaSaida) {
+                    e.preventDefault();
+                    alert('A hora de saída não pode ser anterior à hora de entrada.');
+                }
+            });
         });
     </script>
 }

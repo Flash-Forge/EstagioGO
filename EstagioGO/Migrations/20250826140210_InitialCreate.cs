@@ -75,6 +75,23 @@ namespace EstagioGO.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PeriodoAvaliacao",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nome = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    DataInicio = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DataFim = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Descricao = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Ativo = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PeriodoAvaliacao", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -231,7 +248,8 @@ namespace EstagioGO.Migrations
                     AvaliadorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     DataAvaliacao = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Nota = table.Column<int>(type: "int", nullable: false),
-                    Comentarios = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Comentarios = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    PeriodoAvaliacaoId = table.Column<int>(type: "int", nullable: true),
                     ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
@@ -254,6 +272,11 @@ namespace EstagioGO.Migrations
                         principalTable: "Estagiarios",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Avaliacoes_PeriodoAvaliacao_PeriodoAvaliacaoId",
+                        column: x => x.PeriodoAvaliacaoId,
+                        principalTable: "PeriodoAvaliacao",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -267,7 +290,7 @@ namespace EstagioGO.Migrations
                     HoraEntrada = table.Column<TimeSpan>(type: "time", nullable: true),
                     HoraSaida = table.Column<TimeSpan>(type: "time", nullable: true),
                     Presente = table.Column<bool>(type: "bit", nullable: false),
-                    Observacao = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Observacao = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     JustificativaId = table.Column<int>(type: "int", nullable: true),
                     DataRegistro = table.Column<DateTime>(type: "datetime2", nullable: false),
                     RegistradoPorId = table.Column<string>(type: "nvarchar(450)", nullable: false)
@@ -382,6 +405,11 @@ namespace EstagioGO.Migrations
                 column: "EstagiarioId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Avaliacoes_PeriodoAvaliacaoId",
+                table: "Avaliacoes",
+                column: "PeriodoAvaliacaoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Estagiarios_CoordenadorId",
                 table: "Estagiarios",
                 column: "CoordenadorId");
@@ -453,6 +481,9 @@ namespace EstagioGO.Migrations
 
             migrationBuilder.DropTable(
                 name: "Estagiarios");
+
+            migrationBuilder.DropTable(
+                name: "PeriodoAvaliacao");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

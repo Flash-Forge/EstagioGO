@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EstagioGO.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250822224835_AddPeriodoAvaliacaoToAvaliacao")]
-    partial class AddPeriodoAvaliacaoToAvaliacao
+    [Migration("20250826140210_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -313,7 +313,6 @@ namespace EstagioGO.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Observacao")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 

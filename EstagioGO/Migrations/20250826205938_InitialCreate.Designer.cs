@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EstagioGO.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250826140210_InitialCreate")]
+    [Migration("20250826205938_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -233,10 +233,6 @@ namespace EstagioGO.Migrations
                     b.Property<bool>("Ativo")
                         .HasColumnType("bit");
 
-                    b.Property<string>("CoordenadorId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("Curso")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -275,8 +271,6 @@ namespace EstagioGO.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CoordenadorId");
 
                     b.HasIndex("SupervisorId");
 
@@ -551,12 +545,6 @@ namespace EstagioGO.Migrations
 
             modelBuilder.Entity("EstagioGO.Models.Domain.Estagiario", b =>
                 {
-                    b.HasOne("ApplicationUser", "Coordenador")
-                        .WithMany()
-                        .HasForeignKey("CoordenadorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("ApplicationUser", "Supervisor")
                         .WithMany("Estagiarios")
                         .HasForeignKey("SupervisorId")
@@ -568,8 +556,6 @@ namespace EstagioGO.Migrations
                         .HasForeignKey("EstagioGO.Models.Domain.Estagiario", "UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Coordenador");
 
                     b.Navigation("Supervisor");
 

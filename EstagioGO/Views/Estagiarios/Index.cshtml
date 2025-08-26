@@ -16,7 +16,6 @@
             <th>@Html.DisplayNameFor(m => m.DataInicio)</th>
             <th>@Html.DisplayNameFor(m => m.DataTermino)</th>
             <th>Supervisor</th>
-            <th>Coordenador</th>
             <th>Usuário</th>
             <th>@Html.DisplayNameFor(m => m.Ativo)</th>
             <th>@Html.DisplayNameFor(m => m.DataCadastro)</th>
@@ -34,7 +33,6 @@
                 <td>@item.DataInicio</td>
                 <td>@item.DataTermino</td>
                 <td>@item.Supervisor.NomeCompleto</td>
-                <td>@item.Coordenador.NomeCompleto</td>
                 <td>@item.User.NomeCompleto</td>
                 <td>@(item.Ativo ? "Sim" : "Não")</td>
                 <td>@item.DataCadastro</td>

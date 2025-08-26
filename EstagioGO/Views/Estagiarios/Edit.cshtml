@@ -52,13 +52,6 @@
                 <span asp-validation-for="SupervisorId" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="CoordenadorId" class="control-label">Coordenador</label>
-                <select asp-for="CoordenadorId" class="form-control" asp-items="ViewBag.CoordenadorId">
-                    <option value="">-- Selecione o Coordenador --</option>
-                </select>
-                <span asp-validation-for="CoordenadorId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
                 <label class="control-label">Usuário (Estagiário)</label>
                 <p class="form-control-static">@ViewBag.NomeUsuario</p>
                 <small class="form-text text-muted">O usuário associado não pode ser alterado após o cadastro inicial.</small>

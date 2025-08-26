@@ -210,7 +210,6 @@ namespace EstagioGO.Migrations
                     DataInicio = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DataTermino = table.Column<DateTime>(type: "datetime2", nullable: true),
                     SupervisorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    CoordenadorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Ativo = table.Column<bool>(type: "bit", nullable: false),
                     DataCadastro = table.Column<DateTime>(type: "datetime2", nullable: false)
@@ -218,12 +217,6 @@ namespace EstagioGO.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Estagiarios", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Estagiarios_AspNetUsers_CoordenadorId",
-                        column: x => x.CoordenadorId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Estagiarios_AspNetUsers_SupervisorId",
                         column: x => x.SupervisorId,
@@ -408,11 +401,6 @@ namespace EstagioGO.Migrations
                 name: "IX_Avaliacoes_PeriodoAvaliacaoId",
                 table: "Avaliacoes",
                 column: "PeriodoAvaliacaoId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Estagiarios_CoordenadorId",
-                table: "Estagiarios",
-                column: "CoordenadorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Estagiarios_SupervisorId",

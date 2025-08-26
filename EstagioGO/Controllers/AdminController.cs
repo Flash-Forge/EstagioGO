@@ -73,8 +73,6 @@ namespace EstagioGO.Controllers
             {
                 if (contexto == "supervisor")
                     model.Role = "Supervisor";
-                else if (contexto == "coordenador")
-                    model.Role = "Coordenador";
                 else if (contexto == "estagiario")
                     model.Role = "Estagiario";
             }

@@ -4,146 +4,225 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Gestão Digital de Estágios</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/EstagioGO.styles.css" asp-append-version="true" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
     <!-- DataTables CSS + Bootstrap 5 integration -->
-    <link rel="stylesheet"
-          href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
-    <link rel="stylesheet"
-          href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" />
-    <link rel="stylesheet"
-          href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Gestão Digital de Estágios</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                <i class="fas fa-graduation-cap me-2"></i>Gestão Digital de Estágios
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
+                            <i class="fas fa-home me-1"></i>Início
+                        </a>
+                    </li>
+                    @if (User.IsInRole("Administrador") || User.IsInRole("Coordenador"))
+                    {
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Início</a>
+                            <a class="nav-link" asp-area="" asp-controller="Estagiarios" asp-action="Index">
+                                <i class="fas fa-users me-1"></i>Estagiários
+                            </a>
                         </li>
-
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            if (User.IsInRole("Administrador") || User.IsInRole("Coordenador"))
-                            {
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="estagiariosDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Estagiários
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="estagiariosDropdown">
-                                        <li><a class="dropdown-item" asp-controller="Estagiarios" asp-action="Index">Listar Estagiários</a></li>
-                                        <li><a class="dropdown-item" asp-controller="Estagiarios" asp-action="Create">Adicionar Estagiário</a></li>
-                                    </ul>
-                                </li>
-                            }
-
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Frequencia" asp-action="Index">Frequência</a>
+                    }
+                    @if (User.IsInRole("Administrador") || User.IsInRole("Coordenador") || User.IsInRole("Supervisor"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Frequencia" asp-action="Index">
+                                <i class="fas fa-calendar-check me-1"></i>Frequência
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Avaliacoes" asp-action="Index">
+                                <i class="fas fa-star me-1"></i>Avaliações
+                            </a>
+                        </li>
+                    }
+                    @if (User.IsInRole("Administrador") || User.IsInRole("Coordenador"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Relatorios" asp-action="Index">
+                                <i class="fas fa-chart-bar me-1"></i>Relatórios
+                            </a>
+                        </li>
+                    }
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i>@User.Identity.Name
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index"><i class="fas fa-user me-2"></i>Perfil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                                    <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i>Sair</button>
+                                </form>
                             </li>
-
-                            if (User.IsInRole("Administrador") || User.IsInRole("Coordenador"))
-                            {
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="relatoriosDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Relatórios
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="relatoriosDropdown">
-                                        <li><a class="dropdown-item" asp-controller="Relatorios" asp-action="Frequencia">Frequência</a></li>
-                                        <li><a class="dropdown-item" asp-controller="Relatorios" asp-action="Desempenho">Desempenho</a></li>
-                                    </ul>
-                                </li>
-                            }
-
-                            <!-- Menu de Administração - Apenas para Administradores -->
-                            @if (User.IsInRole("Administrador"))
-                            {
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-gear-fill"></i> Administração
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="adminDropdown">
-                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="UserManagement"><i class="bi bi-people-fill"></i> Gerenciar Usuários</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="CreateUser"><i class="bi bi-person-plus-fill"></i> Criar Novo Usuário</a></li>
-                                    </ul>
-                                </li>
-                            }
-
-
-                        }
-                    </ul>
-                    <partial name="_LoginPartial" />
-                </div>
+                        </ul>
+                    </li>
+                </ul>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @if (TempData["Success"] != null)
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            @if (User.Identity.IsAuthenticated)
             {
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    @TempData["Success"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+                <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+                    <div class="position-sticky pt-3">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link active" asp-area="" asp-controller="Home" asp-action="Index">
+                                    <i class="fas fa-home me-2"></i>Dashboard
+                                </a>
+                            </li>
+                            @if (User.IsInRole("Administrador") || User.IsInRole("Coordenador"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Estagiarios" asp-action="Index">
+                                        <i class="fas fa-users me-2"></i>Estagiários
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Admin" asp-action="UserManagement">
+                                        <i class="fas fa-user-cog me-2"></i>Gerenciar Usuários
+                                    </a>
+                                </li>
+                            }
+                            @if (User.IsInRole("Administrador") || User.IsInRole("Coordenador") || User.IsInRole("Supervisor"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Frequencia" asp-action="Index">
+                                        <i class="fas fa-calendar-check me-2"></i>Registrar Frequência
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Avaliacoes" asp-action="Index">
+                                        <i class="fas fa-star me-2"></i>Avaliações
+                                    </a>
+                                </li>
+                            }
+                            @if (User.IsInRole("Estagiario"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Estagiarios" asp-action="MyProfile">
+                                        <i class="fas fa-user me-2"></i>Meu Perfil
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Frequencia" asp-action="MyAttendance">
+                                        <i class="fas fa-calendar-check me-2"></i>Minha Frequência
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Avaliacoes" asp-action="MyEvaluations">
+                                        <i class="fas fa-star me-2"></i>Minhas Avaliações
+                                    </a>
+                                </li>
+                            }
+                            @if (User.IsInRole("Administrador") || User.IsInRole("Coordenador"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Relatorios" asp-action="Index">
+                                        <i class="fas fa-chart-bar me-2"></i>Relatórios
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </nav>
             }
 
-            @if (TempData["Error"] != null)
-            {
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    @TempData["Error"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <!-- Main Content Area -->
+            <main class="@(User.Identity.IsAuthenticated ? "col-md-9 ms-sm-auto col-lg-10 px-md-4" : "col-12")">
+                <!-- Breadcrumbs -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">@ViewData["Title"]</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        @RenderSection("Toolbar", required: false)
+                    </div>
                 </div>
-            }
 
-            <!-- Adicionar mensagens de sucesso e erro para o gerenciamento de usuários -->
-            @if (TempData["SuccessMessage"] != null)
-            {
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    @TempData["SuccessMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
+                <!-- Messages -->
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        @TempData["Success"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        @TempData["SuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @TempData["ErrorMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
 
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    @TempData["ErrorMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
-
-            @RenderBody()
-        </main>
+                <!-- Page Content -->
+                @RenderBody()
+            </main>
+        </div>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <!-- Footer -->
+    <footer class="border-top footer text-muted bg-light">
         <div class="container">
-            &copy; @DateTime.Now.Year - Gestão Digital de Estágios - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacidade</a>
+            &copy; @DateTime.Now.Year - Gestão Digital de Estágios - <a asp-area="" asp-controller="Home" asp-action="Privacy">Política de Privacidade</a>
         </div>
     </footer>
 
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <!-- DataTables JS + extensões -->
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
-            integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"
-            integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"
-            integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap5.min.js"></script>

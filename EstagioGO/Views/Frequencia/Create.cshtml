@@ -16,24 +16,19 @@
             @if (isEstagiario)
             {
                 <input type="hidden" asp-for="EstagiarioId" />
-                <input type="hidden" asp-for="Presente" value="true" />
-                <div class="form-group">
+                <div class="form-group mb-3">
                     <label class="control-label">Estagiário</label>
                     <input class="form-control" value="@ViewBag.EstagiarioNome" readonly />
                 </div>
             }
             else
             {
-                <div class="form-group">
+                <div class="form-group mb-3">
                     <label asp-for="EstagiarioId" class="control-label"></label>
-                    <select asp-for="EstagiarioId" class="form-control" asp-items="ViewBag.EstagiarioId"></select>
+                    <select asp-for="EstagiarioId" class="form-control" asp-items="ViewBag.EstagiarioId">
+                        <option value="">-- Selecione o Estagiário --</option>
+                    </select>
                     <span asp-validation-for="EstagiarioId" class="text-danger"></span>
-                </div>
-
-                <div class="form-group form-check">
-                    <label class="form-check-label">
-                        <input class="form-check-input" asp-for="Presente" /> @Html.DisplayNameFor(model => model.Presente)
-                    </label>
                 </div>
             }
 

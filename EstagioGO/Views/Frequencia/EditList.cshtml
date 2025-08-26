@@ -1,0 +1,42 @@
+﻿@model IEnumerable<EstagioGO.Models.Domain.Frequencia>
+
+@{
+    ViewData["Title"] = "Editar Frequências";
+}
+
+<h2>Editar Frequências de @ViewBag.EstagiarioNome</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Data</th>
+            <th>Entrada</th>
+            <th>Saída</th>
+            <th>Presente</th>
+            <th>Observação</th>
+            <th>Justificativa</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Data.ToString("dd/MM/yyyy")</td>
+                <td>@(item.HoraEntrada?.ToString(@"hh\:mm"))</td>
+                <td>@(item.HoraSaida?.ToString(@"hh\:mm"))</td>
+                <td>@(item.Presente ? "Sim" : "Não")</td>
+                <td>@item.Observacao</td>
+                <td>@(item.Justificativa?.Descricao)</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary">Editar</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Excluir</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div>
+    <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+</div>

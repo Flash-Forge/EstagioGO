@@ -28,7 +28,6 @@ namespace EstagioGO.Controllers
         {
             var estagiarios = await _context.Estagiarios
                 .Include(e => e.Supervisor)
-                .Include(e => e.Coordenador)
                 .Include(e => e.User)
                 .ToListAsync();
             return View(estagiarios);
@@ -44,7 +43,6 @@ namespace EstagioGO.Controllers
 
             var estagiario = await _context.Estagiarios
                 .Include(e => e.Supervisor)
-                .Include(e => e.Coordenador)
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (estagiario == null)
@@ -78,7 +76,6 @@ namespace EstagioGO.Controllers
             // Remover a validação das propriedades de navegação
             ModelState.Remove("User");
             ModelState.Remove("Supervisor");
-            ModelState.Remove("Coordenador");
             ModelState.Remove("Frequencias");
             ModelState.Remove("Avaliacoes");
 
@@ -88,7 +85,6 @@ namespace EstagioGO.Controllers
             Debug.WriteLine($"Matricula: {estagiario.Matricula}");
             Debug.WriteLine($"UserId: {estagiario.UserId}");
             Debug.WriteLine($"SupervisorId: {estagiario.SupervisorId}");
-            Debug.WriteLine($"CoordenadorId: {estagiario.CoordenadorId}");
 
             // Validação das datas
             if (estagiario.DataInicio >= estagiario.DataTermino)
@@ -187,7 +183,6 @@ namespace EstagioGO.Controllers
             // Remover a validação das propriedades de navegação
             ModelState.Remove("User");
             ModelState.Remove("Supervisor");
-            ModelState.Remove("Coordenador");
             ModelState.Remove("Frequencias");
             ModelState.Remove("Avaliacoes");
 
@@ -253,7 +248,6 @@ namespace EstagioGO.Controllers
 
             var estagiario = await _context.Estagiarios
                 .Include(e => e.Supervisor)
-                .Include(e => e.Coordenador)
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (estagiario == null)
@@ -295,16 +289,6 @@ namespace EstagioGO.Controllers
                            Url.Action("CreateUser", "Admin", new { contexto = "supervisor" }));
                 }
                 ViewBag.SupervisorId = new SelectList(supervisores, "Id", "NomeCompleto");
-
-                // Buscar coordenadores
-                var coordenadores = await _userManager.GetUsersInRoleAsync("Coordenador");
-                if (!coordenadores.Any())
-                {
-                    return (false,
-                           "Não há coordenadores cadastrados. Você será redirecionado para criar um usuário coordenador.",
-                           Url.Action("CreateUser", "Admin", new { contexto = "coordenador" }));
-                }
-                ViewBag.CoordenadorId = new SelectList(coordenadores, "Id", "NomeCompleto");
 
                 // Buscar usuários com role "Estagiario"
                 var estagiariosUsers = await _userManager.GetUsersInRoleAsync("Estagiario");
@@ -354,7 +338,6 @@ namespace EstagioGO.Controllers
             {
                 Debug.WriteLine($"Erro ao carregar ViewBags: {ex.Message}");
                 ViewBag.SupervisorId = new SelectList(new List<ApplicationUser>(), "Id", "NomeCompleto");
-                ViewBag.CoordenadorId = new SelectList(new List<ApplicationUser>(), "Id", "NomeCompleto");
                 ViewBag.UserId = new SelectList(new List<ApplicationUser>(), "Id", "NomeCompleto");
                 return (false, "Ocorreu um erro ao carregar os dados. Tente novamente.", null);
             }

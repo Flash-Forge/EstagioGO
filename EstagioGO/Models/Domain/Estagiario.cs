@@ -42,13 +42,6 @@ namespace EstagioGO.Models.Domain
         [ForeignKey("SupervisorId")]
         public ApplicationUser Supervisor { get; set; }
 
-        [Required(ErrorMessage = "O coordenador é obrigatório")]
-        [Display(Name = "Coordenador")]
-        public string CoordenadorId { get; set; }
-
-        [ForeignKey("CoordenadorId")]
-        public ApplicationUser Coordenador { get; set; }
-
         [Required(ErrorMessage = "O usuário é obrigatório")]
         [Display(Name = "Usuário do Sistema")]
         public string UserId { get; set; }

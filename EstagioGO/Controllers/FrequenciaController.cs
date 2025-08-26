@@ -104,10 +104,14 @@ namespace EstagioGO.Controllers
         }
 
         // GET: Frequencia/Create
+        // GET: Frequencia/Create
         public async Task<IActionResult> Create(int? estagiarioId)
         {
             var user = await _userManager.GetUserAsync(User);
             var isEstagiario = User.IsInRole("Estagiario");
+            var isSupervisor = User.IsInRole("Supervisor");
+            var isCoordenador = User.IsInRole("Coordenador");
+            var isAdministrador = User.IsInRole("Administrador");
 
             // Se for estagiário, buscar seu próprio ID
             if (isEstagiario)
@@ -121,6 +125,7 @@ namespace EstagioGO.Controllers
                 }
 
                 estagiarioId = estagiario.Id;
+                ViewBag.EstagiarioNome = estagiario.Nome;
             }
 
             // Carregar Estagiários com nome
@@ -132,7 +137,18 @@ namespace EstagioGO.Controllers
             }
             else
             {
-                ViewData["EstagiarioId"] = new SelectList(_context.Estagiarios, "Id", "Nome", estagiarioId);
+                // Para supervisores, mostrar apenas seus estagiários
+                if (isSupervisor)
+                {
+                    ViewData["EstagiarioId"] = new SelectList(
+                        _context.Estagiarios.Where(e => e.SupervisorId == user.Id),
+                        "Id", "Nome", estagiarioId);
+                }
+                else
+                {
+                    // Para coordenadores e administradores, mostrar todos os estagiários
+                    ViewData["EstagiarioId"] = new SelectList(_context.Estagiarios, "Id", "Nome", estagiarioId);
+                }
             }
 
             // Carregar Justificativas apenas para não-estagiários
@@ -149,7 +165,7 @@ namespace EstagioGO.Controllers
                     EstagiarioId = estagiarioId.Value,
                     Data = DateTime.Today,
                     HoraEntrada = DateTime.Now.TimeOfDay,
-                    Presente = true, // Estagiário está batendo ponto, portanto presente
+                    Presente = true,
                     DataRegistro = DateTime.Now,
                     RegistradoPorId = user.Id
                 };
@@ -167,18 +183,21 @@ namespace EstagioGO.Controllers
         {
             var user = await _userManager.GetUserAsync(User);
             var isEstagiario = User.IsInRole("Estagiario");
-
-            // Definir o RegistradoPorId ANTES de qualquer validação
-            frequencia.RegistradoPorId = user.Id;
-            frequencia.DataRegistro = DateTime.Now;
+            var isSupervisor = User.IsInRole("Supervisor");
+            var isCoordenador = User.IsInRole("Coordenador");
+            var isAdministrador = User.IsInRole("Administrador");
 
             // Remover validação das propriedades de navegação
             ModelState.Remove("Estagiario");
             ModelState.Remove("RegistradoPor");
             ModelState.Remove("Justificativa");
-            ModelState.Remove("RegistradoPorId"); // Também remover a validação do ID
+            ModelState.Remove("RegistradoPorId"); // Adicionar esta linha
 
-            // Resto das validações...
+            // Definir o RegistradoPorId ANTES de qualquer validação
+            frequencia.RegistradoPorId = user.Id;
+            frequencia.DataRegistro = DateTime.Now;
+
+            // Validações
             if (frequencia.Data > DateTime.Today)
             {
                 ModelState.AddModelError("Data", "A data não pode ser futura.");
@@ -196,6 +215,7 @@ namespace EstagioGO.Controllers
                 frequencia.Presente = true;
                 frequencia.JustificativaId = null;
 
+                // Verificar se o estagiário está tentando registrar para si mesmo
                 var estagiario = await _context.Estagiarios
                     .FirstOrDefaultAsync(e => e.UserId == user.Id);
 
@@ -204,8 +224,25 @@ namespace EstagioGO.Controllers
                     return Forbid();
                 }
             }
+            else
+            {
+                // Para supervisores, coordenadores e administradores, verificar permissões
+                var estagiario = await _context.Estagiarios
+                    .FirstOrDefaultAsync(e => e.Id == frequencia.EstagiarioId);
 
-            // Verifica se já existe frequência registrada
+                if (estagiario == null)
+                {
+                    ModelState.AddModelError("EstagiarioId", "Estagiário não encontrado.");
+                }
+                else if (isSupervisor && estagiario.SupervisorId != user.Id)
+                {
+                    // Supervisores só podem registrar frequência para seus próprios estagiários
+                    ModelState.AddModelError("", "Você só pode registrar frequência para estagiários que você supervisiona.");
+                }
+                // Coordenadores e administradores podem registrar para qualquer estagiário
+            }
+
+            // Verifica se já existe frequência registrada para o estagiário na mesma data
             bool existeRegistro = await _context.Frequencias
                 .AnyAsync(f => f.EstagiarioId == frequencia.EstagiarioId && f.Data.Date == frequencia.Data.Date);
 
@@ -214,71 +251,56 @@ namespace EstagioGO.Controllers
                 ModelState.AddModelError("", "Já existe um registro de frequência para esse estagiário nesta data.");
             }
 
-            // Validação do ModelState
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-                // Log de erros para debug
-                foreach (var key in ModelState.Keys)
+                try
                 {
-                    foreach (var error in ModelState[key].Errors)
+                    _context.Add(frequencia);
+                    await _context.SaveChangesAsync();
+
+                    if (isEstagiario)
                     {
-                        Debug.WriteLine($"Key: {key}, Error: {error.ErrorMessage}");
+                        TempData["SuccessMessage"] = "Ponto registrado com sucesso!";
                     }
-                }
+                    else
+                    {
+                        TempData["SuccessMessage"] = "Frequência registrada com sucesso!";
+                    }
 
-                // Recarregar as listas em caso de erro
-                if (isEstagiario)
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", "Ocorreu um erro ao salvar a frequência. Tente novamente.");
+                }
+            }
+
+            // Recarregar as listas em caso de erro
+            if (isEstagiario)
+            {
+                ViewData["EstagiarioId"] = new SelectList(
+                    _context.Estagiarios.Where(e => e.Id == frequencia.EstagiarioId),
+                    "Id", "Nome", frequencia.EstagiarioId);
+            }
+            else
+            {
+                // Para supervisores, mostrar apenas seus estagiários
+                if (isSupervisor)
                 {
                     ViewData["EstagiarioId"] = new SelectList(
-                        _context.Estagiarios.Where(e => e.Id == frequencia.EstagiarioId),
+                        _context.Estagiarios.Where(e => e.SupervisorId == user.Id),
                         "Id", "Nome", frequencia.EstagiarioId);
                 }
                 else
                 {
+                    // Para coordenadores e administradores, mostrar todos os estagiários
                     ViewData["EstagiarioId"] = new SelectList(_context.Estagiarios, "Id", "Nome", frequencia.EstagiarioId);
-                    ViewData["JustificativaId"] = new SelectList(_context.Justificativas, "Id", "Descricao", frequencia.JustificativaId);
                 }
 
-                return View(frequencia);
+                ViewData["JustificativaId"] = new SelectList(_context.Justificativas, "Id", "Descricao", frequencia.JustificativaId);
             }
 
-            // Tentar salvar
-            try
-            {
-                _context.Add(frequencia);
-                await _context.SaveChangesAsync();
-
-                if (isEstagiario)
-                {
-                    TempData["SuccessMessage"] = "Ponto registrado com sucesso!";
-                }
-                else
-                {
-                    TempData["SuccessMessage"] = "Frequência registrada com sucesso!";
-                }
-
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                // Logar exceção
-                ModelState.AddModelError("", "Ocorreu um erro ao salvar a frequência. Tente novamente.");
-
-                // Recarregar as listas em caso de erro
-                if (isEstagiario)
-                {
-                    ViewData["EstagiarioId"] = new SelectList(
-                        _context.Estagiarios.Where(e => e.Id == frequencia.EstagiarioId),
-                        "Id", "Nome", frequencia.EstagiarioId);
-                }
-                else
-                {
-                    ViewData["EstagiarioId"] = new SelectList(_context.Estagiarios, "Id", "Nome", frequencia.EstagiarioId);
-                    ViewData["JustificativaId"] = new SelectList(_context.Justificativas, "Id", "Descricao", frequencia.JustificativaId);
-                }
-
-                return View(frequencia);
-            }
+            return View(frequencia);
         }
 
         // GET: Frequencia/Edit/5

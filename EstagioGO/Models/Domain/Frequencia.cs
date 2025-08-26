@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace EstagioGO.Models.Domain
 {
@@ -14,6 +15,7 @@ namespace EstagioGO.Models.Domain
         public int EstagiarioId { get; set; }
 
         [ForeignKey("EstagiarioId")]
+        [ValidateNever] // Adicionar esta linha
         public Estagiario Estagiario { get; set; }
 
         [Required(ErrorMessage = "A data é obrigatória")]
@@ -37,6 +39,7 @@ namespace EstagioGO.Models.Domain
         public int? JustificativaId { get; set; }
 
         [ForeignKey("JustificativaId")]
+        [ValidateNever] // Adicionar esta linha
         public Justificativa? Justificativa { get; set; }
 
         [Display(Name = "Data de Registro")]
@@ -46,6 +49,7 @@ namespace EstagioGO.Models.Domain
         public string RegistradoPorId { get; set; }
 
         [ForeignKey("RegistradoPorId")]
+        [ValidateNever] // Adicionar esta linha
         public ApplicationUser RegistradoPor { get; set; }
 
         // Validação condicional: Se presente == false, justificativa obrigatória

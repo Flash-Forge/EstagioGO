@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace EstagioGO.Models
+namespace EstagioGO.Models.Admin
 {
     public class EditUserViewModel
     {

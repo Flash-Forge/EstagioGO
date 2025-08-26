@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace EstagioGO.Models
+namespace EstagioGO.Models.Admin
 {
     public class UserManagementViewModel
     {

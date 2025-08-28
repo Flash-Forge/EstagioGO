@@ -1,6 +1,7 @@
 ﻿using EstagioGO.Models.Domain;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace EstagioGO.Data
 {
@@ -16,7 +17,6 @@ namespace EstagioGO.Data
         public DbSet<Frequencia> Frequencias { get; set; }
         public DbSet<Justificativa> Justificativas { get; set; }
         public DbSet<Avaliacao> Avaliacoes { get; set; }
-        public DbSet<ItemAvaliacao> ItensAvaliacao { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -58,17 +58,16 @@ namespace EstagioGO.Data
                 }
             );
 
-            // Configurar relacionamentos
             builder.Entity<Estagiario>()
                 .HasOne(e => e.Supervisor)
-                .WithMany(u => u.Estagiarios)
+                .WithMany(u => u.EstagiariosSupervisionados)
                 .HasForeignKey(e => e.SupervisorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Estagiario>()
                 .HasOne(e => e.User)
-                .WithOne()
-                .HasForeignKey<Estagiario>(e => e.UserId)
+                .WithMany(u => u.EstagiariosComoUsuario)
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Estagiario>()
@@ -89,7 +88,7 @@ namespace EstagioGO.Data
 
             builder.Entity<Frequencia>()
                 .HasOne(f => f.RegistradoPor)
-                .WithMany()
+                .WithMany(u => u.FrequenciasRegistradas)
                 .HasForeignKey(f => f.RegistradoPorId)
                 .OnDelete(DeleteBehavior.Restrict);
 

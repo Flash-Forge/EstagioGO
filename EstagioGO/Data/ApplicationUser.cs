@@ -10,6 +10,8 @@ public class ApplicationUser : IdentityUser
     public bool PrimeiroAcessoConcluido { get; set; } = false;
 
     // Relacionamentos
-    public ICollection<Estagiario> Estagiarios { get; set; }
+    public ICollection<Estagiario> EstagiariosSupervisionados { get; set; }
+    public ICollection<Estagiario> EstagiariosComoUsuario { get; set; }
     public ICollection<Avaliacao> AvaliacoesRealizadas { get; set; }
+    public ICollection<Frequencia> FrequenciasRegistradas { get; set; }
 }

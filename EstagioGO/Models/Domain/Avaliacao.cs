@@ -33,14 +33,5 @@ namespace EstagioGO.Models.Domain
 
         [StringLength(2000, ErrorMessage = "Os comentários não podem ter mais de 2000 caracteres")]
         public string Comentarios { get; set; }
-
-        // Relacionamentos com itens de avaliação
-        public ICollection<ItemAvaliacao> ItensAvaliacao { get; set; } = new List<ItemAvaliacao>();
-
-        // Propriedade de navegação para o período de avaliação (se aplicável)
-        public int? PeriodoAvaliacaoId { get; set; }
-
-        [ForeignKey("PeriodoAvaliacaoId")]
-        public PeriodoAvaliacao PeriodoAvaliacao { get; set; }
     }
 }

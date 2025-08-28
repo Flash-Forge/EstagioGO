@@ -4,6 +4,7 @@ using EstagioGO.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EstagioGO.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250828130155_CorrigirRelacionamentosEstagiario")]
+    partial class CorrigirRelacionamentosEstagiario
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -214,7 +217,7 @@ namespace EstagioGO.Migrations
 
                     b.HasIndex("EstagiarioId");
 
-                    b.ToTable("Avaliacoes", (string)null);
+                    b.ToTable("Avaliacoes");
                 });
 
             modelBuilder.Entity("EstagioGO.Models.Domain.Estagiario", b =>
@@ -272,7 +275,7 @@ namespace EstagioGO.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Estagiarios", (string)null);
+                    b.ToTable("Estagiarios");
                 });
 
             modelBuilder.Entity("EstagioGO.Models.Domain.Frequencia", b =>
@@ -320,7 +323,7 @@ namespace EstagioGO.Migrations
 
                     b.HasIndex("RegistradoPorId");
 
-                    b.ToTable("Frequencias", (string)null);
+                    b.ToTable("Frequencias");
                 });
 
             modelBuilder.Entity("EstagioGO.Models.Domain.ItemAvaliacao", b =>
@@ -345,7 +348,7 @@ namespace EstagioGO.Migrations
 
                     b.HasIndex("AvaliacaoId");
 
-                    b.ToTable("ItensAvaliacao", (string)null);
+                    b.ToTable("ItensAvaliacao");
                 });
 
             modelBuilder.Entity("EstagioGO.Models.Domain.Justificativa", b =>
@@ -380,7 +383,7 @@ namespace EstagioGO.Migrations
 
                     b.HasIndex("UsuarioRegistroId");
 
-                    b.ToTable("Justificativas", (string)null);
+                    b.ToTable("Justificativas");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

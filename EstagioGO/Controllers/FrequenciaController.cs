@@ -104,7 +104,6 @@ namespace EstagioGO.Controllers
         }
 
         // GET: Frequencia/Create
-        // GET: Frequencia/Create
         public async Task<IActionResult> Create(int? estagiarioId)
         {
             var user = await _userManager.GetUserAsync(User);
@@ -173,6 +172,8 @@ namespace EstagioGO.Controllers
                 return View(model);
             }
 
+            ViewBag.CurrentUserId = user.Id;
+
             return View();
         }
 
@@ -191,7 +192,7 @@ namespace EstagioGO.Controllers
             ModelState.Remove("Estagiario");
             ModelState.Remove("RegistradoPor");
             ModelState.Remove("Justificativa");
-            ModelState.Remove("RegistradoPorId"); // Adicionar esta linha
+            ModelState.Remove("RegistradoPorId");
 
             // Definir o RegistradoPorId ANTES de qualquer validação
             frequencia.RegistradoPorId = user.Id;

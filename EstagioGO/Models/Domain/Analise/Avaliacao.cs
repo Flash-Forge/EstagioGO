@@ -32,9 +32,5 @@ namespace EstagioGO.Models.Domain.Analise
 
         // Relacionamento com as competências avaliadas
         public virtual ICollection<AvaliacaoCompetencia> CompetenciasAvaliadas { get; set; } = new List<AvaliacaoCompetencia>();
-
-        // Nota total calculada (pode ser calculada automaticamente)
-        [Range(0, 100, ErrorMessage = "A nota total deve estar entre 0 e 100")]
-        public decimal NotaTotal { get; set; }
     }
 }

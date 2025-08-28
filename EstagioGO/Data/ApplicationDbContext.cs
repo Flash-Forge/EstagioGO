@@ -1,4 +1,5 @@
 ﻿using EstagioGO.Models.Domain;
+using EstagioGO.Models.Domain.Analise;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.Emit;
@@ -90,7 +91,7 @@ namespace EstagioGO.Data
 
             builder.Entity<Avaliacao>()
                 .HasOne(a => a.Estagiario)
-                .WithMany(e => e.Avaliacoes)
+                .WithMany()
                 .HasForeignKey(a => a.EstagiarioId)
                 .OnDelete(DeleteBehavior.Cascade);
 

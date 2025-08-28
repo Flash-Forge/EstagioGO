@@ -1,4 +1,5 @@
 ﻿using EstagioGO.Models.Domain;
+using EstagioGO.Models.Domain.Analise;
 using Microsoft.AspNetCore.Identity;
 
 public class ApplicationUser : IdentityUser

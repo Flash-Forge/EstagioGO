@@ -56,6 +56,5 @@ namespace EstagioGO.Models.Domain
 
         // Relacionamentos - inicializar como listas vazias para evitar null reference
         public ICollection<Frequencia> Frequencias { get; set; } = new List<Frequencia>();
-        public ICollection<Avaliacao> Avaliacoes { get; set; } = new List<Avaliacao>();
     }
 }

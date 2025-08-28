@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace EstagioGO.Models.Domain
+namespace EstagioGO.Models.Domain.Analise
 {
     public class Avaliacao
     {
@@ -27,11 +27,14 @@ namespace EstagioGO.Models.Domain
         [DataType(DataType.Date)]
         public DateTime DataAvaliacao { get; set; } = DateTime.Now;
 
-        [Required(ErrorMessage = "A nota é obrigatória")]
-        [Range(0, 10, ErrorMessage = "A nota deve estar entre 0 e 10")]
-        public int Nota { get; set; }
-
         [StringLength(2000, ErrorMessage = "Os comentários não podem ter mais de 2000 caracteres")]
-        public string Comentarios { get; set; }
+        public string ComentariosGerais { get; set; }
+
+        // Relacionamento com as competências avaliadas
+        public virtual ICollection<AvaliacaoCompetencia> CompetenciasAvaliadas { get; set; } = new List<AvaliacaoCompetencia>();
+
+        // Nota total calculada (pode ser calculada automaticamente)
+        [Range(0, 100, ErrorMessage = "A nota total deve estar entre 0 e 100")]
+        public decimal NotaTotal { get; set; }
     }
 }

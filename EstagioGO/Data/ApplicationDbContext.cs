@@ -1,4 +1,5 @@
 ﻿using EstagioGO.Models.Domain;
+using EstagioGO.Models.Domain.Analise;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,7 +17,6 @@ namespace EstagioGO.Data
         public DbSet<Frequencia> Frequencias { get; set; }
         public DbSet<Justificativa> Justificativas { get; set; }
         public DbSet<Avaliacao> Avaliacoes { get; set; }
-        public DbSet<ItemAvaliacao> ItensAvaliacao { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -95,7 +95,7 @@ namespace EstagioGO.Data
 
             builder.Entity<Avaliacao>()
                 .HasOne(a => a.Estagiario)
-                .WithMany(e => e.Avaliacoes)
+                .WithMany()
                 .HasForeignKey(a => a.EstagiarioId)
                 .OnDelete(DeleteBehavior.Cascade);
 

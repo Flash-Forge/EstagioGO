@@ -59,7 +59,7 @@ namespace EstagioGO.Models.Domain
             {
                 yield return new ValidationResult(
                     "Justificativa é obrigatória quando o estagiário está ausente.",
-                    new[] { nameof(JustificativaId) });
+                    [nameof(JustificativaId)]);
             }
         }
     }

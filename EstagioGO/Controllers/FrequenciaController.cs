@@ -14,16 +14,10 @@ using System.Threading.Tasks;
 namespace EstagioGO.Controllers
 {
     [Authorize]
-    public class FrequenciaController : Controller
+    public class FrequenciaController(ApplicationDbContext context, UserManager<ApplicationUser> userManager) : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
-
-        public FrequenciaController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
-        {
-            _context = context;
-            _userManager = userManager;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly UserManager<ApplicationUser> _userManager = userManager;
 
         // GET: Frequencia
         public async Task<IActionResult> Index()

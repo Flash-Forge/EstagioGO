@@ -55,7 +55,7 @@ namespace EstagioGO.Models.Domain
         public DateTime DataCadastro { get; set; } = DateTime.Now;
 
         // Relacionamentos - inicializar como listas vazias para evitar null reference
-        public ICollection<Frequencia> Frequencias { get; set; } = new List<Frequencia>();
-        public ICollection<Avaliacao> Avaliacoes { get; set; } = new List<Avaliacao>();
+        public ICollection<Frequencia> Frequencias { get; set; } = [];
+        public ICollection<Avaliacao> Avaliacoes { get; set; } = [];
     }
 }

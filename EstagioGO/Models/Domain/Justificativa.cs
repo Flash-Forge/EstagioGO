@@ -32,6 +32,6 @@ namespace EstagioGO.Models.Domain
         public bool Ativo { get; set; } = true;
 
         // Relacionamento inverso
-        public ICollection<Frequencia> Frequencias { get; set; } = new List<Frequencia>();
+        public ICollection<Frequencia> Frequencias { get; set; } = [];
     }
 }

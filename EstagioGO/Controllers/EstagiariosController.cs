@@ -12,16 +12,10 @@ using System.Diagnostics;
 
 namespace EstagioGO.Controllers
 {
-    public class EstagiariosController : Controller
+    public class EstagiariosController(ApplicationDbContext context, UserManager<ApplicationUser> userManager) : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
-
-        public EstagiariosController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
-        {
-            _context = context;
-            _userManager = userManager;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly UserManager<ApplicationUser> _userManager = userManager;
 
         // GET: Estagiarios
         public async Task<IActionResult> Index()
@@ -323,7 +317,7 @@ namespace EstagioGO.Controllers
                 }
 
                 // Verificar se há usuários disponíveis para vincular
-                if (!usuariosDisponiveis.Any())
+                if (usuariosDisponiveis.Count == 0)
                 {
                     return (false,
                            "Não há usuários disponíveis com perfil de Estagiário. Todos os usuários estagiários já estão vinculados a outros cadastros. Você será redirecionado para criar um novo usuário estagiário.",

@@ -5,12 +5,8 @@ using System.Reflection.Emit;
 
 namespace EstagioGO.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
+    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser, ApplicationRole, string>(options)
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
-        {
-        }
 
         // Adicione estes DbSets
         public DbSet<Estagiario> Estagiarios { get; set; }

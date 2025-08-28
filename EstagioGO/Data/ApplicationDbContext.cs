@@ -104,6 +104,12 @@ namespace EstagioGO.Data
                 .WithMany()
                 .HasForeignKey(a => a.AvaliadorId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Justificativa>()
+                .HasOne(j => j.UsuarioRegistro)
+                .WithMany()
+                .HasForeignKey(j => j.UsuarioRegistroId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

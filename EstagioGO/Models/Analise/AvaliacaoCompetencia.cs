@@ -1,7 +1,7 @@
-﻿    using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace EstagioGO.Models.Domain.Analise
+namespace EstagioGO.Models.Analise
 {
     public class AvaliacaoCompetencia
     {

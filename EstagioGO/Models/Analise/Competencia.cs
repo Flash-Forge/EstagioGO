@@ -1,8 +1,7 @@
-﻿using EstagioGO.Models.Domain.Analise;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace EstagioGO.Models.Domain
+namespace EstagioGO.Models.Analise
 {
     public class Competencia
     {
@@ -21,5 +20,7 @@ namespace EstagioGO.Models.Domain
         public int OrdemExibicao { get; set; }
 
         public bool Ativo { get; set; } = true;
+
+        public virtual ICollection<AvaliacaoCompetencia> AvaliacoesCompetencia { get; set; } = new HashSet<AvaliacaoCompetencia>();
     }
 }

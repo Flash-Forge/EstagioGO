@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using EstagioGO.Models.Domain;
 
-namespace EstagioGO.Models.Domain.Analise
+namespace EstagioGO.Models.Analise
 {
     public class Avaliacao
     {
@@ -30,7 +31,12 @@ namespace EstagioGO.Models.Domain.Analise
         [StringLength(2000, ErrorMessage = "Os comentários não podem ter mais de 2000 caracteres")]
         public string ComentariosGerais { get; set; }
 
+        // Média das notas (0-5)
+        [Range(0, 5)]
+        [Column(TypeName = "decimal(3,2)")]
+        public decimal MediaNotas { get; set; }
+
         // Relacionamento com as competências avaliadas
-        public virtual ICollection<AvaliacaoCompetencia> CompetenciasAvaliadas { get; set; } = new List<AvaliacaoCompetencia>();
+        public virtual ICollection<AvaliacaoCompetencia> CompetenciasAvaliadas { get; set; } = new HashSet<AvaliacaoCompetencia>();
     }
 }

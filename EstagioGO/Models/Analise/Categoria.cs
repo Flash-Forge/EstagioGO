@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace EstagioGO.Models.Domain.Analise
+namespace EstagioGO.Models.Analise
 {
     public class Categoria
     {
@@ -19,6 +19,6 @@ namespace EstagioGO.Models.Domain.Analise
         public bool Ativo { get; set; } = true;
 
         // Relacionamento com Competencias
-        public virtual ICollection<Competencia> Competencias { get; set; } = new List<Competencia>();
+        public virtual ICollection<Competencia> Competencias { get; set; } = new HashSet<Competencia>();
     }
 }

@@ -19,12 +19,10 @@ namespace EstagioGO.Data
         public DbSet<Competencia> Competencias { get; set; }
         public DbSet<AvaliacaoCompetencia> AvaliacaoCompetencias { get; set; }
 
-        // REMOVER EM PRODUCAAO!!!!!!!!
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder
-                .EnableSensitiveDataLogging() // 👈 Adicionar esta linha
-                .EnableDetailedErrors();     // 👈 E esta linha
+                .EnableDetailedErrors();
         }
 
         protected override void OnModelCreating(ModelBuilder builder)

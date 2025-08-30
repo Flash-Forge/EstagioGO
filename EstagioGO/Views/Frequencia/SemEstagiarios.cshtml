@@ -1,0 +1,43 @@
+﻿@{
+    ViewData["Title"] = "Estagiários Necessários";
+}
+
+<div class="container mt-5">
+    <div class="alert alert-warning" role="alert">
+        <h4 class="alert-heading">Atenção!</h4>
+        <p>@ViewBag.MensagemSemRecursos</p>
+        <hr>
+        <p class="mb-0">Você será redirecionado automaticamente em <span id="countdown">5</span> segundos.</p>
+    </div>
+
+    <div class="text-center">
+        @if (!string.IsNullOrEmpty(ViewBag.RedirecionarPara))
+        {
+            <a href="@ViewBag.RedirecionarPara" class="btn btn-primary">Criar Estagiário</a>
+        }
+        <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">Voltar para Início</a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let seconds = 5;
+        const countdownElement = document.getElementById('countdown');
+        const redirectUrl = '@ViewBag.RedirecionarPara';
+
+        if (redirectUrl) {
+            const countdown = setInterval(() => {
+                seconds--;
+                countdownElement.textContent = seconds;
+
+                if (seconds <= 0) {
+                    clearInterval(countdown);
+                    window.location.href = redirectUrl;
+                }
+            }, 1000);
+        } else {
+            // Se não houver URL de redirecionamento, esconder o contador
+            document.getElementById('countdown').parentElement.style.display = 'none';
+        }
+    </script>
+}

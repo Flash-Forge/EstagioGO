@@ -1,4 +1,5 @@
-﻿using EstagioGO.Models.Domain;
+﻿using EstagioGO.Models.Analise;
+using EstagioGO.Models.Domain;
 using Microsoft.AspNetCore.Identity;
 
 public class ApplicationUser : IdentityUser
@@ -14,4 +15,5 @@ public class ApplicationUser : IdentityUser
     public ICollection<Estagiario> EstagiariosComoUsuario { get; set; }
     public ICollection<Avaliacao> AvaliacoesRealizadas { get; set; }
     public ICollection<Frequencia> FrequenciasRegistradas { get; set; }
+    public ICollection<Justificativa> JustificativasRegistradas { get; set; }
 }

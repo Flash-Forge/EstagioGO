@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Gerenciamento de Usuários";
     var defaultAdminEmail = "admin@estagio.com";
+    var currentUserIsDefaultAdmin = User.Identity.Name.Equals(defaultAdminEmail, StringComparison.OrdinalIgnoreCase);
 }
 
 <div class="container mt-4">
@@ -29,12 +30,16 @@
             <tbody>
                 @foreach (var user in Model)
                 {
+                    var isAdministrator = user.Role == "Administrador";
                     var isDefaultAdmin = user.Email.Equals(defaultAdminEmail, StringComparison.OrdinalIgnoreCase);
+                    var canEditDelete = !isAdministrator || (isAdministrator && currentUserIsDefaultAdmin);
+
                     <tr>
+                        <td>@user.Id</td>
                         <td>@user.NomeCompleto</td>
                         <td>@user.Email</td>
                         <td><span class="badge bg-primary">@user.Role</span></td>
-                        <td>@user.DataCadastro:dd/MM/yyyy</td>
+                        <td>@user.DataCadastro.ToString("dd/MM/yyyy")</td>
                         <td>
                             <span class="badge @(user.Ativo ? "bg-success" : "bg-danger")">
                                 @(user.Ativo ? "Ativo" : "Inativo")
@@ -50,12 +55,22 @@
                                 <a asp-action="ViewUser" asp-route-id="@user.Id" class="btn btn-sm btn-outline-info">
                                     <i class="bi bi-eye"></i>
                                 </a>
+
                                 @if (isDefaultAdmin)
                                 {
-                                    <button class="btn btn-sm btn-outline-primary" disabled>
+                                    <button class="btn btn-sm btn-outline-primary" disabled title="Não editável">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-danger" disabled>
+                                    <button class="btn btn-sm btn-outline-danger" disabled title="Não excluível">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                }
+                                else if (!canEditDelete)
+                                {
+                                    <button class="btn btn-sm btn-outline-primary" disabled title="Apenas o administrador padrão pode editar administradores">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" disabled title="Apenas o administrador padrão pode excluir administradores">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 }

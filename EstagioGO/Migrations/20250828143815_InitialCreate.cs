@@ -60,35 +60,19 @@ namespace EstagioGO.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Justificativas",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Descricao = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    RequerDocumentacao = table.Column<bool>(type: "bit", nullable: false),
-                    Ativo = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Justificativas", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PeriodoAvaliacao",
+                name: "Categorias",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Nome = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    DataInicio = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DataFim = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Descricao = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Ativo = table.Column<bool>(type: "bit", nullable: false)
+                    OrdemExibicao = table.Column<int>(type: "int", nullable: false),
+                    Ativo = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PeriodoAvaliacao", x => x.Id);
+                    table.PrimaryKey("PK_Categorias", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -232,6 +216,51 @@ namespace EstagioGO.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Justificativas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Motivo = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Detalhamento = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    DataRegistro = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UsuarioRegistroId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Ativo = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Justificativas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Justificativas_AspNetUsers_UsuarioRegistroId",
+                        column: x => x.UsuarioRegistroId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Competencias",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Descricao = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    CategoriaId = table.Column<int>(type: "int", nullable: false),
+                    OrdemExibicao = table.Column<int>(type: "int", nullable: false),
+                    Ativo = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Competencias", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Competencias_Categorias_CategoriaId",
+                        column: x => x.CategoriaId,
+                        principalTable: "Categorias",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Avaliacoes",
                 columns: table => new
                 {
@@ -240,19 +269,11 @@ namespace EstagioGO.Migrations
                     EstagiarioId = table.Column<int>(type: "int", nullable: false),
                     AvaliadorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     DataAvaliacao = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Nota = table.Column<int>(type: "int", nullable: false),
-                    Comentarios = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
-                    PeriodoAvaliacaoId = table.Column<int>(type: "int", nullable: true),
-                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    ComentariosGerais = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Avaliacoes", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Avaliacoes_AspNetUsers_ApplicationUserId",
-                        column: x => x.ApplicationUserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Avaliacoes_AspNetUsers_AvaliadorId",
                         column: x => x.AvaliadorId,
@@ -265,11 +286,6 @@ namespace EstagioGO.Migrations
                         principalTable: "Estagiarios",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Avaliacoes_PeriodoAvaliacao_PeriodoAvaliacaoId",
-                        column: x => x.PeriodoAvaliacaoId,
-                        principalTable: "PeriodoAvaliacao",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -312,24 +328,31 @@ namespace EstagioGO.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ItensAvaliacao",
+                name: "AvaliacaoCompetencias",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     AvaliacaoId = table.Column<int>(type: "int", nullable: false),
-                    Descricao = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Nota = table.Column<int>(type: "int", nullable: false)
+                    CompetenciaId = table.Column<int>(type: "int", nullable: false),
+                    Nota = table.Column<int>(type: "int", nullable: false),
+                    Comentario = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ItensAvaliacao", x => x.Id);
+                    table.PrimaryKey("PK_AvaliacaoCompetencias", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ItensAvaliacao_Avaliacoes_AvaliacaoId",
+                        name: "FK_AvaliacaoCompetencias_Avaliacoes_AvaliacaoId",
                         column: x => x.AvaliacaoId,
                         principalTable: "Avaliacoes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AvaliacaoCompetencias_Competencias_CompetenciaId",
+                        column: x => x.CompetenciaId,
+                        principalTable: "Competencias",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.InsertData(
@@ -341,6 +364,45 @@ namespace EstagioGO.Migrations
                     { "2", null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Gestão completa dos estagiários", "Coordenador", "COORDENADOR" },
                     { "3", null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Avaliação e acompanhamento dos estagiários", "Supervisor", "SUPERVISOR" },
                     { "4", null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Visualização do próprio perfil e registros", "Estagiario", "ESTAGIARIO" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Categorias",
+                columns: new[] { "Id", "Ativo", "Descricao", "Nome", "OrdemExibicao" },
+                values: new object[,]
+                {
+                    { 1, true, "Avaliação dos conhecimentos técnicos específicos", "Conhecimento Técnico", 1 },
+                    { 2, true, "Habilidades de comunicação e expressão", "Comunicação", 2 },
+                    { 3, true, "Capacidade de colaboração e trabalho em grupo", "Trabalho em Equipe", 3 },
+                    { 4, true, "Iniciativa e capacidade de antecipação", "Proatividade", 4 },
+                    { 5, true, "Qualidade e precisão nas entregas", "Qualidade do Trabalho", 5 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Competencias",
+                columns: new[] { "Id", "Ativo", "CategoriaId", "Descricao", "OrdemExibicao" },
+                values: new object[,]
+                {
+                    { 1, true, 1, "Domínio das ferramentas e tecnologias", 1 },
+                    { 2, true, 1, "Capacidade de resolver problemas técnicos", 2 },
+                    { 3, true, 1, "Qualidade do código/documentação", 3 },
+                    { 4, true, 1, "Capacidade de aprendizado de novas tecnologias", 4 },
+                    { 5, true, 2, "Clareza na expressão oral", 1 },
+                    { 6, true, 2, "Clareza na expressão escrita", 2 },
+                    { 7, true, 2, "Capacidade de apresentação", 3 },
+                    { 8, true, 2, "Escuta ativa e compreensão", 4 },
+                    { 9, true, 3, "Colaboração e apoio aos colegas", 1 },
+                    { 10, true, 3, "Respeito às opiniões divergentes", 2 },
+                    { 11, true, 3, "Contribuição para decisões coletivas", 3 },
+                    { 12, true, 3, "Flexibilidade e adaptabilidade", 4 },
+                    { 13, true, 4, "Iniciativa para assumir responsabilidades", 1 },
+                    { 14, true, 4, "Antecipação de problemas e soluções", 2 },
+                    { 15, true, 4, "Busca por melhorias contínuas", 3 },
+                    { 16, true, 4, "Autonomia na execução de tarefas", 4 },
+                    { 17, true, 5, "Precisão e atenção aos detalhes", 1 },
+                    { 18, true, 5, "Cumprimento de prazos", 2 },
+                    { 19, true, 5, "Organização e documentação", 3 },
+                    { 20, true, 5, "Consistência nas entregas", 4 }
                 });
 
             migrationBuilder.CreateIndex(
@@ -383,9 +445,15 @@ namespace EstagioGO.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Avaliacoes_ApplicationUserId",
-                table: "Avaliacoes",
-                column: "ApplicationUserId");
+                name: "IX_AvaliacaoCompetencias_AvaliacaoId_CompetenciaId",
+                table: "AvaliacaoCompetencias",
+                columns: new[] { "AvaliacaoId", "CompetenciaId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AvaliacaoCompetencias_CompetenciaId",
+                table: "AvaliacaoCompetencias",
+                column: "CompetenciaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Avaliacoes_AvaliadorId",
@@ -398,9 +466,19 @@ namespace EstagioGO.Migrations
                 column: "EstagiarioId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Avaliacoes_PeriodoAvaliacaoId",
-                table: "Avaliacoes",
-                column: "PeriodoAvaliacaoId");
+                name: "IX_Categorias_OrdemExibicao",
+                table: "Categorias",
+                column: "OrdemExibicao");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Competencias_CategoriaId",
+                table: "Competencias",
+                column: "CategoriaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Competencias_OrdemExibicao",
+                table: "Competencias",
+                column: "OrdemExibicao");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Estagiarios_SupervisorId",
@@ -429,9 +507,9 @@ namespace EstagioGO.Migrations
                 column: "RegistradoPorId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ItensAvaliacao_AvaliacaoId",
-                table: "ItensAvaliacao",
-                column: "AvaliacaoId");
+                name: "IX_Justificativas_UsuarioRegistroId",
+                table: "Justificativas",
+                column: "UsuarioRegistroId");
         }
 
         /// <inheritdoc />
@@ -453,25 +531,28 @@ namespace EstagioGO.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Frequencias");
+                name: "AvaliacaoCompetencias");
 
             migrationBuilder.DropTable(
-                name: "ItensAvaliacao");
+                name: "Frequencias");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "Justificativas");
+                name: "Avaliacoes");
 
             migrationBuilder.DropTable(
-                name: "Avaliacoes");
+                name: "Competencias");
+
+            migrationBuilder.DropTable(
+                name: "Justificativas");
 
             migrationBuilder.DropTable(
                 name: "Estagiarios");
 
             migrationBuilder.DropTable(
-                name: "PeriodoAvaliacao");
+                name: "Categorias");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

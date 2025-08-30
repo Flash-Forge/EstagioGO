@@ -1,0 +1,95 @@
+﻿@model EstagioGO.Models.ViewModels.AvaliacaoViewModel
+
+@{
+    ViewData["Title"] = "Nova Avaliação";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    
+    <div class="form-group">
+        <label asp-for="EstagiarioId" class="control-label"></label>
+        <select asp-for="EstagiarioId" class="form-control" asp-items="ViewBag.Estagiarios">
+            <option value="">-- Selecione o Estagiário --</option>
+        </select>
+        <span asp-validation-for="EstagiarioId" class="text-danger"></span>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4>Avaliação por Competências</h4>
+            <p class="text-muted">Avalie cada competência de 0 a 5 (0 = Não atende, 5 = Excelente)</p>
+            <p class="text-muted">A média será calculada automaticamente com base nas notas.</p>
+        </div>
+        <div class="card-body">
+            @for (int i = 0; i < Model.Categorias.Count; i++)
+            {
+                <div class="category-card mb-4">
+                    <h5>@Model.Categorias[i].Nome</h5>
+                    <p class="text-muted">@Model.Categorias[i].Descricao</p>
+                    
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th style="width: 60%">Competência</th>
+                                <th style="width: 20%">Nota (0-5)</th>
+                                <th style="width: 20%">Comentário</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int j = 0; j < Model.Categorias[i].Competencias.Count; j++)
+                            {
+                                <tr>
+                                    <td>
+                                        @Model.Categorias[i].Competencias[j].Descricao
+                                        <input type="hidden" asp-for="@Model.Categorias[i].Competencias[j].CompetenciaId" />
+                                    </td>
+                                    <td>
+                                        <input asp-for="@Model.Categorias[i].Competencias[j].Nota" class="form-control" min="0" max="5" />
+                                        <span asp-validation-for="@Model.Categorias[i].Competencias[j].Nota" class="text-danger"></span>
+                                    </td>
+                                    <td>
+                                        <input asp-for="@Model.Categorias[i].Competencias[j].Comentario" class="form-control" />
+                                        <span asp-validation-for="@Model.Categorias[i].Competencias[j].Comentario" class="text-danger"></span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+    
+    <div class="form-group mt-4">
+        <label asp-for="ComentariosGerais" class="control-label"></label>
+        <textarea asp-for="ComentariosGerais" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="ComentariosGerais" class="text-danger"></span>
+    </div>
+    
+    <div class="form-group mt-4">
+        <button type="submit" class="btn btn-primary">Salvar Avaliação</button>
+        <a asp-action="Index" asp-controller="Home" class="btn btn-secondary">Cancelar</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Script para melhorar a usabilidade do formulário
+        $(document).ready(function() {
+            // Adicionar validação em tempo real para as notas
+            $('input[type="number"]').on('input', function() {
+                var value = $(this).val();
+                if (value < 0) {
+                    $(this).val(0);
+                } else if (value > 5) {
+                    $(this).val(5);
+                }
+            });
+        });
+    </script>
+}

@@ -174,7 +174,7 @@ namespace EstagioGO.Migrations
                         });
                 });
 
-            modelBuilder.Entity("EstagioGO.Models.Domain.Avaliacao", b =>
+            modelBuilder.Entity("EstagioGO.Models.Analise.Avaliacao", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -182,14 +182,11 @@ namespace EstagioGO.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ApplicationUserId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("AvaliadorId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Comentarios")
+                    b.Property<string>("ComentariosGerais")
                         .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
@@ -200,21 +197,318 @@ namespace EstagioGO.Migrations
                     b.Property<int>("EstagiarioId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Nota")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("PeriodoAvaliacaoId")
-                        .HasColumnType("int");
+                    b.Property<decimal>("MediaNotas")
+                        .HasColumnType("decimal(3,2)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ApplicationUserId");
 
                     b.HasIndex("AvaliadorId");
 
                     b.HasIndex("EstagiarioId");
 
-                    b.ToTable("Avaliacoes", (string)null);
+                    b.ToTable("Avaliacoes");
+                });
+
+            modelBuilder.Entity("EstagioGO.Models.Analise.AvaliacaoCompetencia", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AvaliacaoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comentario")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("CompetenciaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Nota")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompetenciaId");
+
+                    b.HasIndex("AvaliacaoId", "CompetenciaId")
+                        .IsUnique();
+
+                    b.ToTable("AvaliacaoCompetencias");
+                });
+
+            modelBuilder.Entity("EstagioGO.Models.Analise.Categoria", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Ativo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("OrdemExibicao")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrdemExibicao");
+
+                    b.ToTable("Categorias");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Ativo = true,
+                            Descricao = "Avaliação dos conhecimentos técnicos específicos",
+                            Nome = "Conhecimento Técnico",
+                            OrdemExibicao = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Ativo = true,
+                            Descricao = "Habilidades de comunicação e expressão",
+                            Nome = "Comunicação",
+                            OrdemExibicao = 2
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Ativo = true,
+                            Descricao = "Capacidade de colaboração e trabalho em grupo",
+                            Nome = "Trabalho em Equipe",
+                            OrdemExibicao = 3
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Ativo = true,
+                            Descricao = "Iniciativa e capacidade de antecipação",
+                            Nome = "Proatividade",
+                            OrdemExibicao = 4
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Ativo = true,
+                            Descricao = "Qualidade e precisão nas entregas",
+                            Nome = "Qualidade do Trabalho",
+                            OrdemExibicao = 5
+                        });
+                });
+
+            modelBuilder.Entity("EstagioGO.Models.Analise.Competencia", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Ativo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("CategoriaId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("OrdemExibicao")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoriaId");
+
+                    b.HasIndex("OrdemExibicao");
+
+                    b.ToTable("Competencias");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Ativo = true,
+                            CategoriaId = 1,
+                            Descricao = "Domínio das ferramentas e tecnologias",
+                            OrdemExibicao = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Ativo = true,
+                            CategoriaId = 1,
+                            Descricao = "Capacidade de resolver problemas técnicos",
+                            OrdemExibicao = 2
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Ativo = true,
+                            CategoriaId = 1,
+                            Descricao = "Qualidade do código/documentação",
+                            OrdemExibicao = 3
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Ativo = true,
+                            CategoriaId = 1,
+                            Descricao = "Capacidade de aprendizado de novas tecnologias",
+                            OrdemExibicao = 4
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Ativo = true,
+                            CategoriaId = 2,
+                            Descricao = "Clareza na expressão oral",
+                            OrdemExibicao = 1
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Ativo = true,
+                            CategoriaId = 2,
+                            Descricao = "Clareza na expressão escrita",
+                            OrdemExibicao = 2
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Ativo = true,
+                            CategoriaId = 2,
+                            Descricao = "Capacidade de apresentação",
+                            OrdemExibicao = 3
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Ativo = true,
+                            CategoriaId = 2,
+                            Descricao = "Escuta ativa e compreensão",
+                            OrdemExibicao = 4
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Ativo = true,
+                            CategoriaId = 3,
+                            Descricao = "Colaboração e apoio aos colegas",
+                            OrdemExibicao = 1
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Ativo = true,
+                            CategoriaId = 3,
+                            Descricao = "Respeito às opiniões divergentes",
+                            OrdemExibicao = 2
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Ativo = true,
+                            CategoriaId = 3,
+                            Descricao = "Contribuição para decisões coletivas",
+                            OrdemExibicao = 3
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Ativo = true,
+                            CategoriaId = 3,
+                            Descricao = "Flexibilidade e adaptabilidade",
+                            OrdemExibicao = 4
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Ativo = true,
+                            CategoriaId = 4,
+                            Descricao = "Iniciativa para assumir responsabilidades",
+                            OrdemExibicao = 1
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Ativo = true,
+                            CategoriaId = 4,
+                            Descricao = "Antecipação de problemas e soluções",
+                            OrdemExibicao = 2
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Ativo = true,
+                            CategoriaId = 4,
+                            Descricao = "Busca por melhorias contínuas",
+                            OrdemExibicao = 3
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Ativo = true,
+                            CategoriaId = 4,
+                            Descricao = "Autonomia na execução de tarefas",
+                            OrdemExibicao = 4
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Ativo = true,
+                            CategoriaId = 5,
+                            Descricao = "Precisão e atenção aos detalhes",
+                            OrdemExibicao = 1
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Ativo = true,
+                            CategoriaId = 5,
+                            Descricao = "Cumprimento de prazos",
+                            OrdemExibicao = 2
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Ativo = true,
+                            CategoriaId = 5,
+                            Descricao = "Organização e documentação",
+                            OrdemExibicao = 3
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Ativo = true,
+                            CategoriaId = 5,
+                            Descricao = "Consistência nas entregas",
+                            OrdemExibicao = 4
+                        });
                 });
 
             modelBuilder.Entity("EstagioGO.Models.Domain.Estagiario", b =>
@@ -272,7 +566,7 @@ namespace EstagioGO.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Estagiarios", (string)null);
+                    b.ToTable("Estagiarios");
                 });
 
             modelBuilder.Entity("EstagioGO.Models.Domain.Frequencia", b =>
@@ -320,32 +614,7 @@ namespace EstagioGO.Migrations
 
                     b.HasIndex("RegistradoPorId");
 
-                    b.ToTable("Frequencias", (string)null);
-                });
-
-            modelBuilder.Entity("EstagioGO.Models.Domain.ItemAvaliacao", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AvaliacaoId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Descricao")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Nota")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AvaliacaoId");
-
-                    b.ToTable("ItensAvaliacao", (string)null);
+                    b.ToTable("Frequencias");
                 });
 
             modelBuilder.Entity("EstagioGO.Models.Domain.Justificativa", b =>
@@ -380,7 +649,7 @@ namespace EstagioGO.Migrations
 
                     b.HasIndex("UsuarioRegistroId");
 
-                    b.ToTable("Justificativas", (string)null);
+                    b.ToTable("Justificativas");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -489,20 +758,16 @@ namespace EstagioGO.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("EstagioGO.Models.Domain.Avaliacao", b =>
+            modelBuilder.Entity("EstagioGO.Models.Analise.Avaliacao", b =>
                 {
-                    b.HasOne("ApplicationUser", null)
-                        .WithMany("AvaliacoesRealizadas")
-                        .HasForeignKey("ApplicationUserId");
-
                     b.HasOne("ApplicationUser", "Avaliador")
-                        .WithMany()
+                        .WithMany("AvaliacoesRealizadas")
                         .HasForeignKey("AvaliadorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("EstagioGO.Models.Domain.Estagiario", "Estagiario")
-                        .WithMany("Avaliacoes")
+                        .WithMany()
                         .HasForeignKey("EstagiarioId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -510,6 +775,36 @@ namespace EstagioGO.Migrations
                     b.Navigation("Avaliador");
 
                     b.Navigation("Estagiario");
+                });
+
+            modelBuilder.Entity("EstagioGO.Models.Analise.AvaliacaoCompetencia", b =>
+                {
+                    b.HasOne("EstagioGO.Models.Analise.Avaliacao", "Avaliacao")
+                        .WithMany("CompetenciasAvaliadas")
+                        .HasForeignKey("AvaliacaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EstagioGO.Models.Analise.Competencia", "Competencia")
+                        .WithMany("AvaliacoesCompetencia")
+                        .HasForeignKey("CompetenciaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Avaliacao");
+
+                    b.Navigation("Competencia");
+                });
+
+            modelBuilder.Entity("EstagioGO.Models.Analise.Competencia", b =>
+                {
+                    b.HasOne("EstagioGO.Models.Analise.Categoria", "Categoria")
+                        .WithMany("Competencias")
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Categoria");
                 });
 
             modelBuilder.Entity("EstagioGO.Models.Domain.Estagiario", b =>
@@ -545,7 +840,7 @@ namespace EstagioGO.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ApplicationUser", "RegistradoPor")
-                        .WithMany()
+                        .WithMany("FrequenciasRegistradas")
                         .HasForeignKey("RegistradoPorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -557,21 +852,10 @@ namespace EstagioGO.Migrations
                     b.Navigation("RegistradoPor");
                 });
 
-            modelBuilder.Entity("EstagioGO.Models.Domain.ItemAvaliacao", b =>
-                {
-                    b.HasOne("EstagioGO.Models.Domain.Avaliacao", "Avaliacao")
-                        .WithMany("ItensAvaliacao")
-                        .HasForeignKey("AvaliacaoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Avaliacao");
-                });
-
             modelBuilder.Entity("EstagioGO.Models.Domain.Justificativa", b =>
                 {
                     b.HasOne("ApplicationUser", "UsuarioRegistro")
-                        .WithMany()
+                        .WithMany("JustificativasRegistradas")
                         .HasForeignKey("UsuarioRegistroId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -637,17 +921,29 @@ namespace EstagioGO.Migrations
                     b.Navigation("EstagiariosComoUsuario");
 
                     b.Navigation("EstagiariosSupervisionados");
+
+                    b.Navigation("FrequenciasRegistradas");
+
+                    b.Navigation("JustificativasRegistradas");
                 });
 
-            modelBuilder.Entity("EstagioGO.Models.Domain.Avaliacao", b =>
+            modelBuilder.Entity("EstagioGO.Models.Analise.Avaliacao", b =>
                 {
-                    b.Navigation("ItensAvaliacao");
+                    b.Navigation("CompetenciasAvaliadas");
+                });
+
+            modelBuilder.Entity("EstagioGO.Models.Analise.Categoria", b =>
+                {
+                    b.Navigation("Competencias");
+                });
+
+            modelBuilder.Entity("EstagioGO.Models.Analise.Competencia", b =>
+                {
+                    b.Navigation("AvaliacoesCompetencia");
                 });
 
             modelBuilder.Entity("EstagioGO.Models.Domain.Estagiario", b =>
                 {
-                    b.Navigation("Avaliacoes");
-
                     b.Navigation("Frequencias");
                 });
 

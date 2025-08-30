@@ -11,30 +11,47 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace EstagioGO.Controllers
 {
-    [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = "Administrador,Coordenador")]
     public class AdminController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IEmailSender _emailSender;
+        private readonly ILogger<AdminController> _logger;
 
         public AdminController(
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            ILogger<AdminController> logger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _emailSender = emailSender;
+            _logger = logger;
         }
 
-        // Página inicial de gerenciamento de usuários
+        // GET: Admin/UserManagement
         public async Task<IActionResult> UserManagement()
         {
-            var users = await _userManager.Users
+            var usersQuery = _userManager.Users.AsQueryable();
+
+            // Se for coordenador, filtrar apenas usuários com role Estagiario
+            if (User.IsInRole("Coordenador") && !User.IsInRole("Administrador"))
+            {
+                // Obter IDs dos usuários com role Estagiario
+                var estagiarios = await _userManager.GetUsersInRoleAsync("Estagiario");
+                var estagiariosIds = estagiarios.Select(e => e.Id).ToList();
+
+                // Filtrar usando Contains que é traduzível para SQL
+                usersQuery = usersQuery.Where(u => estagiariosIds.Contains(u.Id));
+            }
+
+            var users = await usersQuery
                 .Select(u => new UserManagementViewModel
                 {
                     Id = u.Id,
@@ -61,11 +78,21 @@ namespace EstagioGO.Controllers
         // GET: Criar novo usuário
         public IActionResult CreateUser(string contexto)
         {
+            var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
+
+            var roles = _roleManager.Roles
+                .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
+                .ToList();
+
+            // Coordenador só pode criar estagiários
+            if (isCoordenador)
+            {
+                roles = roles.Where(r => r.Value == "Estagiario").ToList();
+            }
+
             var model = new CreateUserViewModel
             {
-                Roles = _roleManager.Roles
-                    .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
-                    .ToList()
+                Roles = roles
             };
 
             // Pré-selecionar a role com base no contexto
@@ -76,8 +103,14 @@ namespace EstagioGO.Controllers
                 else if (contexto == "estagiario")
                     model.Role = "Estagiario";
             }
+            // Se for coordenador e não tiver contexto, forçar Estagiario
+            else if (isCoordenador)
+            {
+                model.Role = "Estagiario";
+            }
 
             ViewBag.Contexto = contexto;
+            ViewBag.IsCoordenador = isCoordenador;
             return View(model);
         }
 
@@ -86,11 +119,32 @@ namespace EstagioGO.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateUser(CreateUserViewModel model)
         {
-            if (ModelState.IsValid)
+            // Remover a validação da propriedade Roles do ModelState
+            ModelState.Remove("Roles");
+
+            model.Email = model.Email?.ToLowerInvariant();
+
+            // Adicionar logging para diagnóstico
+            _logger.LogInformation("Tentativa de criação de usuário por: {UserName}", User.Identity.Name);
+            _logger.LogInformation("Dados do modelo: {Email}, {Role}", model.Email, model.Role);
+
+            // Verificar se é coordenador e validar permissões
+            var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
+            if (isCoordenador && model.Role != "Estagiario")
             {
-                model.Roles = _roleManager.Roles
-                    .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
-                    .ToList();
+                ModelState.AddModelError("Role", "Coordenadores só podem criar usuários com perfil de Estagiário.");
+                _logger.LogWarning("Tentativa de criar usuário com role não permitida: {Role}", model.Role);
+            }
+
+            if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("ModelState inválido: {Errors}",
+                    string.Join("; ", ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)));
+
+                // Preencher as roles disponíveis para o usuário atual
+                model.Roles = await GetRolesForCurrentUser();
                 return View(model);
             }
 
@@ -99,9 +153,10 @@ namespace EstagioGO.Controllers
             if (existingUser != null)
             {
                 ModelState.AddModelError("Email", "Este email já está em uso.");
-                model.Roles = _roleManager.Roles
-                    .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
-                    .ToList();
+                _logger.LogWarning("Tentativa de criar usuário com email já existente: {Email}", model.Email);
+
+                // Preencher as roles disponíveis para o usuário atual
+                model.Roles = await GetRolesForCurrentUser();
                 return View(model);
             }
 
@@ -110,10 +165,10 @@ namespace EstagioGO.Controllers
                 UserName = model.Email,
                 Email = model.Email,
                 NomeCompleto = model.NomeCompleto,
-                Cargo = model.Role, // Usando o papel como cargo
+                Cargo = model.Role,
                 Ativo = true,
                 DataCadastro = DateTime.Now,
-                PrimeiroAcessoConcluido = false // Forçar alteração de senha no primeiro acesso
+                PrimeiroAcessoConcluido = false
             };
 
             // Gerar senha temporária segura
@@ -132,18 +187,19 @@ namespace EstagioGO.Controllers
                 }
 
                 TempData["SuccessMessage"] = $"Usuário {user.NomeCompleto} criado com sucesso.";
+                _logger.LogInformation("Usuário criado com sucesso: {Email}, Role: {Role}", user.Email, model.Role);
+
                 return RedirectToAction(nameof(UserManagement));
             }
 
             foreach (var error in result.Errors)
             {
                 ModelState.AddModelError(string.Empty, error.Description);
+                _logger.LogError("Erro ao criar usuário: {Error}", error.Description);
             }
 
-            model.Roles = _roleManager.Roles
-                .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
-                .ToList();
-
+            // Preencher as roles disponíveis para o usuário atual
+            model.Roles = await GetRolesForCurrentUser();
             return View(model);
         }
 
@@ -162,31 +218,59 @@ namespace EstagioGO.Controllers
             }
 
             // Impedir a edição do usuário administrador padrão
-            if (user.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase))
+            if (IsDefaultAdministrator(user))
             {
                 TempData["ErrorMessage"] = "Não é possível editar o usuário administrador padrão.";
                 return RedirectToAction(nameof(UserManagement));
             }
 
-            var userRoles = await _userManager.GetRolesAsync(user);
+            // Verificar se usuário atual não é admin padrão tentando editar outro admin
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (!IsDefaultAdministrator(currentUser) && await IsUserAdministrator(user))
+            {
+                TempData["ErrorMessage"] = "Administradores comuns não podem editar outros administradores.";
+                return RedirectToAction(nameof(UserManagement));
+            }
+
+            // Coordenador só pode editar estagiários
+            var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
+            if (isCoordenador)
+            {
+                var userRoles = await _userManager.GetRolesAsync(user);
+                if (!userRoles.Contains("Estagiario"))
+                {
+                    TempData["ErrorMessage"] = "Coordenadores só podem editar usuários com perfil de Estagiário.";
+                    return RedirectToAction(nameof(UserManagement));
+                }
+            }
+
+            var userRolesList = await _userManager.GetRolesAsync(user);
+            var roles = _roleManager.Roles
+                .Select(r => new SelectListItem
+                {
+                    Value = r.Name,
+                    Text = r.Name,
+                    Selected = userRolesList.Contains(r.Name)
+                })
+                .ToList();
+
+            // Coordenador só pode ver role de Estagiario
+            if (isCoordenador)
+            {
+                roles = roles.Where(r => r.Value == "Estagiario").ToList();
+            }
 
             var model = new EditUserViewModel
             {
                 Id = user.Id,
                 NomeCompleto = user.NomeCompleto,
                 Email = user.Email,
-                Role = userRoles.FirstOrDefault(),
+                Role = userRolesList.FirstOrDefault(),
                 Ativo = user.Ativo,
-                Roles = _roleManager.Roles
-                    .Select(r => new SelectListItem
-                    {
-                        Value = r.Name,
-                        Text = r.Name,
-                        Selected = userRoles.Contains(r.Name)
-                    })
-                    .ToList()
+                Roles = roles
             };
 
+            ViewBag.IsCoordenador = isCoordenador;
             return View(model);
         }
 
@@ -196,6 +280,32 @@ namespace EstagioGO.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditUser(string id, EditUserViewModel model)
         {
+            // Converter email para minúsculo
+            model.Email = model.Email?.ToLowerInvariant();
+
+            var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
+
+            // Coordenador só pode editar estagiários e manter como estagiários
+            if (isCoordenador)
+            {
+                if (model.Role != "Estagiario")
+                {
+                    ModelState.AddModelError("Role", "Coordenadores só podem manter o perfil de Estagiário.");
+                }
+
+                // Verificar se o usuário sendo editado é um estagiário
+                var user = await _userManager.FindByIdAsync(id);
+                if (user != null)
+                {
+                    var userRoles = await _userManager.GetRolesAsync(user);
+                    if (!userRoles.Contains("Estagiario"))
+                    {
+                        TempData["ErrorMessage"] = "Coordenadores só podem editar usuários com perfil de Estagiário.";
+                        return RedirectToAction(nameof(UserManagement));
+                    }
+                }
+            }
+
             // Preencher Roles antes de qualquer verificação
             model.Roles = _roleManager.Roles
                 .Select(r => new SelectListItem
@@ -205,6 +315,11 @@ namespace EstagioGO.Controllers
                     Selected = r.Name == model.Role
                 })
                 .ToList();
+
+            if (isCoordenador)
+            {
+                model.Roles = model.Roles.Where(r => r.Value == "Estagiario").ToList();
+            }
 
             // Remover a validação da propriedade Roles do ModelState
             ModelState.Remove("Roles");
@@ -219,28 +334,36 @@ namespace EstagioGO.Controllers
                 return NotFound();
             }
 
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
+            var userToEdit = await _userManager.FindByIdAsync(id);
+            if (userToEdit == null)
             {
                 return NotFound();
             }
 
             // Verificar se é o administrador padrão
-            if (user.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase))
+            if (userToEdit.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase))
             {
                 TempData["ErrorMessage"] = AppConstants.DefaultAdminEditError;
                 return RedirectToAction(nameof(UserManagement));
             }
 
+            // Verificar se usuário atual não é admin padrão tentando editar outro admin
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (!IsDefaultAdministrator(currentUser) && await IsUserAdministrator(userToEdit))
+            {
+                TempData["ErrorMessage"] = "Administradores comuns não podem editar outros administradores.";
+                return RedirectToAction(nameof(UserManagement));
+            }
+
             // Verificar se o email foi alterado
-            bool emailAlterado = user.Email != model.Email;
-            bool primeiroAcessoPendente = !user.PrimeiroAcessoConcluido;
+            bool emailAlterado = userToEdit.Email != model.Email;
+            bool primeiroAcessoPendente = !userToEdit.PrimeiroAcessoConcluido;
 
             // Verificar se o novo email já existe para outro usuário
             if (emailAlterado)
             {
                 var usuarioComEmail = await _userManager.FindByEmailAsync(model.Email);
-                if (usuarioComEmail != null && usuarioComEmail.Id != user.Id)
+                if (usuarioComEmail != null && usuarioComEmail.Id != userToEdit.Id)
                 {
                     ModelState.AddModelError("Email", "Este email já está em uso por outro usuário.");
                     return View(model);
@@ -248,50 +371,50 @@ namespace EstagioGO.Controllers
             }
 
             // Atualizar propriedades do usuário
-            user.NomeCompleto = model.NomeCompleto;
-            user.Cargo = model.Role;
-            user.Ativo = model.Ativo;
+            userToEdit.NomeCompleto = model.NomeCompleto;
+            userToEdit.Cargo = model.Role;
+            userToEdit.Ativo = model.Ativo;
 
             // Se o email foi alterado, atualizar o email
             if (emailAlterado)
             {
-                user.Email = model.Email;
-                user.UserName = model.Email;
-                user.NormalizedEmail = _userManager.NormalizeEmail(model.Email);
-                user.NormalizedUserName = _userManager.NormalizeName(model.Email);
+                userToEdit.Email = model.Email;
+                userToEdit.UserName = model.Email;
+                userToEdit.NormalizedEmail = _userManager.NormalizeEmail(model.Email);
+                userToEdit.NormalizedUserName = _userManager.NormalizeName(model.Email);
             }
 
-            var result = await _userManager.UpdateAsync(user);
+            var result = await _userManager.UpdateAsync(userToEdit);
             if (result.Succeeded)
             {
                 // Atualizar roles
-                var currentRoles = await _userManager.GetRolesAsync(user);
+                var currentRoles = await _userManager.GetRolesAsync(userToEdit);
                 if (currentRoles.Any())
                 {
-                    await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                    await _userManager.RemoveFromRolesAsync(userToEdit, currentRoles);
                 }
-                await _userManager.AddToRoleAsync(user, model.Role);
+                await _userManager.AddToRoleAsync(userToEdit, model.Role);
 
                 // Enviar nova senha apenas se o email foi alterado E primeiro acesso pendente
                 if (emailAlterado && primeiroAcessoPendente)
                 {
                     var novaSenha = GenerateTemporaryPassword();
-                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                    var passwordResult = await _userManager.ResetPasswordAsync(user, token, novaSenha);
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(userToEdit);
+                    var passwordResult = await _userManager.ResetPasswordAsync(userToEdit, token, novaSenha);
 
                     if (passwordResult.Succeeded)
                     {
-                        await SendCredentialsEmail(user, novaSenha);
-                        TempData["SuccessMessage"] = $"Usuário {user.NomeCompleto} atualizado com sucesso. Uma nova senha foi enviada para o email.";
+                        await SendCredentialsEmail(userToEdit, novaSenha);
+                        TempData["SuccessMessage"] = $"Usuário {userToEdit.NomeCompleto} atualizado com sucesso. Uma nova senha foi enviada para o email.";
                     }
                     else
                     {
-                        TempData["WarningMessage"] = $"Usuário {user.NomeCompleto} atualizado, mas houve um erro ao redefinir a senha.";
+                        TempData["WarningMessage"] = $"Usuário {userToEdit.NomeCompleto} atualizado, mas houve um erro ao redefinir a senha.";
                     }
                 }
                 else
                 {
-                    TempData["SuccessMessage"] = $"Usuário {user.NomeCompleto} atualizado com sucesso.";
+                    TempData["SuccessMessage"] = $"Usuário {userToEdit.NomeCompleto} atualizado com sucesso.";
                 }
 
                 return RedirectToAction(nameof(UserManagement));
@@ -320,8 +443,20 @@ namespace EstagioGO.Controllers
                 return NotFound();
             }
 
+            // Coordenador só pode visualizar estagiários
+            var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
+            if (isCoordenador)
+            {
+                var userRoles = await _userManager.GetRolesAsync(user);
+                if (!userRoles.Contains("Estagiario"))
+                {
+                    TempData["ErrorMessage"] = "Coordenadores só podem visualizar usuários com perfil de Estagiário.";
+                    return RedirectToAction(nameof(UserManagement));
+                }
+            }
+
             // Obter a role do usuário
-            var userRoles = await _userManager.GetRolesAsync(user);
+            var userRolesList = await _userManager.GetRolesAsync(user);
 
             var model = new UserDetailViewModel
             {
@@ -329,7 +464,7 @@ namespace EstagioGO.Controllers
                 NomeCompleto = user.NomeCompleto,
                 Email = user.Email,
                 Cargo = user.Cargo,
-                Role = userRoles.FirstOrDefault(),
+                Role = userRolesList.FirstOrDefault(),
                 DataCadastro = user.DataCadastro,
                 Ativo = user.Ativo,
                 PrimeiroAcessoConcluido = user.PrimeiroAcessoConcluido
@@ -352,6 +487,29 @@ namespace EstagioGO.Controllers
                 return NotFound();
             }
 
+            // Coordenador não pode deletar usuários
+            var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
+            if (isCoordenador)
+            {
+                TempData["ErrorMessage"] = "Coordenadores não têm permissão para excluir usuários.";
+                return RedirectToAction(nameof(UserManagement));
+            }
+
+            // Impedir a exclusão do usuário administrador padrão
+            if (IsDefaultAdministrator(user))
+            {
+                TempData["ErrorMessage"] = "Não é possível excluir o usuário administrador padrão.";
+                return RedirectToAction(nameof(UserManagement));
+            }
+
+            // Verificar se usuário atual não é admin padrão tentando excluir outro admin
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (!IsDefaultAdministrator(currentUser) && await IsUserAdministrator(user))
+            {
+                TempData["ErrorMessage"] = "Administradores comuns não podem excluir outros administradores.";
+                return RedirectToAction(nameof(UserManagement));
+            }
+
             return View(user);
         }
 
@@ -360,6 +518,14 @@ namespace EstagioGO.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteUserConfirmed(string id)
         {
+            // Coordenador não pode deletar usuários
+            var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
+            if (isCoordenador)
+            {
+                TempData["ErrorMessage"] = "Coordenadores não têm permissão para excluir usuários.";
+                return RedirectToAction(nameof(UserManagement));
+            }
+
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
@@ -367,9 +533,17 @@ namespace EstagioGO.Controllers
             }
 
             // Impedir a exclusão do usuário administrador padrão
-            if (user.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase))
+            if (IsDefaultAdministrator(user))
             {
                 TempData["ErrorMessage"] = "Não é possível excluir o usuário administrador padrão.";
+                return RedirectToAction(nameof(UserManagement));
+            }
+
+            // Verificar se usuário atual não é admin padrão tentando excluir outro admin
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (!IsDefaultAdministrator(currentUser) && await IsUserAdministrator(user))
+            {
+                TempData["ErrorMessage"] = "Administradores comuns não podem excluir outros administradores.";
                 return RedirectToAction(nameof(UserManagement));
             }
 
@@ -384,6 +558,22 @@ namespace EstagioGO.Controllers
             }
 
             return RedirectToAction(nameof(UserManagement));
+        }
+
+        private async Task<List<SelectListItem>> GetRolesForCurrentUser()
+        {
+            var roles = _roleManager.Roles
+                .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
+                .ToList();
+
+            // Se for coordenador, filtrar apenas a role Estagiario
+            var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
+            if (isCoordenador)
+            {
+                roles = roles.Where(r => r.Value == "Estagiario").ToList();
+            }
+
+            return roles;
         }
 
         // Gerar senha temporária segura
@@ -424,6 +614,17 @@ namespace EstagioGO.Controllers
             }
 
             return View(adminUser);
+        }
+
+        private async Task<bool> IsUserAdministrator(ApplicationUser user)
+        {
+            var userRoles = await _userManager.GetRolesAsync(user);
+            return userRoles.Contains("Administrador");
+        }
+
+        private bool IsDefaultAdministrator(ApplicationUser user)
+        {
+            return user.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase);
         }
 
         private async Task SendCredentialsEmail(ApplicationUser user, string password)

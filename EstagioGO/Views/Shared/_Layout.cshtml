@@ -63,8 +63,8 @@
                                 </li>
                             }
 
-                            <!-- Menu de Administração - Apenas para Administradores -->
-                            @if (User.IsInRole("Administrador"))
+                            <!-- Menu de Administração - Apenas para Administradores e Coordenadores -->
+                            @if (User.IsInRole("Administrador") || User.IsInRole("Coordenador"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -72,13 +72,19 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="adminDropdown">
                                         <li><a class="dropdown-item" asp-controller="Admin" asp-action="UserManagement"><i class="bi bi-people-fill"></i> Gerenciar Usuários</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="CreateUser"><i class="bi bi-person-plus-fill"></i> Criar Novo Usuário</a></li>
+                                        @if (User.IsInRole("Administrador"))
+                                        {
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" asp-controller="Admin" asp-action="CreateUser"><i class="bi bi-person-plus-fill"></i> Criar Novo Usuário</a></li>
+                                        }
+                                        else
+                                        {
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" asp-controller="Admin" asp-action="CreateUser" asp-route-contexto="estagiario"><i class="bi bi-person-plus-fill"></i> Criar Estagiário</a></li>
+                                        }
                                     </ul>
                                 </li>
                             }
-
-
                         }
                     </ul>
                     <partial name="_LoginPartial" />
@@ -117,6 +123,14 @@
             {
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["WarningMessage"] != null)
+            {
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    @TempData["WarningMessage"]
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             }

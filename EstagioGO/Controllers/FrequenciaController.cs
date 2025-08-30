@@ -22,6 +22,16 @@ namespace EstagioGO.Controllers
         // GET: Frequencia
         public async Task<IActionResult> Index()
         {
+            // Verificar se existe algum estagiário cadastrado
+            bool existemEstagiarios = await _context.Estagiarios.AnyAsync();
+
+            if (!existemEstagiarios)
+            {
+                ViewBag.MensagemSemRecursos = "Não há estagiários cadastrados. Você precisa cadastrar um estagiário primeiro.";
+                ViewBag.RedirecionarPara = Url.Action("Create", "Estagiarios");
+                return View("SemEstagiarios"); // Usa a nova view específica
+            }
+
             var user = await _userManager.GetUserAsync(User);
             var isEstagiario = User.IsInRole("Estagiario");
 
@@ -49,7 +59,9 @@ namespace EstagioGO.Controllers
                 }
                 else
                 {
-                    return NotFound("Estagiário não encontrado para este usuário.");
+                    ViewBag.MensagemSemRecursos = "Estagiário não encontrado para este usuário. Contate o administrador.";
+                    ViewBag.RedirecionarPara = Url.Action("Index", "Home");
+                    return View("SemEstagiarios");
                 }
             }
             else
@@ -100,6 +112,15 @@ namespace EstagioGO.Controllers
         // GET: Frequencia/Create
         public async Task<IActionResult> Create(int? estagiarioId)
         {
+            bool existemEstagiarios = await _context.Estagiarios.AnyAsync();
+
+            if (!existemEstagiarios)
+            {
+                ViewBag.MensagemSemRecursos = "Não há estagiários cadastrados. Você precisa cadastrar um estagiário primeiro.";
+                ViewBag.RedirecionarPara = Url.Action("Create", "Estagiarios");
+                return View("SemEstagiarios");
+            }
+
             var user = await _userManager.GetUserAsync(User);
             var isEstagiario = User.IsInRole("Estagiario");
             var isSupervisor = User.IsInRole("Supervisor");
@@ -114,7 +135,8 @@ namespace EstagioGO.Controllers
 
                 if (estagiario == null)
                 {
-                    return NotFound("Estagiário não encontrado para este usuário.");
+                    TempData["ErrorMessage"] = "Estagiário não encontrado para este usuário. Contate o administrador.";
+                    return RedirectToAction("Index", "Home");
                 }
 
                 estagiarioId = estagiario.Id;

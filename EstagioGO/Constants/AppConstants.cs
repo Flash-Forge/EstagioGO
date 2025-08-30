@@ -4,6 +4,7 @@
     {
         public const string DefaultAdminEmail = "admin@estagio.com";
         public const string DefaultAdminEditError = "Não é possível editar o usuário administrador padrão.";
-        public const string DefaultAdminDeleteError = "Não é possível excluir o usuário administrador padrão.";
+        public const string RegularAdminEditError = "Administradores comuns não podem editar outros administradores.";
+        public const string RegularAdminDeleteError = "Administradores comuns não podem excluir outros administradores.";
     }
 }

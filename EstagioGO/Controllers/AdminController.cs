@@ -122,6 +122,8 @@ namespace EstagioGO.Controllers
             // Remover a validação da propriedade Roles do ModelState
             ModelState.Remove("Roles");
 
+            model.Email = model.Email?.ToLowerInvariant();
+
             // Adicionar logging para diagnóstico
             _logger.LogInformation("Tentativa de criação de usuário por: {UserName}", User.Identity.Name);
             _logger.LogInformation("Dados do modelo: {Email}, {Role}", model.Email, model.Role);
@@ -216,9 +218,17 @@ namespace EstagioGO.Controllers
             }
 
             // Impedir a edição do usuário administrador padrão
-            if (user.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase))
+            if (IsDefaultAdministrator(user))
             {
                 TempData["ErrorMessage"] = "Não é possível editar o usuário administrador padrão.";
+                return RedirectToAction(nameof(UserManagement));
+            }
+
+            // Verificar se usuário atual não é admin padrão tentando editar outro admin
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (!IsDefaultAdministrator(currentUser) && await IsUserAdministrator(user))
+            {
+                TempData["ErrorMessage"] = "Administradores comuns não podem editar outros administradores.";
                 return RedirectToAction(nameof(UserManagement));
             }
 
@@ -270,6 +280,9 @@ namespace EstagioGO.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditUser(string id, EditUserViewModel model)
         {
+            // Converter email para minúsculo
+            model.Email = model.Email?.ToLowerInvariant();
+
             var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
 
             // Coordenador só pode editar estagiários e manter como estagiários
@@ -331,6 +344,14 @@ namespace EstagioGO.Controllers
             if (userToEdit.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase))
             {
                 TempData["ErrorMessage"] = AppConstants.DefaultAdminEditError;
+                return RedirectToAction(nameof(UserManagement));
+            }
+
+            // Verificar se usuário atual não é admin padrão tentando editar outro admin
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (!IsDefaultAdministrator(currentUser) && await IsUserAdministrator(userToEdit))
+            {
+                TempData["ErrorMessage"] = "Administradores comuns não podem editar outros administradores.";
                 return RedirectToAction(nameof(UserManagement));
             }
 
@@ -474,6 +495,21 @@ namespace EstagioGO.Controllers
                 return RedirectToAction(nameof(UserManagement));
             }
 
+            // Impedir a exclusão do usuário administrador padrão
+            if (IsDefaultAdministrator(user))
+            {
+                TempData["ErrorMessage"] = "Não é possível excluir o usuário administrador padrão.";
+                return RedirectToAction(nameof(UserManagement));
+            }
+
+            // Verificar se usuário atual não é admin padrão tentando excluir outro admin
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (!IsDefaultAdministrator(currentUser) && await IsUserAdministrator(user))
+            {
+                TempData["ErrorMessage"] = "Administradores comuns não podem excluir outros administradores.";
+                return RedirectToAction(nameof(UserManagement));
+            }
+
             return View(user);
         }
 
@@ -497,9 +533,17 @@ namespace EstagioGO.Controllers
             }
 
             // Impedir a exclusão do usuário administrador padrão
-            if (user.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase))
+            if (IsDefaultAdministrator(user))
             {
                 TempData["ErrorMessage"] = "Não é possível excluir o usuário administrador padrão.";
+                return RedirectToAction(nameof(UserManagement));
+            }
+
+            // Verificar se usuário atual não é admin padrão tentando excluir outro admin
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (!IsDefaultAdministrator(currentUser) && await IsUserAdministrator(user))
+            {
+                TempData["ErrorMessage"] = "Administradores comuns não podem excluir outros administradores.";
                 return RedirectToAction(nameof(UserManagement));
             }
 
@@ -570,6 +614,17 @@ namespace EstagioGO.Controllers
             }
 
             return View(adminUser);
+        }
+
+        private async Task<bool> IsUserAdministrator(ApplicationUser user)
+        {
+            var userRoles = await _userManager.GetRolesAsync(user);
+            return userRoles.Contains("Administrador");
+        }
+
+        private bool IsDefaultAdministrator(ApplicationUser user)
+        {
+            return user.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase);
         }
 
         private async Task SendCredentialsEmail(ApplicationUser user, string password)

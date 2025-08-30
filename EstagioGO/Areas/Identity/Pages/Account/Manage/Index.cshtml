@@ -15,8 +15,15 @@
                 <input asp-for="Username" class="form-control" placeholder="Por favor, escolha seu nome de usuário." disabled />
                 <label asp-for="Username" class="form-label">Email</label>
             </div>
-            <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Salvar</button>
+            <!-- DESNECESSARIO <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Salvar</button> -->
         </form>
+
+        <!-- Botão para alteração de senha -->
+        <div class="mt-3">
+            <a asp-area="Identity" asp-page="/Account/Manage/ChangePassword" class="w-100 btn btn-lg btn-outline-secondary">
+                Alterar Senha
+            </a>
+        </div>
     </div>
 </div>
 

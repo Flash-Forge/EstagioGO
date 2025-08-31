@@ -4,6 +4,7 @@ using EstagioGO.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EstagioGO.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250831173504_JustificativaMigration")]
+    partial class JustificativaMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -286,11 +289,6 @@ namespace EstagioGO.Migrations
                     b.Property<DateTime>("DataRegistro")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Detalhamento")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<int>("EstagiarioId")
                         .HasColumnType("int");
 
@@ -300,9 +298,8 @@ namespace EstagioGO.Migrations
                     b.Property<TimeSpan?>("HoraSaida")
                         .HasColumnType("time");
 
-                    b.Property<string>("Motivo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("JustificativaId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Observacao")
                         .HasMaxLength(500)
@@ -319,9 +316,46 @@ namespace EstagioGO.Migrations
 
                     b.HasIndex("EstagiarioId");
 
+                    b.HasIndex("JustificativaId");
+
                     b.HasIndex("RegistradoPorId");
 
                     b.ToTable("Frequencias");
+                });
+
+            modelBuilder.Entity("EstagioGO.Models.Domain.Justificativa", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("DataRegistro")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Detalhamento")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UsuarioRegistroId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioRegistroId");
+
+                    b.ToTable("Justificativas");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -480,6 +514,11 @@ namespace EstagioGO.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EstagioGO.Models.Domain.Justificativa", "Justificativa")
+                        .WithMany("Frequencias")
+                        .HasForeignKey("JustificativaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ApplicationUser", "RegistradoPor")
                         .WithMany("FrequenciasRegistradas")
                         .HasForeignKey("RegistradoPorId")
@@ -488,7 +527,20 @@ namespace EstagioGO.Migrations
 
                     b.Navigation("Estagiario");
 
+                    b.Navigation("Justificativa");
+
                     b.Navigation("RegistradoPor");
+                });
+
+            modelBuilder.Entity("EstagioGO.Models.Domain.Justificativa", b =>
+                {
+                    b.HasOne("ApplicationUser", "UsuarioRegistro")
+                        .WithMany()
+                        .HasForeignKey("UsuarioRegistroId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("UsuarioRegistro");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -557,6 +609,11 @@ namespace EstagioGO.Migrations
                 {
                     b.Navigation("Avaliacoes");
 
+                    b.Navigation("Frequencias");
+                });
+
+            modelBuilder.Entity("EstagioGO.Models.Domain.Justificativa", b =>
+                {
                     b.Navigation("Frequencias");
                 });
 #pragma warning restore 612, 618

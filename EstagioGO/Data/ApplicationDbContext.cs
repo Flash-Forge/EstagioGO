@@ -15,7 +15,6 @@ namespace EstagioGO.Data
         // Adicione estes DbSets
         public DbSet<Estagiario> Estagiarios { get; set; }
         public DbSet<Frequencia> Frequencias { get; set; }
-        public DbSet<Justificativa> Justificativas { get; set; }
         public DbSet<Avaliacao> Avaliacoes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -81,12 +80,6 @@ namespace EstagioGO.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Frequencia>()
-                .HasOne(f => f.Justificativa)
-                .WithMany(j => j.Frequencias)
-                .HasForeignKey(f => f.JustificativaId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Frequencia>()
                 .HasOne(f => f.RegistradoPor)
                 .WithMany(u => u.FrequenciasRegistradas)
                 .HasForeignKey(f => f.RegistradoPorId)
@@ -102,12 +95,6 @@ namespace EstagioGO.Data
                 .HasOne(a => a.Avaliador)
                 .WithMany()
                 .HasForeignKey(a => a.AvaliadorId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Justificativa>()
-                .HasOne(j => j.UsuarioRegistro)
-                .WithMany()
-                .HasForeignKey(j => j.UsuarioRegistroId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

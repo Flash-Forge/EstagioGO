@@ -74,11 +74,15 @@
 
             <div id="camposAusencia" style="display: none;">
                 <div class="form-group mb-3">
-                    <label asp-for="JustificativaId" class="control-label">Justificativa (Opcional)</label>
-                    <select asp-for="JustificativaId" class="form-control" asp-items="ViewBag.JustificativaId">
-                        <option value="">-- Selecione uma justificativa (opcional) --</option>
-                    </select>
-                    <span asp-validation-for="JustificativaId" class="text-danger"></span>
+                    <label asp-for="Motivo" class="control-label">Motivo da Falta</label>
+                    <textarea asp-for="Motivo" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Motivo" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Detalhamento" class="control-label">Detalhamento (Opcional)</label>
+                    <textarea asp-for="Detalhamento" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Detalhamento" class="text-danger"></span>
                 </div>
             </div>
 

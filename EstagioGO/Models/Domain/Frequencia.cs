@@ -35,15 +35,17 @@ namespace EstagioGO.Models.Domain
         [StringLength(500, ErrorMessage = "A observação não pode ter mais de 500 caracteres")]
         public string? Observacao { get; set; }
 
-        [AllowNull]
-        public int? JustificativaId { get; set; }
-
-        [ForeignKey("JustificativaId")]
-        [ValidateNever] // Adicionar esta linha
-        public Justificativa? Justificativa { get; set; }
-
         [Display(Name = "Data de Registro")]
         public DateTime DataRegistro { get; set; } = DateTime.Now;
+
+        [AllowNull]
+        [Display(Name = "Motivo")]
+        public string Motivo { get; set; }
+
+        [AllowNull]
+        [Display(Name = "Detalhamento")]
+        [StringLength(500, ErrorMessage = "O detalhamento não pode ter mais de 500 caracteres")]
+        public string Detalhamento { get; set; }
 
         [Required(ErrorMessage = "O usuário que registrou é obrigatório")]
         public string RegistradoPorId { get; set; }
@@ -55,11 +57,11 @@ namespace EstagioGO.Models.Domain
         // Validação condicional: Se presente == false, justificativa obrigatória
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (!Presente && !JustificativaId.HasValue)
+            if (Presente == false && Motivo == null)
             {
                 yield return new ValidationResult(
                     "Justificativa é obrigatória quando o estagiário está ausente.",
-                    new[] { nameof(JustificativaId) });
+                    new[] { nameof(Motivo) });
             }
         }
     }

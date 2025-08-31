@@ -77,7 +77,6 @@ namespace EstagioGO.Controllers
 
             var frequencia = await _context.Frequencias
                 .Include(f => f.Estagiario)
-                .Include(f => f.Justificativa)
                 .Include(f => f.RegistradoPor)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
@@ -164,7 +163,7 @@ namespace EstagioGO.Controllers
             // Carregar Justificativas apenas para não-estagiários
             if (!isEstagiario)
             {
-                ViewData["JustificativaId"] = new SelectList(_context.Justificativas, "Id", "Descricao");
+                ViewData["Motivo"] = new SelectList(_context.Frequencias, "Motivo", "Detalhamento");
             }
 
             // Se for estagiário, definir valores padrão
@@ -177,7 +176,9 @@ namespace EstagioGO.Controllers
                     HoraEntrada = DateTime.Now.TimeOfDay,
                     Presente = true,
                     DataRegistro = DateTime.Now,
-                    RegistradoPorId = user.Id
+                    RegistradoPorId = user.Id,
+                    Motivo = null,
+                    Detalhamento = null
                 };
 
                 return View(model);
@@ -191,7 +192,7 @@ namespace EstagioGO.Controllers
         // POST: Frequencia/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,EstagiarioId,Data,HoraEntrada,HoraSaida,Presente,Observacao,JustificativaId")] Frequencia frequencia)
+        public async Task<IActionResult> Create([Bind("Id,EstagiarioId,Data,HoraEntrada,HoraSaida,Presente,Observacao,Motivo,Detalhamento")] Frequencia frequencia)
         {
             var user = await _userManager.GetUserAsync(User);
             var isEstagiario = User.IsInRole("Estagiario");
@@ -202,12 +203,15 @@ namespace EstagioGO.Controllers
             // Remover validação das propriedades de navegação
             ModelState.Remove("Estagiario");
             ModelState.Remove("RegistradoPor");
-            ModelState.Remove("Justificativa");
+            ModelState.Remove("Motivo");
+            ModelState.Remove("Detalhamento");
             ModelState.Remove("RegistradoPorId");
 
             // Definir o RegistradoPorId ANTES de qualquer validação
             frequencia.RegistradoPorId = user.Id;
             frequencia.DataRegistro = DateTime.Now;
+            frequencia.Motivo = "Estagiário Presente";
+            frequencia.Detalhamento = "Estagiário Presente";
 
             // Validações
             if (frequencia.Data > DateTime.Today)
@@ -225,7 +229,8 @@ namespace EstagioGO.Controllers
             if (isEstagiario)
             {
                 frequencia.Presente = true;
-                frequencia.JustificativaId = null;
+                frequencia.Motivo = null;
+                frequencia.Detalhamento = null;
 
                 // Verificar se o estagiário está tentando registrar para si mesmo
                 var estagiario = await _context.Estagiarios
@@ -252,6 +257,15 @@ namespace EstagioGO.Controllers
                     ModelState.AddModelError("", "Você só pode registrar frequência para estagiários que você supervisiona.");
                 }
                 // Coordenadores e administradores podem registrar para qualquer estagiário
+
+                if(frequencia.Motivo == null && !frequencia.Presente)
+                {
+                    ModelState.AddModelError("","É preciso jutificar a falta do Estagiário");
+                }
+                else
+                {
+                    ModelState.Remove("Motivo");
+                }
             }
 
             // Verifica se já existe frequência registrada para o estagiário na mesma data
@@ -309,7 +323,7 @@ namespace EstagioGO.Controllers
                     ViewData["EstagiarioId"] = new SelectList(_context.Estagiarios, "Id", "Nome", frequencia.EstagiarioId);
                 }
 
-                ViewData["JustificativaId"] = new SelectList(_context.Justificativas, "Id", "Descricao", frequencia.JustificativaId);
+                ViewData["Motivo"] = new SelectList(_context.Frequencias, "Id", "Detalhamento", frequencia.Motivo);
             }
 
             return View(frequencia);
@@ -348,7 +362,7 @@ namespace EstagioGO.Controllers
 
             if (!isEstagiario)
             {
-                ViewData["JustificativaId"] = new SelectList(_context.Justificativas, "Id", "Descricao", frequencia.JustificativaId);
+                ViewData["Motivo"] = new SelectList(_context.Frequencias, "Motivo", "Detalhamento", frequencia.Motivo);
             }
 
             return View(frequencia);
@@ -385,7 +399,7 @@ namespace EstagioGO.Controllers
                 if (originalFrequencia != null)
                 {
                     frequencia.Presente = originalFrequencia.Presente;
-                    frequencia.JustificativaId = originalFrequencia.JustificativaId;
+                    frequencia.Motivo = originalFrequencia.Motivo;
                 }
             }
 
@@ -428,7 +442,7 @@ namespace EstagioGO.Controllers
 
             if (!isEstagiario)
             {
-                ViewData["JustificativaId"] = new SelectList(_context.Justificativas, "Id", "Descricao", frequencia.JustificativaId);
+                ViewData["Motivo"] = new SelectList(_context.Frequencias, "Motivo", "Detalhamento", frequencia.Motivo);
             }
 
             return View(frequencia);
@@ -444,7 +458,6 @@ namespace EstagioGO.Controllers
 
             var frequencia = await _context.Frequencias
                 .Include(f => f.Estagiario)
-                .Include(f => f.Justificativa)
                 .Include(f => f.RegistradoPor)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
@@ -503,7 +516,6 @@ namespace EstagioGO.Controllers
 
             var frequencias = await _context.Frequencias
                 .Include(f => f.Estagiario)
-                .Include(f => f.Justificativa)
                 .Where(f => f.EstagiarioId == estagiarioId)
                 .OrderByDescending(f => f.Data)
                 .ThenByDescending(f => f.DataRegistro)

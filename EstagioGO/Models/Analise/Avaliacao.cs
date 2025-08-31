@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using EstagioGO.Models.Domain;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using EstagioGO.Models.Domain;
 
 namespace EstagioGO.Models.Analise
 {
@@ -29,7 +27,7 @@ namespace EstagioGO.Models.Analise
         public DateTime DataAvaliacao { get; set; } = DateTime.Now;
 
         [StringLength(2000, ErrorMessage = "Os comentários não podem ter mais de 2000 caracteres")]
-        public string ComentariosGerais { get; set; }
+        public string? ComentariosGerais { get; set; }
 
         // Média das notas (0-5)
         [Range(0, 5)]

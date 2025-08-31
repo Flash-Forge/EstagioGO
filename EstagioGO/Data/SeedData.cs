@@ -37,7 +37,7 @@ namespace EstagioGO.Data
                 }
 
                 // Criar os papéis (roles) se não existirem
-                string[] roleNames = { "Administrador", "Coordenador", "Supervisor", "Estagiario" };
+                string[] roleNames = ["Administrador", "Coordenador", "Supervisor", "Estagiario"];
                 foreach (var roleName in roleNames)
                 {
                     try
@@ -141,14 +141,14 @@ namespace EstagioGO.Data
 
         private static string ObterDescricaoRole(string roleName)
         {
-            switch (roleName)
+            return roleName switch
             {
-                case "Administrador": return "Acesso total ao sistema";
-                case "Coordenador": return "Gestão completa dos estagiários";
-                case "Supervisor": return "Avaliação e acompanhamento dos estagiários";
-                case "Estagiario": return "Visualização do próprio perfil e registros";
-                default: return "Papel do sistema";
-            }
+                "Administrador" => "Acesso total ao sistema",
+                "Coordenador" => "Gestão completa dos estagiários",
+                "Supervisor" => "Avaliação e acompanhamento dos estagiários",
+                "Estagiario" => "Visualização do próprio perfil e registros",
+                _ => "Papel do sistema",
+            };
         }
     }
 }

@@ -1,26 +1,21 @@
 ﻿using EstagioGO.Data;
 using EstagioGO.Models.Domain;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace EstagioGO.Controllers
 {
     public class EstagiariosController(ApplicationDbContext context, UserManager<ApplicationUser> userManager) : Controller
     {
-        private readonly ApplicationDbContext _context = context;
         private readonly UserManager<ApplicationUser> _userManager = userManager;
 
         // GET: Estagiarios
         public async Task<IActionResult> Index()
         {
-            var estagiarios = await _context.Estagiarios
+            var estagiarios = await context.Estagiarios
                 .Include(e => e.Supervisor)
                 .Include(e => e.User)
                 .ToListAsync();
@@ -35,7 +30,7 @@ namespace EstagioGO.Controllers
                 return NotFound();
             }
 
-            var estagiario = await _context.Estagiarios
+            var estagiario = await context.Estagiarios
                 .Include(e => e.Supervisor)
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(m => m.Id == id);
@@ -105,7 +100,7 @@ namespace EstagioGO.Controllers
             }
 
             // Verificar se o UserId já está em uso
-            bool usuarioJaVinculado = await _context.Estagiarios.AnyAsync(e => e.UserId == estagiario.UserId);
+            bool usuarioJaVinculado = await context.Estagiarios.AnyAsync(e => e.UserId == estagiario.UserId);
             Debug.WriteLine($"Usuário já vinculado: {usuarioJaVinculado}");
 
             if (usuarioJaVinculado)
@@ -122,8 +117,8 @@ namespace EstagioGO.Controllers
                 // A data de cadastro é definida automaticamente
                 estagiario.DataCadastro = DateTime.Now;
 
-                _context.Add(estagiario);
-                await _context.SaveChangesAsync();
+                context.Add(estagiario);
+                await context.SaveChangesAsync();
 
                 Debug.WriteLine("Estagiário salvo com sucesso!");
                 TempData["SuccessMessage"] = "Estagiário cadastrado com sucesso!";
@@ -154,7 +149,7 @@ namespace EstagioGO.Controllers
         {
             if (id == null) return NotFound();
 
-            var estagiario = await _context.Estagiarios.FindAsync(id);
+            var estagiario = await context.Estagiarios.FindAsync(id);
             if (estagiario == null) return NotFound();
 
             var (recursosDisponiveis, mensagemErro, redirecionarPara) = await CarregarViewBags(estagiario.UserId);
@@ -193,7 +188,7 @@ namespace EstagioGO.Controllers
             }
 
             // Buscar o estagiário existente para preservar o UserId original
-            var estagiarioExistente = await _context.Estagiarios
+            var estagiarioExistente = await context.Estagiarios
                 .AsNoTracking()
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -209,8 +204,8 @@ namespace EstagioGO.Controllers
             {
                 try
                 {
-                    _context.Update(estagiario);
-                    await _context.SaveChangesAsync();
+                    context.Update(estagiario);
+                    await context.SaveChangesAsync();
 
                     TempData["SuccessMessage"] = "Estagiário atualizado com sucesso!";
                     return RedirectToAction(nameof(Index));
@@ -240,7 +235,7 @@ namespace EstagioGO.Controllers
                 return NotFound();
             }
 
-            var estagiario = await _context.Estagiarios
+            var estagiario = await context.Estagiarios
                 .Include(e => e.Supervisor)
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(m => m.Id == id);
@@ -257,9 +252,9 @@ namespace EstagioGO.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var estagiario = await _context.Estagiarios.FindAsync(id);
-            _context.Estagiarios.Remove(estagiario);
-            await _context.SaveChangesAsync();
+            var estagiario = await context.Estagiarios.FindAsync(id);
+            context.Estagiarios.Remove(estagiario);
+            await context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Estagiário excluído com sucesso!";
             return RedirectToAction(nameof(Index));
@@ -267,7 +262,7 @@ namespace EstagioGO.Controllers
 
         private bool EstagiarioExists(int id)
         {
-            return _context.Estagiarios.Any(e => e.Id == id);
+            return context.Estagiarios.Any(e => e.Id == id);
         }
 
         private async Task<(bool recursosDisponiveis, string mensagemErro, string redirecionarPara)> CarregarViewBags(string userIdAtual = null)
@@ -296,7 +291,7 @@ namespace EstagioGO.Controllers
                 }
 
                 // Obter IDs de usuários já vinculados
-                var usuariosVinculados = await _context.Estagiarios
+                var usuariosVinculados = await context.Estagiarios
                     .Where(e => e.UserId != null && e.UserId != userIdAtual)
                     .Select(e => e.UserId)
                     .ToListAsync();

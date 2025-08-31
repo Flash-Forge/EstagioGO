@@ -269,7 +269,8 @@ namespace EstagioGO.Migrations
                     EstagiarioId = table.Column<int>(type: "int", nullable: false),
                     AvaliadorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     DataAvaliacao = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ComentariosGerais = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false)
+                    ComentariosGerais = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    MediaNotas = table.Column<decimal>(type: "decimal(3,2)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -336,7 +337,7 @@ namespace EstagioGO.Migrations
                     AvaliacaoId = table.Column<int>(type: "int", nullable: false),
                     CompetenciaId = table.Column<int>(type: "int", nullable: false),
                     Nota = table.Column<int>(type: "int", nullable: false),
-                    Comentario = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false)
+                    Comentario = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {

@@ -8,10 +8,7 @@ namespace EstagioGO.Data
         public ApplicationRole() { }
 
         // Adicione este construtor para evitar problemas futuros
-        public ApplicationRole(string roleName) : base(roleName)
-        {
-            DataCriacao = DateTime.Now;
-        }
+        public ApplicationRole(string roleName) : base(roleName) => DataCriacao = DateTime.Now;
 
         public string Descricao { get; set; }
         public DateTime DataCriacao { get; set; }

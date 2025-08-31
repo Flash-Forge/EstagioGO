@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using EstagioGO.Data;
+﻿using EstagioGO.Data;
 using EstagioGO.Models.Analise;
 using EstagioGO.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -13,22 +10,14 @@ using Microsoft.EntityFrameworkCore;
 namespace EstagioGO.Controllers
 {
     [Authorize(Roles = "Supervisor,Coordenador,Administrador")]
-    public class AvaliacaoController : Controller
+    public class AvaliacaoController(ApplicationDbContext context, UserManager<ApplicationUser> userManager) : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
-
-        public AvaliacaoController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
-        {
-            _context = context;
-            _userManager = userManager;
-        }
 
         // GET: Avaliacao/Create
         public async Task<IActionResult> Create()
         {
             // Carregar categorias e competências ativas
-            var categorias = await _context.Categorias
+            var categorias = await context.Categorias
                 .Include(c => c.Competencias)
                 .Where(c => c.Ativo)
                 .OrderBy(c => c.OrdemExibicao)
@@ -36,12 +25,12 @@ namespace EstagioGO.Controllers
 
             var viewModel = new AvaliacaoViewModel
             {
-                Categorias = categorias.Select(c => new CategoriaAvaliacaoViewModel
+                Categorias = [.. categorias.Select(c => new CategoriaAvaliacaoViewModel
                 {
                     CategoriaId = c.Id,
                     Nome = c.Nome,
                     Descricao = c.Descricao,
-                    Competencias = c.Competencias
+                    Competencias = [.. c.Competencias
                         .Where(comp => comp.Ativo)
                         .OrderBy(comp => comp.OrdemExibicao)
                         .Select(comp => new CompetenciaAvaliacaoViewModel
@@ -49,13 +38,13 @@ namespace EstagioGO.Controllers
                             CompetenciaId = comp.Id,
                             Descricao = comp.Descricao,
                             Nota = 0 // Valor padrão
-                        }).ToList()
-                }).ToList()
+                        })]
+                })]
             };
 
             // Carregar estagiários ativos para o dropdown
             ViewBag.Estagiarios = new SelectList(
-                await _context.Estagiarios
+                await context.Estagiarios
                     .Where(e => e.Ativo)
                     .OrderBy(e => e.Nome)
                     .ToListAsync(),
@@ -74,7 +63,7 @@ namespace EstagioGO.Controllers
                 try
                 {
                     // Obter o ID do usuário logado
-                    var user = await _userManager.GetUserAsync(User);
+                    var user = await userManager.GetUserAsync(User);
                     var avaliadorId = user.Id;
 
                     // Criar a avaliação
@@ -116,8 +105,8 @@ namespace EstagioGO.Controllers
                         avaliacao.MediaNotas = Math.Round(somaNotas / totalCompetencias, 2);
                     }
 
-                    _context.Add(avaliacao);
-                    await _context.SaveChangesAsync();
+                    context.Add(avaliacao);
+                    await context.SaveChangesAsync();
 
                     TempData["SuccessMessage"] = $"Avaliação registrada com sucesso! Média: {avaliacao.MediaNotas}/5";
                     return RedirectToAction(nameof(Index), "Home");
@@ -130,7 +119,7 @@ namespace EstagioGO.Controllers
 
             // Se houver erro, recarregar os dados necessários para a view
             ViewBag.Estagiarios = new SelectList(
-                await _context.Estagiarios
+                await context.Estagiarios
                     .Where(e => e.Ativo)
                     .OrderBy(e => e.Nome)
                     .ToListAsync(),

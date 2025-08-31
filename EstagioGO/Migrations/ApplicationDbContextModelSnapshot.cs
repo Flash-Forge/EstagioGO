@@ -187,7 +187,6 @@ namespace EstagioGO.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ComentariosGerais")
-                        .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 

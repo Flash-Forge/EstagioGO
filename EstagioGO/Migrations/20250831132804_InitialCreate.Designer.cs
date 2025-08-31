@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EstagioGO.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250828145102_AddMediaNotasInAvaliacao")]
-    partial class AddMediaNotasInAvaliacao
+    [Migration("20250831132804_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -190,7 +190,6 @@ namespace EstagioGO.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ComentariosGerais")
-                        .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
@@ -224,7 +223,6 @@ namespace EstagioGO.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Comentario")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 

@@ -1,7 +1,6 @@
 using EstagioGO.Constants;
 using EstagioGO.Data;
 using EstagioGO.Filters;
-using EstagioGO.Services;
 using EstagioGO.Services.Email;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -44,20 +43,19 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 builder.Services.AddSingleton<IEmailSender, EmailSender>();
 
 // Políticas de autorização
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("PodeGerenciarEstagiarios", policy =>
+builder.Services.AddAuthorizationBuilder()
+                               // Políticas de autorização
+                               .AddPolicy("PodeGerenciarEstagiarios", policy =>
+        policy.RequireRole("Administrador", "Coordenador"))
+                               // Políticas de autorização
+                               .AddPolicy("PodeRegistrarFrequencia", policy =>
+        policy.RequireRole("Administrador", "Coordenador", "Supervisor"))
+                               // Políticas de autorização
+                               .AddPolicy("PodeAvaliarEstagiarios", policy =>
+        policy.RequireRole("Administrador", "Coordenador", "Supervisor"))
+                               // Políticas de autorização
+                               .AddPolicy("PodeVerRelatorios", policy =>
         policy.RequireRole("Administrador", "Coordenador"));
-
-    options.AddPolicy("PodeRegistrarFrequencia", policy =>
-        policy.RequireRole("Administrador", "Coordenador", "Supervisor"));
-
-    options.AddPolicy("PodeAvaliarEstagiarios", policy =>
-        policy.RequireRole("Administrador", "Coordenador", "Supervisor"));
-
-    options.AddPolicy("PodeVerRelatorios", policy =>
-        policy.RequireRole("Administrador", "Coordenador"));
-});
 
 // Adicione o filtro de primeiro acesso
 builder.Services.AddScoped<FirstAccessFilter>();

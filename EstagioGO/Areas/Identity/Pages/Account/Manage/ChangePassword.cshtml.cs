@@ -1,24 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.ComponentModel.DataAnnotations;
 
 namespace EstagioGO.Areas.Identity.Pages.Account.Manage
 {
-    public class ChangePasswordModel : PageModel
+    public class ChangePasswordModel(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager) : PageModel
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-
-        public ChangePasswordModel(
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-        }
-
         [BindProperty]
         public InputModel Input { get; set; }
 
@@ -30,26 +20,26 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
             [Required]
             [DataType(DataType.Password)]
             [Display(Name = "Senha atual")]
-            public string OldPassword { get; set; }
+            public required string OldPassword { get; set; }
 
             [Required]
             [StringLength(100, ErrorMessage = "A {0} deve ter pelo menos {2} e no máximo {1} caracteres.", MinimumLength = 6)]
             [DataType(DataType.Password)]
             [Display(Name = "Nova senha")]
-            public string NewPassword { get; set; }
+            public required string NewPassword { get; set; }
 
             [DataType(DataType.Password)]
             [Display(Name = "Confirmar nova senha")]
             [Compare("NewPassword", ErrorMessage = "A nova senha e a confirmação não coincidem.")]
-            public string ConfirmPassword { get; set; }
+            public required string ConfirmPassword { get; set; }
         }
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var user = await _userManager.GetUserAsync(User);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Não foi possível carregar o usuário com ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"Não foi possível carregar o usuário com ID '{userManager.GetUserId(User)}'.");
             }
 
             // Verifique se é o primeiro acesso
@@ -69,13 +59,13 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            var user = await _userManager.GetUserAsync(User);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Não foi possível carregar o usuário com ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"Não foi possível carregar o usuário com ID '{userManager.GetUserId(User)}'.");
             }
 
-            var changePasswordResult = await _userManager.ChangePasswordAsync(user, Input.OldPassword, Input.NewPassword);
+            var changePasswordResult = await userManager.ChangePasswordAsync(user, Input.OldPassword, Input.NewPassword);
             if (!changePasswordResult.Succeeded)
             {
                 foreach (var error in changePasswordResult.Errors)
@@ -92,7 +82,7 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
             if (isFirstAccess)
             {
                 user.PrimeiroAcessoConcluido = true;
-                var updateResult = await _userManager.UpdateAsync(user);
+                var updateResult = await userManager.UpdateAsync(user);
 
                 if (!updateResult.Succeeded)
                 {
@@ -104,7 +94,7 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
                 }
             }
 
-            await _signInManager.RefreshSignInAsync(user);
+            await signInManager.RefreshSignInAsync(user);
 
             StatusMessage = "Sua senha foi alterada com sucesso.";
 

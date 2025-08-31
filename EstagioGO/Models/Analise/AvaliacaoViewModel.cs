@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace EstagioGO.Models.ViewModels
 {
@@ -12,7 +10,7 @@ namespace EstagioGO.Models.ViewModels
 
         [StringLength(2000, ErrorMessage = "Os comentários não podem ter mais de 2000 caracteres")]
         [Display(Name = "Comentários Gerais")]
-        public string ComentariosGerais { get; set; }
+        public string? ComentariosGerais { get; set; }
 
         public List<CategoriaAvaliacaoViewModel> Categorias { get; set; } = [];
     }

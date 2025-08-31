@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace EstagioGO.Models.Domain
 {
@@ -15,7 +13,7 @@ namespace EstagioGO.Models.Domain
         public int EstagiarioId { get; set; }
 
         [ForeignKey("EstagiarioId")]
-        [ValidateNever] // Adicionar esta linha
+        [ValidateNever]
         public Estagiario Estagiario { get; set; }
 
         [Required(ErrorMessage = "A data é obrigatória")]

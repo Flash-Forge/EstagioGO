@@ -1,0 +1,335 @@
+﻿@model EstagioGO.Models.Analise.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard de Avaliações";
+}
+
+<div class="container-fluid">
+    <h2>@ViewData["Title"]</h2>
+
+    <!-- Filtro por estagiário -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <form asp-action="Index" method="get" class="form-inline">
+                <div class="form-group">
+                    <label for="estagiarioId" class="mr-2">Filtrar por Estagiário:</label>
+                    <select name="estagiarioId" id="estagiarioId" class="form-control" asp-items="ViewBag.Estagiarios">
+                        <option value="">-- Todos os Estagiários --</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary ml-2">Filtrar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Seção Superior: KPIs -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total de Estagiários Ativos</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalEstagiariosAtivos</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Avaliações Pendentes</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.AvaliacoesPendentes</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Média de Desempenho</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.MediaDesempenhoGeral.ToString("N2")/5</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Estagiários em Risco</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.EstagiariosEmRisco</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção Central: Gráficos -->
+    <div class="row">
+        <!-- Gráfico de Radar -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Média de Competências do Grupo</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="radarChart" style="width: 100%; height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Barras -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Desempenho por Categoria</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="barChart" style="width: 100%; height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção Inferior: Evolução e Ações -->
+    <div class="row">
+        <!-- Evolução do Desempenho Médio -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Evolução do Desempenho Médio</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="lineChart" style="width: 100%; height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mapeamento de Talento -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Mapeamento de Talento</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="scatterChart" style="width: 100%; height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Estagiários -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Lista de Estagiários</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Supervisor</th>
+                                    <th>Curso</th>
+                                    <th>Instituição</th>
+                                    <th>Última Nota</th>
+                                    <th>Última Avaliação</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var estagiario in Model.Estagiarios)
+                                {
+                                    <tr>
+                                        <td>@estagiario.Nome</td>
+                                        <td>@estagiario.Supervisor</td>
+                                        <td>@estagiario.Curso</td>
+                                        <td>@estagiario.Instituicao</td>
+                                        <td>@estagiario.UltimaNota.ToString("N2")</td>
+                                        <td>@estagiario.UltimaAvaliacao?.ToString("dd/MM/yyyy")</td>
+                                        <td>
+                                            <span class="badge @(estagiario.Status == "Estável" ? "badge-success" : "badge-danger")">
+                                                @estagiario.Status
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="@Url.Action("Details", "Estagiarios", new { id = estagiario.Id })" class="btn btn-info btn-sm">
+                                                <i class="fas fa-eye"></i> Ver Detalhes
+                                            </a>
+                                            <a href="@Url.Action("Create", "Avaliacao", new { estagiarioId = estagiario.Id })" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-plus"></i> Nova Avaliação
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Dados para os gráficos
+        const radarData = {
+            labels: [@Html.Raw(string.Join(", ", Model.MediasCategorias.Select(m => $"'{m.Categoria}'")))],
+            datasets: [{
+                label: 'Média das Categorias',
+                data: [@string.Join(", ", Model.MediasCategorias.Select(m => m.Media.ToString("N2")))],
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(54, 162, 235, 1)'
+            }]
+        };
+
+        const barData = {
+            labels: [@Html.Raw(string.Join(", ", Model.MediasCategorias.Select(m => $"'{m.Categoria}'")))],
+            datasets: [{
+                label: 'Média por Categoria',
+                data: [@string.Join(", ", Model.MediasCategorias.Select(m => m.Media.ToString("N2")))],
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        const lineData = {
+            labels: [@Html.Raw(string.Join(", ", Model.EvolucaoDesempenho.Select(e => $"'{e.Periodo}'")))],
+            datasets: [{
+                label: 'Evolução do Desempenho',
+                data: [@string.Join(", ", Model.EvolucaoDesempenho.Select(e => e.Media.ToString("N2")))],
+                fill: false,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        };
+
+        const scatterData = {
+            datasets: [{
+                label: 'Mapeamento de Talentos',
+                data: [
+                    @foreach (var talento in Model.MapeamentoTalentos)
+                    {
+                            <text>{ x: @talento.MediaHabilidadesTecnicas.ToString("N2"), y: @talento.MediaHabilidadesComportamentais.ToString("N2") },</text>
+                    }
+                ],
+                backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                pointRadius: 8,
+                pointHoverRadius: 10
+            }]
+        };
+
+        // Configuração dos gráficos
+        document.addEventListener('DOMContentLoaded', function() {
+            // Radar Chart
+            const radarCtx = document.getElementById('radarChart').getContext('2d');
+            new Chart(radarCtx, {
+                type: 'radar',
+                data: radarData,
+                options: {
+                    scales: {
+                        r: {
+                            angleLines: { display: true },
+                            suggestedMin: 0,
+                            suggestedMax: 5
+                        }
+                    }
+                }
+            });
+
+            // Bar Chart
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            new Chart(barCtx, {
+                type: 'bar',
+                data: barData,
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5
+                        }
+                    }
+                }
+            });
+
+            // Line Chart
+            const lineCtx = document.getElementById('lineChart').getContext('2d');
+            new Chart(lineCtx, {
+                type: 'line',
+                data: lineData,
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5
+                        }
+                    }
+                }
+            });
+
+            // Scatter Chart
+            const scatterCtx = document.getElementById('scatterChart').getContext('2d');
+            new Chart(scatterCtx, {
+                type: 'scatter',
+                data: scatterData,
+                options: {
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Habilidades Técnicas' },
+                            beginAtZero: true,
+                            max: 5
+                        },
+                        y: {
+                            title: { display: true, text: 'Habilidades Comportamentais' },
+                            beginAtZero: true,
+                            max: 5
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

@@ -102,7 +102,7 @@ namespace EstagioGO.Data
 
             builder.Entity<Avaliacao>()
                 .HasOne(a => a.Estagiario)
-                .WithMany()
+                .WithMany(e => e.Avaliacoes)
                 .HasForeignKey(a => a.EstagiarioId)
                 .OnDelete(DeleteBehavior.Cascade);
 

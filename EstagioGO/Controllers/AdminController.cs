@@ -1,6 +1,6 @@
 ﻿using EstagioGO.Constants;
 using EstagioGO.Data;
-using EstagioGO.Models.Admin;
+using EstagioGO.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;

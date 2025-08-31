@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace EstagioGO.Models.ViewModels
+namespace EstagioGO.Models.Analise
 {
     public class AvaliacaoViewModel
     {

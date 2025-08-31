@@ -1,10 +1,5 @@
 ﻿using EstagioGO.Constants;
-using EstagioGO.Data;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace EstagioGO.Data
 {

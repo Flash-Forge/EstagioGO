@@ -37,6 +37,6 @@ namespace EstagioGO.Models.ViewModels
 
         [StringLength(500, ErrorMessage = "O comentário não pode ter mais de 500 caracteres")]
         [Display(Name = "Comentário")]
-        public string Comentario { get; set; }
+        public string? Comentario { get; set; }
     }
 }

@@ -24,6 +24,6 @@ namespace EstagioGO.Models.Analise
         public int Nota { get; set; }
 
         [StringLength(500, ErrorMessage = "O comentário não pode ter mais de 500 caracteres")]
-        public string Comentario { get; set; }
+        public string? Comentario { get; set; }
     }
 }

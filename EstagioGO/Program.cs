@@ -138,6 +138,11 @@ app.MapControllerRoute(
     pattern: "Estagiarios/{action=Index}/{id?}",
     defaults: new { controller = "Estagiarios" });
 
+app.MapControllerRoute(
+    name: "dashboard",
+    pattern: "Dashboard/{action=Index}/{id?}",
+    defaults: new { controller = "Dashboard" });
+
 // No .NET 8, NÃO use app.UseEndpoints() - isso está obsoleto
 app.MapControllerRoute(
     name: "default",

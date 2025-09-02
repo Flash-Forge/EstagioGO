@@ -50,15 +50,15 @@
                                 <a class="nav-link text-dark" asp-controller="Frequencia" asp-action="Index">Frequência</a>
                             </li>
 
-                            if (User.IsInRole("Administrador") || User.IsInRole("Coordenador"))
+                            if (User.IsInRole("Administrador") || User.IsInRole("Coordenador") || User.IsInRole("Supervisor"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" id="relatoriosDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Relatórios
+                                        Avaliações
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="relatoriosDropdown">
-                                        <li><a class="dropdown-item" asp-controller="Relatorios" asp-action="Frequencia">Frequência</a></li>
-                                        <li><a class="dropdown-item" asp-controller="Relatorios" asp-action="Desempenho">Desempenho</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Avaliacao" asp-action="Create">Nova Avaliação</a></li>
                                     </ul>
                                 </li>
                             }

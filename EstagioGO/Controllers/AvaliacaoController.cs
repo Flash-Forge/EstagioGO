@@ -215,5 +215,10 @@ namespace EstagioGO.Controllers
 
             return View(viewModel);
         }
+
+        public IActionResult Index()
+        {
+            return RedirectToAction("Index", "Dashboard");
+        }
     }
 }

@@ -18,8 +18,8 @@ namespace EstagioGO.Models.Analise
     public class CategoriaAvaliacaoViewModel
     {
         public int CategoriaId { get; set; }
-        public string? Nome { get; set; } // Adicionado ?
-        public string? Descricao { get; set; } // Adicionado ?
+        public string? Nome { get; set; }
+        public string? Descricao { get; set; }
         public List<CompetenciaAvaliacaoViewModel> Competencias { get; set; } = [];
     }
 

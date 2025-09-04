@@ -1,90 +1,402 @@
-﻿@model EstagioGO.Models.Analise.ViewModels.DashboardViewModel
+@model EstagioGO.Models.Analise.ViewModels.DashboardViewModel
 
 @{
     ViewData["Title"] = "Dashboard de Avaliações";
 }
 
-<!-- Adicione estas referências CSS no cabeçalho -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
-
 <div class="container-fluid">
-    <h2>@ViewData["Title"]</h2>
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>@ViewData["Title"]
+                </h2>
+                <div>
+                    <a asp-controller="Categoria" asp-action="Index" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-tags me-1"></i>Gerenciar Categorias
+                    </a>
+                    <a asp-controller="Competencia" asp-action="Index" class="btn btn-outline-primary">
+                        <i class="fas fa-list-check me-1"></i>Gerenciar Competências
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Filtro por estagiário -->
     <div class="row mb-4">
         <div class="col-md-6">
-            <form asp-action="Index" method="get" class="form-inline">
-                <div class="form-group">
-                    <label for="estagiarioId" class="mr-2">Filtrar por Estagiário:</label>
-                    <select name="estagiarioId" id="estagiarioId" class="form-control" asp-items="ViewBag.Estagiarios">
-                        <option value="">-- Todos os Estagiários --</option>
-                    </select>
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Index" method="get" class="d-flex align-items-end gap-3">
+                        <div class="flex-grow-1">
+                            <label for="estagiarioId" class="form-label">Filtrar por Estagiário:</label>
+                            <select name="estagiarioId" id="estagiarioId" class="form-select" asp-items="ViewBag.Estagiarios">
+                                <option value="">-- Todos os Estagiários --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i>Filtrar
+                            </button>
+                        </div>
+                        <div>
+                            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Limpar
+                            </a>
+                        </div>
+                    </form>
                 </div>
-                <button type="submit" class="btn btn-primary ml-2">Filtrar</button>
-                <a href="@Url.Action("Index")" class="btn btn-secondary ml-2">Limpar Filtro</a>
-            </form>
+            </div>
         </div>
     </div>
 
-    <!-- Seção de alertas -->
+    <!-- KPIs -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">@Model.TotalEstagiariosAtivos</h4>
+                            <p class="card-text">Estagiários Ativos</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">@Model.AvaliacoesPendentes</h4>
+                            <p class="card-text">Avaliações Pendentes</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">@Model.MediaDesempenhoGeral.ToString("N2")</h4>
+                            <p class="card-text">Média Geral</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">@Model.EstagiariosEmRisco</h4>
+                            <p class="card-text">Estagiários em Risco</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @if (!Model.Estagiarios.Any())
     {
-        <div class="alert alert-warning" role="alert">
-            Nenhum estagiário encontrado ou não há dados de avaliação disponíveis.
-            <a href="@Url.Action("Create", "Avaliacao")" class="alert-link">Crie uma avaliação</a> para ver os dados no dashboard.
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Nenhum dado encontrado!</strong>
+                    Não há estagiários ou avaliações disponíveis para exibir no dashboard.
+                    <a href="@Url.Action("Create", "Avaliacao")" class="alert-link">Crie uma avaliação</a> para ver os dados aqui.
+                </div>
+            </div>
         </div>
     }
+    else
+    {
+        <!-- Gráficos -->
+        <div class="row mb-4">
+            @if (Model.MediasCategorias.Any())
+            {
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-radar me-2"></i>Médias por Categoria
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="radarChart" width="400" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            }
 
-    <!-- Restante do código do dashboard -->
-    <!-- ... -->
+            @if (Model.EvolucaoDesempenho.Any())
+            {
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-line me-2"></i>Evolução do Desempenho
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="lineChart" width="400" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="row mb-4">
+            @if (Model.MapeamentoTalentos.Any())
+            {
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-scatter me-2"></i>Mapeamento de Talentos
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="scatterChart" width="400" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-users me-2"></i>Resumo dos Estagiários
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Última Nota</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var estagiario in Model.Estagiarios.Take(10))
+                                    {
+                                        <tr>
+                                            <td>@estagiario.Nome</td>
+                                            <td>
+                                                <span class="badge @(estagiario.UltimaNota >= 3 ? "bg-success" : "bg-danger")">
+                                                    @estagiario.UltimaNota.ToString("N2")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (estagiario.Status == "Estável")
+                                                {
+                                                    <span class="badge bg-success">@estagiario.Status</span>
+                                                }
+                                                else if (estagiario.Status == "Em Risco")
+                                                {
+                                                    <span class="badge bg-danger">@estagiario.Status</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">@estagiario.Status</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        @if (Model.Estagiarios.Count > 10)
+                        {
+                            <div class="text-center mt-2">
+                                <small class="text-muted">Mostrando 10 de @Model.Estagiarios.Count estagiários</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Dados para os gráficos
-        const radarData = {
-            labels: [@Html.Raw(string.Join(", ", Model.MediasCategorias.Select(m => $"'{m.Categoria}'")))],
-            datasets: [{
-                label: 'Média das Categorias',
-                data: [@string.Join(", ", Model.MediasCategorias.Select(m => m.Media.ToString("N2")))],
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgba(54, 162, 235, 1)'
-            }]
-        };
-
-        // Configuração dos gráficos
         document.addEventListener('DOMContentLoaded', function() {
-            // Verificar se há dados para exibir
-            @if (Model.MediasCategorias.Any() && Model.MediasCategorias.All(m => m.Media > 0))
+            // Configurações globais do Chart.js
+            Chart.defaults.responsive = true;
+            Chart.defaults.maintainAspectRatio = false;
+
+            @if (Model.MediasCategorias.Any())
             {
-                    <text>
-                    // Radar Chart
-                    const radarCtx = document.getElementById('radarChart');
-                    if (radarCtx) {
-                        new Chart(radarCtx, {
-                            type: 'radar',
-                            data: radarData,
-                            options: {
-                                scales: {
-                                    r: {
-                                        angleLines: { display: true },
-                                        suggestedMin: 0,
-                                        suggestedMax: 5
+                <text>
+                // Radar Chart - Médias por Categoria
+                const radarCtx = document.getElementById('radarChart');
+                if (radarCtx) {
+                    new Chart(radarCtx, {
+                        type: 'radar',
+                        data: {
+                            labels: [@Html.Raw(string.Join(", ", Model.MediasCategorias.Select(m => $"'{m.Categoria}'")))],
+                            datasets: [{
+                                label: 'Média das Categorias',
+                                data: [@string.Join(", ", Model.MediasCategorias.Select(m => m.Media.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)))],
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                r: {
+                                    angleLines: { display: true },
+                                    suggestedMin: 0,
+                                    suggestedMax: 5,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                }
+                </text>
+            }
+
+            @if (Model.EvolucaoDesempenho.Any())
+            {
+                <text>
+                // Line Chart - Evolução do Desempenho
+                const lineCtx = document.getElementById('lineChart');
+                if (lineCtx) {
+                    new Chart(lineCtx, {
+                        type: 'line',
+                        data: {
+                            labels: [@Html.Raw(string.Join(", ", Model.EvolucaoDesempenho.Select(e => $"'{e.Periodo}'")))],
+                            datasets: [{
+                                label: 'Média de Desempenho',
+                                data: [@string.Join(", ", Model.EvolucaoDesempenho.Select(e => e.Media.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)))],
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 5,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                }
+                </text>
+            }
+
+            @if (Model.MapeamentoTalentos.Any())
+            {
+                <text>
+                // Scatter Chart - Mapeamento de Talentos
+                const scatterCtx = document.getElementById('scatterChart');
+                if (scatterCtx) {
+                    new Chart(scatterCtx, {
+                        type: 'scatter',
+                        data: {
+                            datasets: [{
+                                label: 'Estagiários',
+                                data: [
+                                    @Html.Raw(string.Join(", ", Model.MapeamentoTalentos.Select(t => 
+                                        $"{{x: {t.MediaHabilidadesTecnicas.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)}, y: {t.MediaHabilidadesComportamentais.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)}, label: '{t.Estagiario}'}}")))
+                                ],
+                                backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Habilidades Técnicas'
+                                    },
+                                    min: 0,
+                                    max: 5
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Habilidades Comportamentais'
+                                    },
+                                    min: 0,
+                                    max: 5
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.raw.label + ': (' + context.parsed.x + ', ' + context.parsed.y + ')';
+                                        }
                                     }
                                 }
                             }
-                        });
-                    }
-                    </text>
+                        }
+                    });
+                }
+                </text>
             }
-
-            // Adicione verificações semelhantes para os outros gráficos
         });
     </script>
 }
+

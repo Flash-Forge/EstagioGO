@@ -212,8 +212,8 @@ namespace EstagioGO.Controllers
                 .OrderByDescending(e => e.UltimaNota)
                 .ToList();
 
-                _logger.LogInformation($"Encontrados {resultado.Count} estagiários para a lista");
-                return resultado;
+                _logger.LogInformation("Encontrados {Count} estagiários para a lista", resultado.Count);
+                return resultado ?? new List<EstagiarioResumoViewModel>();
             }
             catch (Exception ex)
             {

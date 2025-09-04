@@ -1,0 +1,75 @@
+@model EstagioGO.Models.Analise.Competencia
+
+@{
+    ViewData["Title"] = "Nova Competência";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-plus me-2"></i>Nova Competência
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label asp-for="CategoriaId" class="form-label">Categoria</label>
+                                    <select asp-for="CategoriaId" class="form-select" asp-items="ViewBag.CategoriaId">
+                                        <option value="">Selecione uma categoria</option>
+                                    </select>
+                                    <span asp-validation-for="CategoriaId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="OrdemExibicao" class="form-label">Ordem de Exibição</label>
+                                    <input asp-for="OrdemExibicao" class="form-control" type="number" min="1" value="1" />
+                                    <span asp-validation-for="OrdemExibicao" class="text-danger"></span>
+                                    <div class="form-text">Ordem dentro da categoria</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Descricao" class="form-label">Descrição da Competência</label>
+                            <textarea asp-for="Descricao" class="form-control" rows="3" 
+                                      placeholder="Ex: Conhecimento em linguagens de programação"></textarea>
+                            <span asp-validation-for="Descricao" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="Ativo" class="form-check-input" checked />
+                                <label asp-for="Ativo" class="form-check-label">
+                                    Competência ativa
+                                </label>
+                                <div class="form-text">Competências inativas não aparecerão nas avaliações</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Voltar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Salvar Competência
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

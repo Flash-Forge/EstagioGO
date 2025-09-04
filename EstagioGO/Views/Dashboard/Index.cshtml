@@ -1,0 +1,90 @@
+﻿@model EstagioGO.Models.Analise.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard de Avaliações";
+}
+
+<!-- Adicione estas referências CSS no cabeçalho -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+
+<div class="container-fluid">
+    <h2>@ViewData["Title"]</h2>
+
+    <!-- Filtro por estagiário -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <form asp-action="Index" method="get" class="form-inline">
+                <div class="form-group">
+                    <label for="estagiarioId" class="mr-2">Filtrar por Estagiário:</label>
+                    <select name="estagiarioId" id="estagiarioId" class="form-control" asp-items="ViewBag.Estagiarios">
+                        <option value="">-- Todos os Estagiários --</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary ml-2">Filtrar</button>
+                <a href="@Url.Action("Index")" class="btn btn-secondary ml-2">Limpar Filtro</a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Seção de alertas -->
+    @if (!Model.Estagiarios.Any())
+    {
+        <div class="alert alert-warning" role="alert">
+            Nenhum estagiário encontrado ou não há dados de avaliação disponíveis.
+            <a href="@Url.Action("Create", "Avaliacao")" class="alert-link">Crie uma avaliação</a> para ver os dados no dashboard.
+        </div>
+    }
+
+    <!-- Restante do código do dashboard -->
+    <!-- ... -->
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Dados para os gráficos
+        const radarData = {
+            labels: [@Html.Raw(string.Join(", ", Model.MediasCategorias.Select(m => $"'{m.Categoria}'")))],
+            datasets: [{
+                label: 'Média das Categorias',
+                data: [@string.Join(", ", Model.MediasCategorias.Select(m => m.Media.ToString("N2")))],
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(54, 162, 235, 1)'
+            }]
+        };
+
+        // Configuração dos gráficos
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar se há dados para exibir
+            @if (Model.MediasCategorias.Any() && Model.MediasCategorias.All(m => m.Media > 0))
+            {
+                    <text>
+                    // Radar Chart
+                    const radarCtx = document.getElementById('radarChart');
+                    if (radarCtx) {
+                        new Chart(radarCtx, {
+                            type: 'radar',
+                            data: radarData,
+                            options: {
+                                scales: {
+                                    r: {
+                                        angleLines: { display: true },
+                                        suggestedMin: 0,
+                                        suggestedMax: 5
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    </text>
+            }
+
+            // Adicione verificações semelhantes para os outros gráficos
+        });
+    </script>
+}

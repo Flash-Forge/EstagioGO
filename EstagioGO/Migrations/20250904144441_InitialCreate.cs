@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -215,29 +216,6 @@ namespace EstagioGO.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Justificativas",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Motivo = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Detalhamento = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    DataRegistro = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UsuarioRegistroId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Ativo = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Justificativas", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Justificativas_AspNetUsers_UsuarioRegistroId",
-                        column: x => x.UsuarioRegistroId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Competencias",
                 columns: table => new
                 {
@@ -300,8 +278,9 @@ namespace EstagioGO.Migrations
                     HoraSaida = table.Column<TimeSpan>(type: "time", nullable: true),
                     Presente = table.Column<bool>(type: "bit", nullable: false),
                     Observacao = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    JustificativaId = table.Column<int>(type: "int", nullable: true),
                     DataRegistro = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Motivo = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Detalhamento = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     RegistradoPorId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
@@ -319,12 +298,6 @@ namespace EstagioGO.Migrations
                         principalTable: "Estagiarios",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Frequencias_Justificativas_JustificativaId",
-                        column: x => x.JustificativaId,
-                        principalTable: "Justificativas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -497,19 +470,9 @@ namespace EstagioGO.Migrations
                 column: "EstagiarioId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Frequencias_JustificativaId",
-                table: "Frequencias",
-                column: "JustificativaId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Frequencias_RegistradoPorId",
                 table: "Frequencias",
                 column: "RegistradoPorId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Justificativas_UsuarioRegistroId",
-                table: "Justificativas",
-                column: "UsuarioRegistroId");
         }
 
         /// <inheritdoc />
@@ -544,9 +507,6 @@ namespace EstagioGO.Migrations
 
             migrationBuilder.DropTable(
                 name: "Competencias");
-
-            migrationBuilder.DropTable(
-                name: "Justificativas");
 
             migrationBuilder.DropTable(
                 name: "Estagiarios");

@@ -619,41 +619,6 @@ namespace EstagioGO.Migrations
                     b.ToTable("Frequencias");
                 });
 
-            modelBuilder.Entity("EstagioGO.Models.Domain.Justificativa", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Ativo")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("DataRegistro")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Detalhamento")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("Motivo")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("UsuarioRegistroId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UsuarioRegistroId");
-
-                    b.ToTable("Justificativas");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.Property<int>("Id")
@@ -769,7 +734,7 @@ namespace EstagioGO.Migrations
                         .IsRequired();
 
                     b.HasOne("EstagioGO.Models.Domain.Estagiario", "Estagiario")
-                        .WithMany()
+                        .WithMany("Avaliacoes")
                         .HasForeignKey("EstagiarioId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -847,17 +812,6 @@ namespace EstagioGO.Migrations
                     b.Navigation("RegistradoPor");
                 });
 
-            modelBuilder.Entity("EstagioGO.Models.Domain.Justificativa", b =>
-                {
-                    b.HasOne("ApplicationUser", "UsuarioRegistro")
-                        .WithMany("JustificativasRegistradas")
-                        .HasForeignKey("UsuarioRegistroId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("UsuarioRegistro");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("EstagioGO.Data.ApplicationRole", null)
@@ -918,8 +872,6 @@ namespace EstagioGO.Migrations
                     b.Navigation("EstagiariosSupervisionados");
 
                     b.Navigation("FrequenciasRegistradas");
-
-                    b.Navigation("JustificativasRegistradas");
                 });
 
             modelBuilder.Entity("EstagioGO.Models.Analise.Avaliacao", b =>
@@ -939,11 +891,8 @@ namespace EstagioGO.Migrations
 
             modelBuilder.Entity("EstagioGO.Models.Domain.Estagiario", b =>
                 {
-                    b.Navigation("Frequencias");
-                });
+                    b.Navigation("Avaliacoes");
 
-            modelBuilder.Entity("EstagioGO.Models.Domain.Justificativa", b =>
-                {
                     b.Navigation("Frequencias");
                 });
 #pragma warning restore 612, 618

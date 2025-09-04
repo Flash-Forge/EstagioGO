@@ -95,7 +95,7 @@ namespace EstagioGO.Data
 
             builder.Entity<Avaliacao>()
                 .HasOne(a => a.Estagiario)
-                .WithMany()
+                .WithMany(e => e.Avaliacoes)
                 .HasForeignKey(a => a.EstagiarioId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -103,12 +103,6 @@ namespace EstagioGO.Data
                 .HasOne(a => a.Avaliador)
                 .WithMany(u => u.AvaliacoesRealizadas)
                 .HasForeignKey(a => a.AvaliadorId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Justificativa>()
-                .HasOne(j => j.UsuarioRegistro)
-                .WithMany(u => u.JustificativasRegistradas)
-                .HasForeignKey(j => j.UsuarioRegistroId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // CONFIGURAÇÕES PARA O SISTEMA DE AVALIAÇÃO POR CATEGORIAS

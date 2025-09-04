@@ -1,4 +1,4 @@
-﻿namespace EstagioGO.Models.Analise
+﻿namespace EstagioGO.Models.Analise.ViewModels
 {
     public class DashboardViewModel
     {

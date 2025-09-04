@@ -1,5 +1,5 @@
 ﻿using EstagioGO.Data;
-using EstagioGO.Models.Analise;
+using EstagioGO.Models.Analise.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;

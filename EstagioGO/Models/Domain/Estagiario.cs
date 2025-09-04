@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using EstagioGO.Models.Analise;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EstagioGO.Models.Domain
@@ -54,5 +55,7 @@ namespace EstagioGO.Models.Domain
 
         // Relacionamentos - inicializar como listas vazias para evitar null reference
         public ICollection<Frequencia> Frequencias { get; set; } = [];
+
+        public ICollection<Avaliacao> Avaliacoes { get; set; } = [];
     }
 }

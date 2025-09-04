@@ -1,0 +1,142 @@
+@model EstagioGO.Models.Analise.Categoria
+
+@{
+    ViewData["Title"] = "Detalhes da Categoria";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Detalhes da Categoria
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <dl class="row">
+                                <dt class="col-sm-3">Nome:</dt>
+                                <dd class="col-sm-9">@Model.Nome</dd>
+
+                                <dt class="col-sm-3">Descrição:</dt>
+                                <dd class="col-sm-9">
+                                    @if (!string.IsNullOrEmpty(Model.Descricao))
+                                    {
+                                        @Model.Descricao
+                                    }
+                                    else
+                                    {
+                                        <em class="text-muted">Sem descrição</em>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-3">Ordem de Exibição:</dt>
+                                <dd class="col-sm-9">@Model.OrdemExibicao</dd>
+
+                                <dt class="col-sm-3">Status:</dt>
+                                <dd class="col-sm-9">
+                                    @if (Model.Ativo)
+                                    {
+                                        <span class="badge bg-success">Ativa</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inativa</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Competências</h5>
+                                    <h2 class="text-primary">@Model.Competencias.Count(c => c.Ativo)</h2>
+                                    <p class="card-text">Competências ativas</p>
+                                    @if (Model.Competencias.Any(c => !c.Ativo))
+                                    {
+                                        <p class="text-muted">
+                                            <small>@Model.Competencias.Count(c => !c.Ativo) inativas</small>
+                                        </p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.Competencias.Any())
+                    {
+                        <hr />
+                        <h5>Competências desta Categoria</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Ordem</th>
+                                        <th>Descrição</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var competencia in Model.Competencias.OrderBy(c => c.OrdemExibicao))
+                                    {
+                                        <tr class="@(competencia.Ativo ? "" : "table-secondary")">
+                                            <td>@competencia.OrdemExibicao</td>
+                                            <td>@competencia.Descricao</td>
+                                            <td>
+                                                @if (competencia.Ativo)
+                                                {
+                                                    <span class="badge bg-success">Ativa</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Inativa</span>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                <a asp-controller="Competencia" asp-action="Edit" asp-route-id="@competencia.Id" 
+                                                   class="btn btn-sm btn-outline-warning" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <hr />
+                        <div class="text-center py-3">
+                            <i class="fas fa-list-check fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">Nenhuma competência cadastrada para esta categoria.</p>
+                            <a asp-controller="Competencia" asp-action="Create" asp-route-categoriaId="@Model.Id" 
+                               class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Adicionar Competência
+                            </a>
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Voltar à Lista
+                        </a>
+                        <div>
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning me-2">
+                                <i class="fas fa-edit me-1"></i>Editar
+                            </a>
+                            <a asp-controller="Competencia" asp-action="Create" asp-route-categoriaId="@Model.Id" 
+                               class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Nova Competência
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

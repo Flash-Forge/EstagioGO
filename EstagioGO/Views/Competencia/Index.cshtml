@@ -1,0 +1,177 @@
+@model IEnumerable<EstagioGO.Models.Analise.Competencia>
+
+@{
+    ViewData["Title"] = "Gerenciar Competências";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-list-check me-2"></i>Gerenciar Competências
+                    </h3>
+                    <div>
+                        <a asp-action="Create" asp-route-categoriaId="@ViewBag.CategoriaIdSelecionada" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Nova Competência
+                        </a>
+                        <a asp-controller="Categoria" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="fas fa-tags me-1"></i>Gerenciar Categorias
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <!-- Filtro por Categoria -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <form method="get">
+                                <div class="input-group">
+                                    <select name="categoriaId" class="form-select" onchange="this.form.submit()">
+                                        <option value="">Todas as categorias</option>
+                                        @foreach (var categoria in ViewBag.Categorias as SelectList)
+                                        {
+                                            <option value="@categoria.Value" selected="@categoria.Selected">@categoria.Text</option>
+                                        }
+                                    </select>
+                                    <button class="btn btn-outline-secondary" type="submit">
+                                        <i class="fas fa-filter"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Categoria</th>
+                                        <th>Ordem</th>
+                                        <th>Descrição</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        string categoriaAtual = "";
+                                    }
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr class="@(item.Ativo ? "" : "table-secondary")">
+                                            <td>
+                                                @if (categoriaAtual != item.Categoria.Nome)
+                                                {
+                                                    categoriaAtual = item.Categoria.Nome;
+                                                    <strong class="text-primary">@item.Categoria.Nome</strong>
+                                                }
+                                            </td>
+                                            <td>@item.OrdemExibicao</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(item.Descricao))
+                                                {
+                                                    @(item.Descricao.Length > 80 ? item.Descricao.Substring(0, 80) + "..." : item.Descricao)
+                                                }
+                                                else
+                                                {
+                                                    <em class="text-muted">Sem descrição</em>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (item.Ativo)
+                                                {
+                                                    <span class="badge bg-success">Ativa</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Inativa</span>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="btn-group" role="group">
+                                                    <a asp-action="Details" asp-route-id="@item.Id" 
+                                                       class="btn btn-sm btn-outline-info" title="Detalhes">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a asp-action="Edit" asp-route-id="@item.Id" 
+                                                       class="btn btn-sm btn-outline-warning" title="Editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <form asp-action="ToggleStatus" asp-route-id="@item.Id" 
+                                                          method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" 
+                                                                class="btn btn-sm @(item.Ativo ? "btn-outline-secondary" : "btn-outline-success")" 
+                                                                title="@(item.Ativo ? "Desativar" : "Ativar")"
+                                                                onclick="return confirm('@(item.Ativo ? "Desativar" : "Ativar") esta competência?')">
+                                                            <i class="fas @(item.Ativo ? "fa-toggle-off" : "fa-toggle-on")"></i>
+                                                        </button>
+                                                    </form>
+                                                    @if (!item.AvaliacoesCompetencia.Any())
+                                                    {
+                                                        <a asp-action="Delete" asp-route-id="@item.Id" 
+                                                           class="btn btn-sm btn-outline-danger" title="Excluir">
+                                                            <i class="fas fa-trash"></i>
+                                                        </a>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-list-check fa-3x text-muted mb-3"></i>
+                            @if (ViewBag.CategoriaIdSelecionada != null)
+                            {
+                                <h5 class="text-muted">Nenhuma competência encontrada para esta categoria</h5>
+                                <p class="text-muted">Comece criando competências para esta categoria.</p>
+                            }
+                            else
+                            {
+                                <h5 class="text-muted">Nenhuma competência cadastrada</h5>
+                                <p class="text-muted">Comece criando suas primeiras competências.</p>
+                            }
+                            <a asp-action="Create" asp-route-categoriaId="@ViewBag.CategoriaIdSelecionada" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Criar Primeira Competência
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut('slow');
+        }, 5000);
+    </script>
+}
+

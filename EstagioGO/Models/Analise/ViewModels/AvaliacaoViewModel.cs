@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace EstagioGO.Models.Analise
+namespace EstagioGO.Models.Analise.ViewModels
 {
     public class AvaliacaoViewModel
     {
@@ -18,15 +18,15 @@ namespace EstagioGO.Models.Analise
     public class CategoriaAvaliacaoViewModel
     {
         public int CategoriaId { get; set; }
-        public string Nome { get; set; }
-        public string Descricao { get; set; }
+        public string? Nome { get; set; }
+        public string? Descricao { get; set; }
         public List<CompetenciaAvaliacaoViewModel> Competencias { get; set; } = [];
     }
 
     public class CompetenciaAvaliacaoViewModel
     {
         public int CompetenciaId { get; set; }
-        public string Descricao { get; set; }
+        public string? Descricao { get; set; }
 
         [Required(ErrorMessage = "A nota é obrigatória")]
         [Range(0, 5, ErrorMessage = "A nota deve estar entre 0 e 5")]

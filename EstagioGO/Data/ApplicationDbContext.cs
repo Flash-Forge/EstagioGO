@@ -11,7 +11,6 @@ namespace EstagioGO.Data
         // DbSets existentes
         public DbSet<Estagiario> Estagiarios { get; set; }
         public DbSet<Frequencia> Frequencias { get; set; }
-        public DbSet<Justificativa> Justificativas { get; set; }
         public DbSet<Avaliacao> Avaliacoes { get; set; }
 
         // Novos DbSets para o sistema de avaliação por categorias
@@ -89,12 +88,6 @@ namespace EstagioGO.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Frequencia>()
-                .HasOne(f => f.Justificativa)
-                .WithMany(j => j.Frequencias)
-                .HasForeignKey(f => f.JustificativaId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Frequencia>()
                 .HasOne(f => f.RegistradoPor)
                 .WithMany(u => u.FrequenciasRegistradas)
                 .HasForeignKey(f => f.RegistradoPorId)
@@ -110,12 +103,6 @@ namespace EstagioGO.Data
                 .HasOne(a => a.Avaliador)
                 .WithMany(u => u.AvaliacoesRealizadas)
                 .HasForeignKey(a => a.AvaliadorId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Justificativa>()
-                .HasOne(j => j.UsuarioRegistro)
-                .WithMany(u => u.JustificativasRegistradas)
-                .HasForeignKey(j => j.UsuarioRegistroId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // CONFIGURAÇÕES PARA O SISTEMA DE AVALIAÇÃO POR CATEGORIAS

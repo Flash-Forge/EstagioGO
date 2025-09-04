@@ -27,7 +27,6 @@
                 <td>@(item.HoraSaida?.ToString(@"hh\:mm"))</td>
                 <td>@(item.Presente ? "Sim" : "Não")</td>
                 <td>@item.Observacao</td>
-                <td>@(item.Justificativa?.Detalhamento)</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary">Editar</a>
                     <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Excluir</a>

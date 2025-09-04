@@ -1,76 +1,294 @@
 ﻿@model EstagioGO.Models.Domain.Frequencia
-
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Editar Frequência";
+    var isEstagiario = User.IsInRole("Estagiario");
+    var isSupervisor = User.IsInRole("Supervisor");
+    var isCoordenador = User.IsInRole("Coordenador");
+    var isAdministrador = User.IsInRole("Administrador");
+
+    // Impedir acesso de estagiários
+    if (isEstagiario)
+    {
+        Context.Response.StatusCode = 403;
+        return;
+    }
 }
 
-<h1>Edit</h1>
-
-<h4>Frequencia</h4>
+<h1>Editar Frequência</h1>
 <hr />
+
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="col-md-6">
+        <form asp-action="Edit" id="editForm">
+            <div asp-validation-summary="All" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="EstagiarioId" class="control-label"></label>
-                <select asp-for="EstagiarioId" class="form-control" asp-items="ViewBag.EstagiarioId"></select>
-                <span asp-validation-for="EstagiarioId" class="text-danger"></span>
+            <input type="hidden" id="originalDate" value="@Model.Data.ToString("yyyy-MM-dd")" />
+            <!-- Campos ocultos para armazenar os horários originais -->
+            <input type="hidden" id="originalHoraEntrada" value="@(Model.HoraEntrada?.ToString(@"hh\:mm"))" />
+            <input type="hidden" id="originalHoraSaida" value="@(Model.HoraSaida?.ToString(@"hh\:mm"))" />
+
+            <!-- Campos que NÃO podem ser editados -->
+            <div class="form-group mb-3">
+                <label class="control-label">Estagiário</label>
+                <input class="form-control" value="@Model.Estagiario?.Nome" readonly />
+                <input type="hidden" asp-for="EstagiarioId" />
             </div>
-            <div class="form-group">
-                <label asp-for="Data" class="control-label"></label>
-                <input asp-for="Data" class="form-control" />
-                <span asp-validation-for="Data" class="text-danger"></span>
+
+            <!-- Data (editável apenas por administradores) -->
+            <div class="form-group mb-3">
+                <label class="control-label">Data</label>
+                @if (isAdministrador)
+                {
+                    <input asp-for="Data" class="form-control" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")"
+                           id="dataInput" onchange="validarData()" />
+                    <span asp-validation-for="Data" class="text-danger"></span>
+                    <div id="dataError" class="text-danger" style="display: none;"></div>
+                }
+                else
+                {
+                    <input class="form-control" value="@Model.Data.ToString("dd/MM/yyyy")" readonly />
+                    <input type="hidden" asp-for="Data" />
+                }
             </div>
-            <div class="form-group">
-                <label asp-for="HoraEntrada" class="control-label"></label>
-                <input asp-for="HoraEntrada" class="form-control" />
-                <span asp-validation-for="HoraEntrada" class="text-danger"></span>
+
+            <div class="form-group mb-3">
+                <label class="control-label">Registrado por</label>
+                <input class="form-control" value="@Model.RegistradoPor?.UserName" readonly />
+                <input type="hidden" asp-for="RegistradoPorId" />
             </div>
-            <div class="form-group">
-                <label asp-for="HoraSaida" class="control-label"></label>
-                <input asp-for="HoraSaida" class="form-control" />
-                <span asp-validation-for="HoraSaida" class="text-danger"></span>
+
+            <div class="form-group mb-3">
+                <label class="control-label">Data do Registro</label>
+                <input class="form-control" value="@Model.DataRegistro.ToString("dd/MM/yyyy HH:mm")" readonly />
+                <input type="hidden" asp-for="DataRegistro" />
             </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="Presente" /> @Html.DisplayNameFor(model => model.Presente)
-                </label>
+
+            <!-- Campo de presença (editável apenas por supervisores/administradores) -->
+            @if (isSupervisor || isAdministrador)
+            {
+                <div class="form-group mb-3">
+                    <label class="control-label">O estagiário estava presente?</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" asp-for="Presente" value="true" id="presenteSim">
+                        <label class="form-check-label" for="presenteSim">
+                            Sim
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" asp-for="Presente" value="false" id="presenteNao">
+                        <label class="form-check-label" for="presenteNao">
+                            Não
+                        </label>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="form-group mb-3">
+                    <label class="control-label">Status</label>
+                    <input class="form-control" value="@(Model.Presente ? "Presente" : "Falta")" readonly />
+                    <input type="hidden" asp-for="Presente" />
+                </div>
+            }
+
+            <!-- Campos de horários (só aparecem se presente) -->
+            <div id="camposPresenca" style="@(Model.Presente ? "display:block;" : "display:none;")">
+                <div class="form-group mb-3">
+                    <label asp-for="HoraEntrada" class="control-label"></label>
+                    <input asp-for="HoraEntrada" class="form-control" type="time" required />
+                    <span asp-validation-for="HoraEntrada" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="HoraSaida" class="control-label"></label>
+                    <input asp-for="HoraSaida" class="form-control" type="time" required />
+                    <span asp-validation-for="HoraSaida" class="text-danger"></span>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Observacao" class="control-label"></label>
-                <input asp-for="Observacao" class="form-control" />
+
+            <!-- Campos de justificativa (só aparecem se ausente) -->
+            <div id="camposAusencia" style="@(!Model.Presente ? "display:block;" : "display:none;")">
+                <div class="form-group mb-3">
+                    <label asp-for="Motivo" class="control-label">Motivo da Falta</label>
+                    <textarea asp-for="Motivo" class="form-control" rows="3" placeholder="Forneça o motivo da falta"></textarea>
+                    <span asp-validation-for="Motivo" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Detalhamento" class="control-label">Detalhamento do Motivo</label>
+                    <textarea asp-for="Detalhamento" class="form-control" rows="3" placeholder="Forneça detalhes sobre o motivo da falta..."></textarea>
+                    <span asp-validation-for="Detalhamento" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Observacao" class="control-label">Observações Gerais</label>
+                <textarea asp-for="Observacao" class="form-control" rows="3"></textarea>
                 <span asp-validation-for="Observacao" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="JustificativaId" class="control-label"></label>
-                <select asp-for="JustificativaId" class="form-control" asp-items="ViewBag.JustificativaId"></select>
-                <span asp-validation-for="JustificativaId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DataRegistro" class="control-label"></label>
-                <input asp-for="DataRegistro" class="form-control" />
-                <span asp-validation-for="DataRegistro" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="RegistradoPorId" class="control-label"></label>
-                <select asp-for="RegistradoPorId" class="form-control" asp-items="ViewBag.RegistradoPorId"></select>
-                <span asp-validation-for="RegistradoPorId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Salvar" class="btn btn-primary" id="submitButton" />
+                <a asp-action="EditList" asp-route-estagiarioId="@Model.EstagiarioId" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
 </div>
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Controle da exibição dos campos baseado na presença
+            const presenteSim = document.getElementById('presenteSim');
+            const presenteNao = document.getElementById('presenteNao');
+            const camposPresenca = document.getElementById('camposPresenca');
+            const camposAusencia = document.getElementById('camposAusencia');
+            const horaEntrada = document.getElementById('HoraEntrada');
+            const horaSaida = document.getElementById('HoraSaida');
+            const originalHoraEntrada = document.getElementById('originalHoraEntrada').value;
+            const originalHoraSaida = document.getElementById('originalHoraSaida').value;
+
+            // Variáveis para armazenar os horários temporariamente
+            let tempHoraEntrada = originalHoraEntrada;
+            let tempHoraSaida = originalHoraSaida;
+
+            function toggleCampos() {
+                if (presenteSim && presenteSim.checked) {
+                    camposPresenca.style.display = 'block';
+                    camposAusencia.style.display = 'none';
+
+                    // Restaurar horários originais quando voltar para "Presente"
+                    if (horaEntrada && horaSaida) {
+                        horaEntrada.value = tempHoraEntrada;
+                        horaSaida.value = tempHoraSaida;
+                    }
+
+                    // Tornar campos de horário obrigatórios
+                    horaEntrada.setAttribute('required', 'required');
+                    horaSaida.setAttribute('required', 'required');
+
+                    // Remover required dos campos de ausência
+                    document.querySelector('#Motivo').removeAttribute('required');
+
+                } else if (presenteNao && presenteNao.checked) {
+                    camposPresenca.style.display = 'none';
+                    camposAusencia.style.display = 'block';
+
+                    // Armazenar horários atuais temporariamente
+                    if (horaEntrada && horaSaida) {
+                        tempHoraEntrada = horaEntrada.value;
+                        tempHoraSaida = horaSaida.value;
+                    }
+
+                    // Limpar campos de horário
+                    horaEntrada.value = '';
+                    horaSaida.value = '';
+
+                    // Remover required dos campos de horário
+                    horaEntrada.removeAttribute('required');
+                    horaSaida.removeAttribute('required');
+
+                    // Tornar campo de motivo obrigatório
+                    document.querySelector('#Motivo').setAttribute('required', 'required');
+                }
+            }
+
+            // Adicionar event listeners apenas se os elementos existirem
+            if (presenteSim && presenteNao) {
+                presenteSim.addEventListener('change', toggleCampos);
+                presenteNao.addEventListener('change', toggleCampos);
+
+                // Inicializar estado dos radio buttons
+                if (@Model.Presente.ToString().ToLower()) {
+                    presenteSim.checked = true;
+                } else {
+                    presenteNao.checked = true;
+                }
+                toggleCampos();
+            }
+
+            // Validação para hora de saída não ser anterior à hora de entrada
+            document.querySelector('form').addEventListener('submit', function (e) {
+                const horaEntrada = document.getElementById('HoraEntrada');
+                const horaSaida = document.getElementById('HoraSaida');
+                const motivo = document.getElementById('Motivo');
+
+                // Verificar se está presente
+                const estaPresente = presenteSim ? presenteSim.checked : @Model.Presente.ToString().ToLower();
+
+                if (estaPresente) {
+                    // Validação para presença: horários são obrigatórios
+                    if (!horaEntrada.value || !horaSaida.value) {
+                        e.preventDefault();
+                        alert('É necessário informar tanto a hora de entrada quanto a hora de saída quando o estagiário está presente.');
+                        return;
+                    }
+
+                    if (horaEntrada.value && horaSaida.value && horaEntrada.value > horaSaida.value) {
+                        e.preventDefault();
+                        alert('A hora de saída não pode ser anterior à hora de entrada.');
+                        return;
+                    }
+                } else {
+                    // Validação para ausência: motivo é obrigatório
+                    if (!motivo.value) {
+                        e.preventDefault();
+                        alert('É necessário informar o motivo da falta.');
+                        return;
+                    }
+                }
+            });
+        });
+
+        // Função para validar data (apenas para administradores)
+        function validarData() {
+            const dataInput = document.getElementById('dataInput');
+            const dataError = document.getElementById('dataError');
+            const originalDate = document.getElementById('originalDate').value;
+            const submitButton = document.getElementById('submitButton');
+            const estagiarioId = '@Model.EstagiarioId';
+
+            // Se a data não foi alterada, não precisa validar
+            if (dataInput.value === originalDate) {
+                dataError.style.display = 'none';
+                dataError.textContent = '';
+                submitButton.disabled = false;
+                return;
+            }
+
+            // Validar se a data é futura
+            const hoje = new Date().toISOString().split('T')[0];
+            if (dataInput.value > hoje) {
+                dataError.style.display = 'block';
+                dataError.textContent = 'Não é possível registrar data futura.';
+                submitButton.disabled = true;
+                return;
+            }
+
+            // Verificar se já existe frequência para esta data
+            fetch(`/Frequencia/VerificarDataExistente?estagiarioId=${estagiarioId}&data=${dataInput.value}&frequenciaId=@Model.Id`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.existe) {
+                        dataError.style.display = 'block';
+                        dataError.textContent = 'Já existe um registro de frequência para este estagiário nesta data.';
+                        submitButton.disabled = true;
+                    } else {
+                        dataError.style.display = 'none';
+                        dataError.textContent = '';
+                        submitButton.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao validar data:', error);
+                    dataError.style.display = 'block';
+                    dataError.textContent = 'Erro ao validar data. Tente novamente.';
+                    submitButton.disabled = true;
+                });
+        }
+    </script>
 }

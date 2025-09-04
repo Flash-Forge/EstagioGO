@@ -25,6 +25,9 @@
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/index.global.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/index.global.min.js"></script>
 
+    <!-- Adicione o pacote de localização para português -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/locales/pt-br.global.min.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var calendarEl = document.getElementById('calendar');
@@ -32,18 +35,114 @@
             var btnEditar = document.getElementById('btnEditar');
             var estagiarioSelect = document.getElementById('estagiarioSelect');
 
+            // Variável para armazenar as frequências carregadas
+            var frequenciasData = [];
+
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 height: 600,
                 events: [],
-                eventDisplay: 'background'
+                eventDisplay: 'background',
+
+                // Configurações de localização em português
+                locale: 'pt-br',
+                firstDay: 0, // Domingo como primeiro dia da semana (0 = Domingo, 1 = Segunda)
+
+                // Formatação de datas
+                titleFormat: {
+                    year: 'numeric',
+                    month: 'long'
+                },
+                dayHeaderFormat: {
+                    weekday: 'short'
+                },
+                dayPopoverFormat: {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric'
+                },
+
+                // Botões de navegação em português
+                buttonText: {
+                    today: 'Hoje',
+                    month: 'Mês',
+                    week: 'Semana',
+                    day: 'Dia',
+                    list: 'Lista'
+                },
+
+                // Textos em português
+                allDayText: 'Dia todo',
+                moreLinkText: 'mais',
+                noEventsText: 'Não há eventos para mostrar',
+
+
+
+                // Adicionar evento de clique no dia
+                dateClick: function (info) {
+                    var estagiarioId = estagiarioSelect.value;
+                    if (!estagiarioId) {
+                        alert('Selecione um estagiário primeiro.');
+                        return;
+                    }
+
+                    // Formatar a data para o formato YYYY-MM-DD (que é o usado internamente)
+                    var clickedDate = info.dateStr;
+
+                    // Verificar se existe frequência para esta data
+                    var frequencia = frequenciasData.find(f =>
+                        f.date === clickedDate
+                    );
+
+                    if (frequencia) {
+                        // Redirecionar para a view de detalhes
+                        window.location.href = `/Frequencia/Details/${frequencia.id}`;
+                    } else {
+                        alert('Não há registro de frequência para esta data.');
+                    }
+                },
+
+                // Personalizar o conteúdo de cada célula do dia
+                dayCellDidMount: function (args) {
+                    // Tornar a célula clicável
+                    args.el.style.cursor = 'pointer';
+
+                    // Formatar o número do dia para DD
+                    var dayNumberEl = args.el.querySelector('.fc-daygrid-day-number');
+                    if (dayNumberEl) {
+                        var dayNumber = parseInt(dayNumberEl.textContent);
+                        dayNumberEl.textContent = dayNumber.toString().padStart(2, '0');
+                    }
+                }
+
+
             });
 
             calendar.render();
 
+            // Função para formatar datas no formato DD-MM-YYYY
+            function formatDateToDDMMYYYY(dateString) {
+                const date = new Date(dateString);
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}-${month}-${year}`;
+            }
+
+            // Função para converter DD-MM-YYYY para YYYY-MM-DD (formato ISO)
+            function formatDateToISO(dateString) {
+                const parts = dateString.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+                return dateString;
+            }
+
+
             estagiarioSelect.addEventListener('change', function () {
                 var estagiarioId = this.value;
                 calendar.removeAllEvents();
+                frequenciasData = []; // Limpar dados anteriores
 
                 // Ativa ou desativa os botões conforme seleção
                 btnCriar.disabled = !estagiarioId;
@@ -53,14 +152,29 @@
                     fetch(`/Frequencia/GetFrequenciasParaCalendario?estagiarioId=${estagiarioId}`)
                         .then(response => response.json())
                         .then(data => {
+                            if (data.error) {
+                                alert(data.error);
+                                return;
+                            }
+
+                            frequenciasData = data; // Armazenar os dados para uso no clique
+
                             const eventos = data.map(f => ({
                                 start: f.date,
                                 allDay: true,
                                 display: 'background',
-                                color: f.presente ? 'green' : 'red'
+                                color: f.presente ? 'green' : 'red',
+                                // Adicionar informações extras para possível uso futuro
+                                extendedProps: {
+                                    id: f.id
+                                }
                             }));
 
                             eventos.forEach(evento => calendar.addEvent(evento));
+                        })
+                        .catch(error => {
+                            console.error('Erro ao carregar frequências:', error);
+                            alert('Erro ao carregar as frequências.');
                         });
                 }
             });
@@ -69,7 +183,6 @@
                 var estagiarioId = estagiarioSelect.value;
                 if (!estagiarioId) return alert('Selecione um estagiário primeiro.');
 
-                // Redireciona para criar frequência já com EstagiarioId selecionado
                 window.location.href = `/Frequencia/Create?estagiarioId=${estagiarioId}`;
             });
 
@@ -77,9 +190,9 @@
                 var estagiarioId = estagiarioSelect.value;
                 if (!estagiarioId) return alert('Selecione um estagiário primeiro.');
 
-                // Redireciona para a lista de frequências do estagiário para edição
                 window.location.href = `/Frequencia/EditList?estagiarioId=${estagiarioId}`;
             });
         });
     </script>
 }
+

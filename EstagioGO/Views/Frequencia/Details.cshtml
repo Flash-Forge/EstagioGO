@@ -49,6 +49,12 @@
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.Motivo)
         </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Detalhamento)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Detalhamento)
+        </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.DataRegistro)
         </dt>
@@ -59,7 +65,7 @@
             @Html.DisplayNameFor(model => model.RegistradoPor)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.RegistradoPor.Id)
+            @Html.DisplayFor(model => model.RegistradoPor.NomeCompleto)
         </dd>
     </dl>
 </div>

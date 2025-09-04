@@ -38,12 +38,12 @@ namespace EstagioGO.Models.Domain
 
         [AllowNull]
         [Display(Name = "Motivo")]
-        public string Motivo { get; set; }
+        public string Motivo { get; set; } = "";
 
         [AllowNull]
         [Display(Name = "Detalhamento")]
         [StringLength(500, ErrorMessage = "O detalhamento não pode ter mais de 500 caracteres")]
-        public string Detalhamento { get; set; }
+        public string Detalhamento { get; set; } = "";
 
         [Required(ErrorMessage = "O usuário que registrou é obrigatório")]
         public string RegistradoPorId { get; set; }
@@ -58,7 +58,7 @@ namespace EstagioGO.Models.Domain
             if (Presente == false && Motivo == null)
             {
                 yield return new ValidationResult(
-                    "Justificativa é obrigatória quando o estagiário está ausente.",
+                    "Motivo da falta é obrigatória quando o estagiário está ausente.",
                     new[] { nameof(Motivo) });
             }
         }

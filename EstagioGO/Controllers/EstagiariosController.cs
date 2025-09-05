@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace EstagioGO.Controllers
 {
@@ -67,6 +68,17 @@ namespace EstagioGO.Controllers
             ModelState.Remove("Supervisor");
             ModelState.Remove("Frequencias");
             ModelState.Remove("Avaliacoes");
+
+            // Remover formatação do CPF e Telefone antes de validar
+            if (!string.IsNullOrEmpty(estagiario.CPF))
+            {
+                estagiario.CPF = Regex.Replace(estagiario.CPF, @"[^\d]", "");
+            }
+
+            if (!string.IsNullOrEmpty(estagiario.Telefone))
+            {
+                estagiario.Telefone = Regex.Replace(estagiario.Telefone, @"[^\d]", "");
+            }
 
             // DEBUG: Log dos valores recebidos
             Debug.WriteLine($"=== DADOS RECEBIDOS ===");
@@ -174,6 +186,17 @@ namespace EstagioGO.Controllers
             ModelState.Remove("Supervisor");
             ModelState.Remove("Frequencias");
             ModelState.Remove("Avaliacoes");
+
+            // Remover formatação do CPF e Telefone antes de validar
+            if (!string.IsNullOrEmpty(estagiario.CPF))
+            {
+                estagiario.CPF = Regex.Replace(estagiario.CPF, @"[^\d]", "");
+            }
+
+            if (!string.IsNullOrEmpty(estagiario.Telefone))
+            {
+                estagiario.Telefone = Regex.Replace(estagiario.Telefone, @"[^\d]", "");
+            }
 
             // Validação das datas
             if (estagiario.DataInicio >= estagiario.DataTermino)

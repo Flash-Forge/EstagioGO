@@ -8,17 +8,8 @@ using Microsoft.EntityFrameworkCore;
 namespace EstagioGO.Controllers
 {
     [Authorize(Roles = "Supervisor,Coordenador,Administrador")]
-    public class DashboardController : Controller
+    public class DashboardController(ApplicationDbContext context, ILogger<DashboardController> logger) : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly ILogger<DashboardController> _logger;
-
-        public DashboardController(ApplicationDbContext context, ILogger<DashboardController> logger)
-        {
-            _context = context;
-            _logger = logger;
-        }
-
         public async Task<IActionResult> Index(int? estagiarioId)
         {
             try
@@ -29,7 +20,7 @@ namespace EstagioGO.Controllers
                 };
 
                 // Carregar estagiários para o dropdown de filtro
-                var estagiariosDropdown = await _context.Estagiarios
+                var estagiariosDropdown = await context.Estagiarios
                     .Where(e => e.Ativo)
                     .OrderBy(e => e.Nome)
                     .ToListAsync();
@@ -52,7 +43,7 @@ namespace EstagioGO.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao carregar dashboard");
+                logger.LogError(ex, "Erro ao carregar dashboard");
                 TempData["ErrorMessage"] = "Erro ao carregar o dashboard.";
                 return RedirectToAction("Index", "Home");
             }
@@ -62,7 +53,7 @@ namespace EstagioGO.Controllers
         {
             // Lógica para calcular avaliações pendentes
             var umMesAtras = DateTime.Now.AddMonths(-1);
-            var estagiariosAtivos = await _context.Estagiarios
+            var estagiariosAtivos = await context.Estagiarios
                 .Where(e => e.Ativo)
                 .ToListAsync();
 
@@ -70,7 +61,7 @@ namespace EstagioGO.Controllers
 
             foreach (var estagiario in estagiariosAtivos)
             {
-                var ultimaAvaliacao = await _context.Avaliacoes
+                var ultimaAvaliacao = await context.Avaliacoes
                     .Where(a => a.EstagiarioId == estagiario.Id)
                     .OrderByDescending(a => a.DataAvaliacao)
                     .FirstOrDefaultAsync();
@@ -86,7 +77,7 @@ namespace EstagioGO.Controllers
 
         private async Task<decimal> CalcularMediaDesempenhoGeral()
         {
-            var media = await _context.Avaliacoes
+            var media = await context.Avaliacoes
                 .Where(a => a.Estagiario.Ativo)
                 .AverageAsync(a => (decimal?)a.MediaNotas) ?? 0;
 
@@ -96,7 +87,7 @@ namespace EstagioGO.Controllers
         private async Task<int> CalcularEstagiariosEmRisco()
         {
             // Estagiários com média abaixo de 3
-            var estagiariosEmRisco = await _context.Avaliacoes
+            var estagiariosEmRisco = await context.Avaliacoes
                 .Where(a => a.Estagiario.Ativo)
                 .GroupBy(a => a.EstagiarioId)
                 .Select(g => new
@@ -112,7 +103,7 @@ namespace EstagioGO.Controllers
 
         private async Task<List<MediaCategoriaViewModel>> ObterMediasPorCategoria()
         {
-            var medias = await _context.AvaliacaoCompetencias
+            var medias = await context.AvaliacaoCompetencias
                 .Include(ac => ac.Competencia)
                 .ThenInclude(c => c.Categoria)
                 .GroupBy(ac => ac.Competencia.Categoria.Nome)
@@ -129,7 +120,7 @@ namespace EstagioGO.Controllers
         private async Task<List<EvolucaoDesempenhoViewModel>> ObterEvolucaoDesempenho()
         {
             // Primeiro, obtemos os dados agrupados do banco de dados sem a formatação de string
-            var dados = await _context.Avaliacoes
+            var dados = await context.Avaliacoes
                 .Where(a => a.DataAvaliacao >= DateTime.Now.AddMonths(-6))
                 .GroupBy(a => new { a.DataAvaliacao.Year, a.DataAvaliacao.Month })
                 .Select(g => new
@@ -154,7 +145,7 @@ namespace EstagioGO.Controllers
 
         private async Task<List<MapeamentoTalentoViewModel>> ObterMapeamentoTalentos()
         {
-            var talentos = await _context.AvaliacaoCompetencias
+            var talentos = await context.AvaliacaoCompetencias
                 .Include(ac => ac.Avaliacao)
                 .ThenInclude(a => a.Estagiario)
                 .Include(ac => ac.Competencia)
@@ -171,19 +162,19 @@ namespace EstagioGO.Controllers
                 })
                 .ToListAsync();
 
-            return talentos.Select(t => new MapeamentoTalentoViewModel
+            return [.. talentos.Select(t => new MapeamentoTalentoViewModel
             {
                 Estagiario = t.Nome,
                 MediaHabilidadesTecnicas = (decimal)t.MediaHabilidadesTecnicas,
                 MediaHabilidadesComportamentais = (decimal)t.MediaHabilidadesComportamentais
-            }).ToList();
+            })];
         }
 
         private async Task<List<EstagiarioResumoViewModel>> ObterListaEstagiarios()
         {
             try
             {
-                var estagiarios = await _context.Estagiarios
+                var estagiarios = await context.Estagiarios
                     .Include(e => e.Supervisor)
                     .Include(e => e.Avaliacoes)
                     .Where(e => e.Ativo)
@@ -212,13 +203,13 @@ namespace EstagioGO.Controllers
                 .OrderByDescending(e => e.UltimaNota)
                 .ToList();
 
-                _logger.LogInformation("Encontrados {Count} estagiários para a lista", resultado.Count);
-                return resultado ?? new List<EstagiarioResumoViewModel>();
+                logger.LogInformation($"Encontrados {resultado.Count} estagiários para a lista");
+                return resultado;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao obter lista de estagiários");
-                return new List<EstagiarioResumoViewModel>();
+                logger.LogError(ex, "Erro ao obter lista de estagiários");
+                return [];
             }
         }
     }

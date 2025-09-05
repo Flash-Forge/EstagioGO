@@ -19,6 +19,18 @@
             </div>
 
             <div class="form-group mb-3">
+                <label asp-for="CPF" class="control-label"></label>
+                <input asp-for="CPF" class="form-control cpf-mask" placeholder="000.000.000-00" />
+                <span asp-validation-for="CPF" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Telefone" class="control-label"></label>
+                <input asp-for="Telefone" class="form-control phone-mask" placeholder="(00) 00000-0000" />
+                <span asp-validation-for="Telefone" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
                 <label asp-for="Matricula" class="control-label"></label>
                 <input asp-for="Matricula" class="form-control" />
                 <span asp-validation-for="Matricula" class="text-danger"></span>
@@ -87,6 +99,38 @@
     }
     <script>
         $(document).ready(function () {
+            // Máscara para CPF
+            $('.cpf-mask').on('input', function () {
+                var value = $(this).val().replace(/\D/g, '');
+                if (value.length > 11) {
+                    value = value.slice(0, 11);
+                }
+                if (value.length > 9) {
+                    value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+                } else if (value.length > 6) {
+                    value = value.replace(/(\d{3})(\d{3})(\d+)/, "$1.$2.$3");
+                } else if (value.length > 3) {
+                    value = value.replace(/(\d{3})(\d+)/, "$1.$2");
+                }
+                $(this).val(value);
+            });
+
+            // Máscara para Telefone
+            $('.phone-mask').on('input', function () {
+                var value = $(this).val().replace(/\D/g, '');
+                if (value.length > 11) {
+                    value = value.slice(0, 11);
+                }
+                if (value.length > 10) {
+                    value = value.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+                } else if (value.length > 6) {
+                    value = value.replace(/(\d{2})(\d{4})(\d+)/, "($1) $2-$3");
+                } else if (value.length > 2) {
+                    value = value.replace(/(\d{2})(\d+)/, "($1) $2");
+                }
+                $(this).val(value);
+            });
+
             // Validação das datas no cliente
             $('form').submit(function (e) {
                 const inicio = new Date($('#DataInicio').val());

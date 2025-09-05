@@ -78,6 +78,14 @@ namespace EstagioGO.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Estagiario>()
+                .HasIndex(e => e.CPF)
+                .IsUnique();
+
+            builder.Entity<Estagiario>()
+                .HasIndex(e => e.Telefone)
+                .IsUnique();
+
+            builder.Entity<Estagiario>()
                 .HasIndex(e => e.UserId)
                 .IsUnique();
 

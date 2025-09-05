@@ -10,6 +10,8 @@
     <thead>
         <tr>
             <th>@Html.DisplayNameFor(m => m.Nome)</th>
+            <th>@Html.DisplayNameFor(m => m.CPF)</th>
+            <th>@Html.DisplayNameFor(m => m.Telefone)</th>
             <th>@Html.DisplayNameFor(m => m.Matricula)</th>
             <th>@Html.DisplayNameFor(m => m.Curso)</th>
             <th>@Html.DisplayNameFor(m => m.InstituicaoEnsino)</th>
@@ -27,15 +29,17 @@
         {
             <tr>
                 <td>@item.Nome</td>
+                <td>@item.CPFFormatado</td>
+                <td>@item.TelefoneFormatado</td>
                 <td>@item.Matricula</td>
                 <td>@item.Curso</td>
                 <td>@item.InstituicaoEnsino</td>
-                <td>@item.DataInicio</td>
-                <td>@item.DataTermino</td>
+                <td>@item.DataInicio.ToString("dd/MM/yyyy")</td>
+                <td>@(item.DataTermino?.ToString("dd/MM/yyyy") ?? "N/A")</td>
                 <td>@item.Supervisor.NomeCompleto</td>
                 <td>@item.User.NomeCompleto</td>
                 <td>@(item.Ativo ? "Sim" : "Não")</td>
-                <td>@item.DataCadastro</td>
+                <td>@item.DataCadastro.ToString("dd/MM/yyyy")</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.Id">Editar</a> |
                     <a asp-action="Details" asp-route-id="@item.Id">Detalhes</a> |

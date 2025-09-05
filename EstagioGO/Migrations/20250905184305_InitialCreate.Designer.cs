@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EstagioGO.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250904144441_InitialCreate")]
+    [Migration("20250905184305_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -523,6 +523,11 @@ namespace EstagioGO.Migrations
                     b.Property<bool>("Ativo")
                         .HasColumnType("bit");
 
+                    b.Property<string>("CPF")
+                        .IsRequired()
+                        .HasMaxLength(14)
+                        .HasColumnType("nvarchar(14)");
+
                     b.Property<string>("Curso")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -556,13 +561,24 @@ namespace EstagioGO.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("Telefone")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CPF")
+                        .IsUnique();
+
                     b.HasIndex("SupervisorId");
+
+                    b.HasIndex("Telefone")
+                        .IsUnique();
 
                     b.HasIndex("UserId")
                         .IsUnique();

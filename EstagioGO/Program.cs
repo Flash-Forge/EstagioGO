@@ -5,6 +5,7 @@ using EstagioGO.Services.Email;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,7 +56,9 @@ builder.Services.AddAuthorizationBuilder()
         policy.RequireRole("Administrador", "Coordenador", "Supervisor"))
                                // Políticas de autorização
                                .AddPolicy("PodeVerRelatorios", policy =>
-        policy.RequireRole("Administrador", "Coordenador"));
+        policy.RequireRole("Administrador", "Coordenador"))
+                                .AddPolicy("VisualizarSeusDados", policy =>
+        policy.RequireRole("Estagiario"));
 
 // Adicione o filtro de primeiro acesso
 builder.Services.AddScoped<FirstAccessFilter>();

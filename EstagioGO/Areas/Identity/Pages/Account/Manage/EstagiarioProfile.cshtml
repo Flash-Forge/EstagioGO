@@ -1,0 +1,110 @@
+﻿@page
+@model EstagiarioProfileModel
+@using EstagioGO.Data
+@using EstagioGO.Constants
+@inject UserManager<ApplicationUser> UserManager
+@{
+    ViewData["Title"] = "Meus Dados de Estagiário";
+    ViewData["ActivePage"] = ManageNavPages.EstagiarioProfile;
+
+    var user = await UserManager.GetUserAsync(User);
+    var isDefaultAdmin = user?.Email == AppConstants.DefaultAdminEmail;
+}
+
+<h4>@ViewData["Title"]</h4>
+<partial name="_StatusMessage" model="Model.StatusMessage" />
+
+@if (Model.Estagiario != null)
+{
+    <div class="row">
+        <div class="col-md-6">
+            <h5>Dados Pessoais</h5>
+            <dl class="row">
+                <dt class="col-sm-4">Nome:</dt>
+                <dd class="col-sm-8">@Model.Estagiario.Nome</dd>
+
+                <dt class="col-sm-4">CPF:</dt>
+                <dd class="col-sm-8">@Model.Estagiario.CPFFormatado</dd>
+
+                <dt class="col-sm-4">Telefone:</dt>
+                <dd class="col-sm-8">@Model.Estagiario.TelefoneFormatado</dd>
+
+                <dt class="col-sm-4">Matrícula:</dt>
+                <dd class="col-sm-8">@Model.Estagiario.Matricula</dd>
+
+                <dt class="col-sm-4">Curso:</dt>
+                <dd class="col-sm-8">@Model.Estagiario.Curso</dd>
+
+                <dt class="col-sm-4">Instituição de Ensino:</dt>
+                <dd class="col-sm-8">@Model.Estagiario.InstituicaoEnsino</dd>
+
+                <dt class="col-sm-4">Data de Início:</dt>
+                <dd class="col-sm-8">@Model.Estagiario.DataInicio.ToShortDateString()</dd>
+
+                @if (Model.Estagiario.DataTermino.HasValue)
+                {
+                    <dt class="col-sm-4">Data de Término:</dt>
+                    <dd class="col-sm-8">@Model.Estagiario.DataTermino.Value.ToShortDateString()</dd>
+                }
+
+                <dt class="col-sm-4">Supervisor:</dt>
+                <dd class="col-sm-8">@Model.Estagiario.Supervisor?.NomeCompleto</dd>
+
+                <dt class="col-sm-4">Status:</dt>
+                <dd class="col-sm-8">@(Model.Estagiario.Ativo ? "Ativo" : "Inativo")</dd>
+            </dl>
+
+            @if (!isDefaultAdmin)
+            {
+                <h5>Alterar Email</h5>
+                <form id="email-form" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="form-group">
+                        <label asp-for="Input.NewEmail" class="form-label"></label>
+                        <input asp-for="Input.NewEmail" class="form-control" />
+                        <span asp-validation-for="Input.NewEmail" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Input.ConfirmEmail" class="form-label"></label>
+                        <input asp-for="Input.ConfirmEmail" class="form-control" />
+                        <span asp-validation-for="Input.ConfirmEmail" class="text-danger"></span>
+                    </div>
+
+                    <button id="update-email-button" type="submit" class="btn btn-primary">Salvar alterações de email</button>
+                </form>
+            }
+            else
+            {
+                <div class="alert alert-info mt-3" role="alert">
+                    <i class="bi bi-info-circle"></i> @AppConstants.DefaultAdminEditError
+                </div>
+            }
+        </div>
+
+        <div class="col-md-6">
+            <h5>Estatísticas</h5>
+            <dl class="row">
+                <dt class="col-sm-6">Total de Frequências Registradas:</dt>
+                <dd class="col-sm-6">@Model.Estagiario.Frequencias.Count</dd>
+
+                <dt class="col-sm-6">Total de Avaliações:</dt>
+                <dd class="col-sm-6">@Model.Estagiario.Avaliacoes.Count</dd>
+
+                <dt class="col-sm-6">Data de Cadastro:</dt>
+                <dd class="col-sm-6">@Model.Estagiario.DataCadastro.ToShortDateString()</dd>
+            </dl>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning" role="alert">
+        Dados de estagiário não encontrados para este usuário.
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

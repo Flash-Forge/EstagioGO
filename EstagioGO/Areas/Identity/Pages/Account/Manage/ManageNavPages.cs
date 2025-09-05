@@ -60,6 +60,8 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
         /// </summary>
         public static string TwoFactorAuthentication => "TwoFactorAuthentication";
 
+        public static string EstagiarioProfile => "EstagiarioProfile";
+
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
@@ -118,5 +120,7 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
                 ?? System.IO.Path.GetFileNameWithoutExtension(viewContext.ActionDescriptor.DisplayName);
             return string.Equals(activePage, page, StringComparison.OrdinalIgnoreCase) ? "active" : null;
         }
+
+        public static string EstagiarioProfileNavClass(ViewContext viewContext) => PageNavClass(viewContext, EstagiarioProfile);
     }
 }

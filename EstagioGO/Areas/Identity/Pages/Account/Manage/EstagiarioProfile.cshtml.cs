@@ -1,28 +1,31 @@
-Ôªøusing EstagioGO.Constants;
+using EstagioGO.Constants;
+using EstagioGO.Data;
+using EstagioGO.Models.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace EstagioGO.Areas.Identity.Pages.Account.Manage
 {
-    public class IndexModel : PageModel
+    public class EstagiarioProfileModel : PageModel
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly ApplicationDbContext _context;
 
-        public IndexModel(
+        public EstagiarioProfileModel(
             UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
+            ApplicationDbContext context)
         {
             _userManager = userManager;
-            _signInManager = signInManager;
+            _context = context;
         }
-
-        public string Username { get; set; }
 
         [TempData]
         public string StatusMessage { get; set; }
+
+        public Estagiario Estagiario { get; set; }
 
         [BindProperty]
         public InputModel Input { get; set; }
@@ -34,14 +37,18 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
             public string NewEmail { get; set; }
 
             [Display(Name = "Confirmar email")]
-            [Compare("NewEmail", ErrorMessage = "O email e a confirma√ß√£o n√£o coincidem.")]
+            [Compare("NewEmail", ErrorMessage = "O email e a confirmaÁ„o n„o coincidem.")]
             public string ConfirmEmail { get; set; }
         }
 
         private async Task LoadAsync(ApplicationUser user)
         {
-            var userName = await _userManager.GetUserNameAsync(user);
-            Username = userName;
+            // Buscar dados do estagi·rio vinculado ao usu·rio
+            Estagiario = await _context.Estagiarios
+                .Include(e => e.Supervisor)
+                .Include(e => e.Frequencias)
+                .Include(e => e.Avaliacoes)
+                .FirstOrDefaultAsync(e => e.UserId == user.Id);
 
             Input = new InputModel
             {
@@ -54,10 +61,16 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"N√£o foi poss√≠vel carregar o usu√°rio com ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"N„o foi possÌvel carregar o usu·rio com ID '{_userManager.GetUserId(User)}'.");
             }
 
             await LoadAsync(user);
+
+            if (Estagiario == null)
+            {
+                return NotFound("Dados de estagi·rio n„o encontrados para este usu·rio.");
+            }
+
             return Page();
         }
 
@@ -66,10 +79,10 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"N√£o foi poss√≠vel carregar o usu√°rio com ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"N„o foi possÌvel carregar o usu·rio com ID '{_userManager.GetUserId(User)}'.");
             }
 
-            // Verificar se √© o administrador padr√£o
+            // Verificar se È o administrador padr„o
             if (user.Email == AppConstants.DefaultAdminEmail)
             {
                 StatusMessage = "Error: " + AppConstants.DefaultAdminEditError;
@@ -96,7 +109,7 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
                     return Page();
                 }
 
-                // Atualizar tamb√©m o nome de usu√°rio
+                // Atualizar tambÈm o nome de usu·rio
                 var setUserNameResult = await _userManager.SetUserNameAsync(user, Input.NewEmail);
                 if (!setUserNameResult.Succeeded)
                 {
@@ -108,12 +121,12 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
                     return Page();
                 }
 
-                // Atualizar o NormalizedEmail e NormalizedUserName tamb√©m
+                // Atualizar o NormalizedEmail e NormalizedUserName tambÈm
                 user.NormalizedEmail = _userManager.NormalizeEmail(Input.NewEmail);
                 user.NormalizedUserName = _userManager.NormalizeName(Input.NewEmail);
                 await _userManager.UpdateAsync(user);
 
-                // For√ßar novo login com as credenciais atualizadas
+                // ForÁar novo login com as credenciais atualizadas
                 await _userManager.UpdateSecurityStampAsync(user);
             }
 

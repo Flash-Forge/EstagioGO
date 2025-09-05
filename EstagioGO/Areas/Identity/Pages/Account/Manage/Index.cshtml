@@ -1,28 +1,159 @@
 ﻿@page
 @model IndexModel
+@using EstagioGO.Data
+@using EstagioGO.Constants
+@inject UserManager<ApplicationUser> UserManager
 @{
-    ViewData["Title"] = "Perfil";
+    ViewData["Title"] = "Perfil do Usuário";
     ViewData["ActivePage"] = ManageNavPages.Index;
+
+    // Verificar se o usuário é estagiário
+    var user = await UserManager.GetUserAsync(User);
+    var isEstagiario = User.IsInRole("Estagiario");
+    var isDefaultAdmin = user?.Email == AppConstants.DefaultAdminEmail;
 }
 
 <h3>@ViewData["Title"]</h3>
 <partial name="_StatusMessage" for="StatusMessage" />
-<div class="row">
-    <div class="col-md-6">
-        <form id="profile-form" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Username" class="form-control" placeholder="Por favor, escolha seu nome de usuário." disabled />
-                <label asp-for="Username" class="form-label">Email</label>
-            </div>
-            <!-- DESNECESSARIO <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Salvar</button> -->
-        </form>
 
-        <!-- Botão para alteração de senha -->
-        <div class="mt-3">
-            <a asp-area="Identity" asp-page="/Account/Manage/ChangePassword" class="w-100 btn btn-lg btn-outline-secondary">
-                Alterar Senha
-            </a>
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Informações da Conta</h5>
+            </div>
+            <div class="card-body">
+                <form id="profile-form" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input asp-for="Username" class="form-control" placeholder="Email" disabled />
+                                <label asp-for="Username" class="form-label">Email</label>
+                            </div>
+                            @if (isDefaultAdmin)
+                            {
+                                <small class="text-muted">@AppConstants.DefaultAdminEditError</small>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input value="@user.NomeCompleto" class="form-control" disabled />
+                                <label class="form-label">Nome Completo</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input value="@user.Cargo" class="form-control" disabled />
+                                <label class="form-label">Cargo</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!isDefaultAdmin)
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <input asp-for="Input.NewEmail" class="form-control" placeholder="Novo email" />
+                                    <label asp-for="Input.NewEmail" class="form-label">Novo Email</label>
+                                    <span asp-validation-for="Input.NewEmail" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <input asp-for="Input.ConfirmEmail" class="form-control" placeholder="Confirmar email" />
+                                    <label asp-for="Input.ConfirmEmail" class="form-label">Confirmar Email</label>
+                                    <span asp-validation-for="Input.ConfirmEmail" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="update-profile-button" type="submit" class="btn btn-primary">Salvar alterações de email</button>
+                    }
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Ações Disponíveis</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a asp-area="Identity" asp-page="/Account/Manage/ChangePassword" class="btn btn-outline-primary">
+                        <i class="bi bi-key"></i> Alterar Senha
+                    </a>
+
+                    @if (isEstagiario)
+                    {
+                        <a asp-area="Identity" asp-page="/Account/Manage/EstagiarioProfile" class="btn btn-outline-info">
+                            <i class="bi bi-person-badge"></i> Meus Dados de Estagiário
+                        </a>
+                    }
+
+                    @if (User.IsInRole("Administrador") || User.IsInRole("Coordenador"))
+                    {
+                        <a asp-controller="Estagiarios" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-people"></i> Gerenciar Estagiários
+                        </a>
+                    }
+
+                    @if (User.IsInRole("Supervisor"))
+                    {
+                        <a asp-controller="Frequencia" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-calendar-check"></i> Registrar Frequência
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Informações da Conta</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="flex-shrink-0">
+                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <span class="text-white fw-bold fs-4">@user.NomeCompleto?[0]</span>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="mb-0">@user.NomeCompleto</h6>
+                        <span class="text-muted">@user.Cargo</span>
+                    </div>
+                </div>
+
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Email:</span>
+                        <span class="text-muted">@user.Email</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Usuário desde:</span>
+                        <span class="text-muted">@user.DataCadastro.ToString("dd/MM/yyyy")</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Status:</span>
+                        <span class="badge bg-@(user.Ativo ? "success" : "danger")">@(user.Ativo ? "Ativo" : "Inativo")</span>
+                    </li>
+                    @if (isDefaultAdmin)
+                    {
+                        <li class="list-group-item">
+                            <span class="text-warning"><i class="bi bi-shield-exclamation"></i> Administrador Padrão</span>
+                        </li>
+                    }
+                </ul>
+            </div>
         </div>
     </div>
 </div>

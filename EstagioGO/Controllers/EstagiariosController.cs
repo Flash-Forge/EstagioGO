@@ -1,5 +1,6 @@
 ﻿using EstagioGO.Data;
 using EstagioGO.Models.Domain;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -9,6 +10,7 @@ using System.Text.RegularExpressions;
 
 namespace EstagioGO.Controllers
 {
+    [Authorize(Roles = "Administrador,Coordenador")]
     public partial class EstagiariosController(ApplicationDbContext context, UserManager<ApplicationUser> userManager) : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager = userManager;

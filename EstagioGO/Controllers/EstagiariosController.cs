@@ -9,9 +9,12 @@ using System.Text.RegularExpressions;
 
 namespace EstagioGO.Controllers
 {
-    public class EstagiariosController(ApplicationDbContext context, UserManager<ApplicationUser> userManager) : Controller
+    public partial class EstagiariosController(ApplicationDbContext context, UserManager<ApplicationUser> userManager) : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager = userManager;
+
+        // Expressão regular corrigida para ser instanciada diretamente
+        private static readonly Regex NonDigitsRegex = new(@"[^\d]", RegexOptions.Compiled);
 
         // GET: Estagiarios
         public async Task<IActionResult> Index()
@@ -72,12 +75,14 @@ namespace EstagioGO.Controllers
             // Remover formatação do CPF e Telefone antes de validar
             if (!string.IsNullOrEmpty(estagiario.CPF))
             {
-                estagiario.CPF = Regex.Replace(estagiario.CPF, @"[^\d]", "");
+                // A chamada ao método continua igual, pois o nome da variável não mudou
+                estagiario.CPF = NonDigitsRegex.Replace(estagiario.CPF, "");
             }
 
             if (!string.IsNullOrEmpty(estagiario.Telefone))
             {
-                estagiario.Telefone = Regex.Replace(estagiario.Telefone, @"[^\d]", "");
+                // A chamada ao método continua igual, pois o nome da variável não mudou
+                estagiario.Telefone = NonDigitsRegex.Replace(estagiario.Telefone, "");
             }
 
             // DEBUG: Log dos valores recebidos
@@ -101,9 +106,9 @@ namespace EstagioGO.Controllers
                 foreach (var key in ModelState.Keys)
                 {
                     var state = ModelState[key];
-                    foreach (var error in state.Errors)
+                    if (state != null && state.Errors.Count > 0)
                     {
-                        Debug.WriteLine($"{key}: {error.ErrorMessage}");
+                        Debug.WriteLine($"{key}: {string.Join(", ", state.Errors.Select(e => e.ErrorMessage))}");
                     }
                 }
 
@@ -190,12 +195,12 @@ namespace EstagioGO.Controllers
             // Remover formatação do CPF e Telefone antes de validar
             if (!string.IsNullOrEmpty(estagiario.CPF))
             {
-                estagiario.CPF = Regex.Replace(estagiario.CPF, @"[^\d]", "");
+                estagiario.CPF = NonDigitsRegex.Replace(estagiario.CPF, "");
             }
 
             if (!string.IsNullOrEmpty(estagiario.Telefone))
             {
-                estagiario.Telefone = Regex.Replace(estagiario.Telefone, @"[^\d]", "");
+                estagiario.Telefone = NonDigitsRegex.Replace(estagiario.Telefone, "");
             }
 
             // Validação das datas
@@ -276,8 +281,11 @@ namespace EstagioGO.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var estagiario = await context.Estagiarios.FindAsync(id);
-            context.Estagiarios.Remove(estagiario);
-            await context.SaveChangesAsync();
+            if (estagiario != null)
+            {
+                context.Estagiarios.Remove(estagiario);
+                await context.SaveChangesAsync();
+            }
 
             TempData["SuccessMessage"] = "Estagiário excluído com sucesso!";
             return RedirectToAction(nameof(Index));
@@ -288,7 +296,7 @@ namespace EstagioGO.Controllers
             return context.Estagiarios.Any(e => e.Id == id);
         }
 
-        private async Task<(bool recursosDisponiveis, string mensagemErro, string redirecionarPara)> CarregarViewBags(string userIdAtual = null)
+        private async Task<(bool recursosDisponiveis, string? mensagemErro, string? redirecionarPara)> CarregarViewBags(string? userIdAtual = null)
         {
             try
             {
@@ -297,8 +305,8 @@ namespace EstagioGO.Controllers
                 if (!supervisores.Any())
                 {
                     return (false,
-                           "Não há supervisores cadastrados. Você será redirecionado para criar um usuário supervisor.",
-                           Url.Action("CreateUser", "Admin", new { contexto = "supervisor" }));
+                            "Não há supervisores cadastrados. Você será redirecionado para criar um usuário supervisor.",
+                            Url.Action("CreateUser", "Admin", new { contexto = "supervisor" }));
                 }
                 ViewBag.SupervisorId = new SelectList(supervisores, "Id", "NomeCompleto");
 
@@ -309,8 +317,8 @@ namespace EstagioGO.Controllers
                 if (!estagiariosUsers.Any())
                 {
                     return (false,
-                           "Não há usuários com perfil de Estagiário cadastrados. Você será redirecionado para criar um usuário estagiário.",
-                           Url.Action("CreateUser", "Admin", new { contexto = "estagiario" }));
+                            "Não há usuários com perfil de Estagiário cadastrados. Você será redirecionado para criar um usuário estagiário.",
+                            Url.Action("CreateUser", "Admin", new { contexto = "estagiario" }));
                 }
 
                 // Obter IDs de usuários já vinculados
@@ -338,8 +346,8 @@ namespace EstagioGO.Controllers
                 if (usuariosDisponiveis.Count == 0)
                 {
                     return (false,
-                           "Não há usuários disponíveis com perfil de Estagiário. Todos os usuários estagiários já estão vinculados a outros cadastros. Você será redirecionado para criar um novo usuário estagiário.",
-                           Url.Action("CreateUser", "Admin", new { contexto = "estagiario" }));
+                            "Não há usuários disponíveis com perfil de Estagiário. Todos os usuários estagiários já estão vinculados a outros cadastros. Você será redirecionado para criar um novo usuário estagiário.",
+                            Url.Action("CreateUser", "Admin", new { contexto = "estagiario" }));
                 }
 
                 ViewBag.UserId = new SelectList(usuariosDisponiveis, "Id", "NomeCompleto");

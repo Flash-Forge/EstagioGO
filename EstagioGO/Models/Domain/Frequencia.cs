@@ -59,7 +59,7 @@ namespace EstagioGO.Models.Domain
             {
                 yield return new ValidationResult(
                     "Motivo da falta é obrigatória quando o estagiário está ausente.",
-                    new[] { nameof(Motivo) });
+                    [nameof(Motivo)]);
             }
         }
     }

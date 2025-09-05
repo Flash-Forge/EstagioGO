@@ -5,7 +5,7 @@ namespace EstagioGO.Models.Domain
 {
     public class CPFAttribute : ValidationAttribute
     {
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
         {
             if (value == null || string.IsNullOrEmpty(value.ToString()))
                 return ValidationResult.Success;
@@ -13,7 +13,7 @@ namespace EstagioGO.Models.Domain
             var cpf = value.ToString();
 
             // Remove formatação
-            cpf = Regex.Replace(cpf, @"[^\d]", "");
+            cpf = Regex.Replace(cpf!, @"[^\d]", "");
 
             // Verifica se tem 11 dígitos
             if (cpf.Length != 11)

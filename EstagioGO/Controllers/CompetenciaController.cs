@@ -74,7 +74,7 @@ namespace EstagioGO.Controllers
         public async Task<IActionResult> Create(int? categoriaId)
         {
             await CarregarCategoriasDropdown(categoriaId);
-            
+
             var competencia = new Competencia();
             if (categoriaId.HasValue)
             {
@@ -203,7 +203,7 @@ namespace EstagioGO.Controllers
                 if (competencia != null)
                 {
                     // Verificar se há avaliações associadas
-                    if (competencia.AvaliacoesCompetencia.Any())
+                    if (competencia.AvaliacoesCompetencia.Count != 0)
                     {
                         TempData["ErrorMessage"] = "Não é possível excluir uma competência que possui avaliações associadas. Desative-a primeiro.";
                         return RedirectToAction(nameof(Index), new { categoriaId = competencia.CategoriaId });
@@ -237,7 +237,7 @@ namespace EstagioGO.Controllers
                 {
                     competencia.Ativo = !competencia.Ativo;
                     await context.SaveChangesAsync();
-                    
+
                     string status = competencia.Ativo ? "ativada" : "desativada";
                     TempData["SuccessMessage"] = $"Competência {status} com sucesso!";
                     return RedirectToAction(nameof(Index), new { categoriaId = competencia.CategoriaId });

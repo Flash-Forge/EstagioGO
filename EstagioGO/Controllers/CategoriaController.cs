@@ -171,7 +171,7 @@ namespace EstagioGO.Controllers
                 if (categoria != null)
                 {
                     // Verificar se há competências associadas
-                    if (categoria.Competencias.Any())
+                    if (categoria.Competencias.Count != 0)
                     {
                         TempData["ErrorMessage"] = "Não é possível excluir uma categoria que possui competências associadas. Desative-a ou remova as competências primeiro.";
                         return RedirectToAction(nameof(Index));
@@ -203,7 +203,7 @@ namespace EstagioGO.Controllers
                 {
                     categoria.Ativo = !categoria.Ativo;
                     await _context.SaveChangesAsync();
-                    
+
                     string status = categoria.Ativo ? "ativada" : "desativada";
                     TempData["SuccessMessage"] = $"Categoria {status} com sucesso!";
                 }

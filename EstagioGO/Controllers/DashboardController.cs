@@ -203,7 +203,7 @@ namespace EstagioGO.Controllers
                 .OrderByDescending(e => e.UltimaNota)
                 .ToList();
 
-                logger.LogInformation($"Encontrados {resultado.Count} estagiários para a lista");
+                logger.LogInformation("Encontrados {Count} estagiários para a lista", resultado.Count);
                 return resultado;
             }
             catch (Exception ex)

@@ -27,7 +27,7 @@ namespace EstagioGO.Controllers
                     .OrderBy(c => c.OrdemExibicao)
                     .ToListAsync();
 
-                logger.LogInformation($"Encontradas {categorias.Count} categorias ativas");
+                logger.LogInformation("Encontradas {Count} categorias ativas", categorias.Count);
 
                 var viewModel = new AvaliacaoViewModel
                 {
@@ -54,7 +54,7 @@ namespace EstagioGO.Controllers
                     .OrderBy(e => e.Nome)
                     .ToListAsync();
 
-                logger.LogInformation($"Encontrados {estagiarios.Count} estagiários ativos");
+                logger.LogInformation("Encontrados {Count} estagiários ativos", estagiarios.Count);
 
                 ViewBag.Estagiarios = new SelectList(estagiarios, "Id", "Nome");
 
@@ -92,8 +92,8 @@ namespace EstagioGO.Controllers
                         return View(viewModel);
                     }
 
-                    logger.LogInformation($"Avaliador ID: {avaliadorId}");
-                    logger.LogInformation($"Estagiário ID selecionado: {viewModel.EstagiarioId}");
+                    logger.LogInformation("Avaliador ID: {AvaliadorId}", avaliadorId);
+                    logger.LogInformation("Estagiário ID selecionado: {EstagiarioId}", viewModel.EstagiarioId);
 
                     // Verificar se o estagiário existe
                     var estagiario = await context.Estagiarios
@@ -101,7 +101,7 @@ namespace EstagioGO.Controllers
 
                     if (estagiario == null)
                     {
-                        logger.LogError($"Estagiário com ID {viewModel.EstagiarioId} não encontrado ou inativo");
+                        logger.LogError("Estagiário com ID {EstagiarioId} não encontrado ou inativo", viewModel.EstagiarioId);
                         ModelState.AddModelError("EstagiarioId", "Estagiário não encontrado ou inativo.");
                         return View(viewModel);
                     }
@@ -120,13 +120,13 @@ namespace EstagioGO.Controllers
                     decimal somaNotas = 0;
                     int totalCompetencias = 0;
 
-                    logger.LogInformation($"Processando {viewModel.Categorias.Sum(c => c.Competencias.Count)} competências");
+                    logger.LogInformation("Processando {TotalCompetencias} competências", viewModel.Categorias.Sum(c => c.Competencias.Count));
 
                     foreach (var categoria in viewModel.Categorias)
                     {
                         foreach (var competencia in categoria.Competencias)
                         {
-                            logger.LogDebug($"Competência ID: {competencia.CompetenciaId}, Nota: {competencia.Nota}");
+                            logger.LogDebug("Competência ID: {CompetenciaId}, Nota: {Nota}", competencia.CompetenciaId, competencia.Nota);
 
                             var avaliacaoCompetencia = new AvaliacaoCompetencia
                             {
@@ -143,13 +143,13 @@ namespace EstagioGO.Controllers
                         }
                     }
 
-                    logger.LogInformation($"Total de competências processadas: {totalCompetencias}, Soma das notas: {somaNotas}");
+                    logger.LogInformation("Total de competências processadas: {TotalCompetencias}, Soma das notas: {SomaNotas}", totalCompetencias, somaNotas);
 
                     // Calcular a média das notas (0-5)
                     if (totalCompetencias > 0)
                     {
                         avaliacao.MediaNotas = Math.Round(somaNotas / totalCompetencias, 2);
-                        logger.LogInformation($"Média calculada: {avaliacao.MediaNotas}");
+                        logger.LogInformation("Média calculada: {MediaNotas}", avaliacao.MediaNotas);
                     }
                     else
                     {
@@ -182,7 +182,9 @@ namespace EstagioGO.Controllers
                 {
                     if (error.Value.Errors.Count > 0)
                     {
-                        logger.LogWarning($"Erro no campo {error.Key}: {string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage))}");
+                        logger.LogWarning("Erro no campo {FieldName}: {ErrorMessages}",
+                            error.Key,
+                            string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage)));
                     }
                 }
             }

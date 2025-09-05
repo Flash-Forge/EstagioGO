@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace EstagioGO.Controllers
 {
-    public class HomeController(ILogger<HomeController> logger) : Controller
+    public class HomeController() : Controller
     {
         public IActionResult Index()
         {

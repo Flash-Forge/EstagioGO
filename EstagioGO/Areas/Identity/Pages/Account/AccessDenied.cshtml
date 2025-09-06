@@ -1,0 +1,19 @@
+﻿@page
+@model AccessDeniedModel
+@{
+    ViewData["Title"] = "Acesso Negado";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 70vh;">
+    <div class="text-center">
+        <h1 class="display-1 fw-bold text-danger">403</h1>
+        <p class="fs-3"> <span class="text-danger">Opps!</span> Acesso Negado.</p>
+        <p class="lead">
+            Você não tem permissão para visualizar este recurso.
+        </p>
+        <a href="@Url.Content("~/")" class="btn btn-primary mt-3">
+            <i class="fas fa-home me-2"></i>Voltar para a Página Inicial
+        </a>
+    </div>
+</div>

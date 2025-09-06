@@ -5,7 +5,6 @@ using EstagioGO.Services.Email;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +39,19 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    // Configura o caminho para a página de login. O sistema usará isso se um usuário anônimo tentar acessar uma área restrita.
+    options.LoginPath = "/Identity/Account/Login";
+
+    // Configura o caminho para a página de Acesso Negado.
+    // Esta é a linha mais importante para a sua pergunta.
+    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+
+    // Você também pode configurar outros caminhos, se necessário
+    // options.LogoutPath = "/Identity/Account/Logout";
+});
 
 builder.Services.AddSingleton<IEmailSender, EmailSender>();
 
@@ -118,10 +130,12 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios.
+    // MUDANÇA #1: O manipulador de erros 500 agora aponta para uma rota genérica
+    app.UseExceptionHandler("/Error/500"); // Você pode criar um ErrorController para isso
+    app.UseStatusCodePagesWithReExecute("/Error/{0}"); // O {0} será o código de erro (ex: 404)
     app.UseHsts();
 }
+
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

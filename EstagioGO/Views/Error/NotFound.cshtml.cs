@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace EstagioGO.Views.Dashboard
+namespace EstagioGO.Views.Error
 {
-    public class HistoricoModel : PageModel
+    public class NotFoundModel : PageModel
     {
         public void OnGet()
         {

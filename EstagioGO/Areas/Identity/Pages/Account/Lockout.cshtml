@@ -1,0 +1,21 @@
+﻿@page
+@model LockoutModel
+@{
+    ViewData["Title"] = "Conta Bloqueada";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 70vh;">
+    <div class="text-center">
+        <h1 class="display-1 fw-bold text-warning"><i class="fas fa-lock"></i></h1>
+        <p class="fs-3"> <span class="text-warning">Opps!</span> Conta Bloqueada.</p>
+        <p class="lead">
+            Esta conta foi temporariamente bloqueada devido a múltiplas tentativas de login.
+            <br>
+            Por favor, tente novamente mais tarde.
+        </p>
+        <a href="@Url.Page("./Login")" class="btn btn-primary mt-3">
+            <i class="fas fa-sign-in-alt me-2"></i>Ir para a Página de Login
+        </a>
+    </div>
+</div>

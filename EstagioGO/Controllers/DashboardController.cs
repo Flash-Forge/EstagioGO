@@ -38,6 +38,7 @@ namespace EstagioGO.Controllers
                 viewModel.EvolucaoDesempenho = await ObterEvolucaoDesempenho();
                 viewModel.MapeamentoTalentos = await ObterMapeamentoTalentos();
                 viewModel.Estagiarios = await ObterListaEstagiarios();
+                viewModel.DadosFrequencia = await ObterDadosFrequencia(estagiarioId);
 
                 return View(viewModel);
             }
@@ -211,6 +212,64 @@ namespace EstagioGO.Controllers
                 logger.LogError(ex, "Erro ao obter lista de estagiários");
                 return [];
             }
+        }
+
+        public async Task<IActionResult> Historico(int id)
+        {
+            try
+            {
+                var estagiario = await context.Estagiarios
+                    .Include(e => e.Avaliacoes)
+                        .ThenInclude(a => a.Avaliador) // Inclui os dados de quem avaliou
+                    .FirstOrDefaultAsync(e => e.Id == id);
+
+                if (estagiario == null)
+                {
+                    logger.LogWarning("Tentativa de acessar histórico para estagiário não encontrado. ID: {Id}", id);
+                    return NotFound();
+                }
+
+                // Ordena as avaliações da mais recente para a mais antiga para melhor visualização
+                estagiario.Avaliacoes = estagiario.Avaliacoes.OrderByDescending(a => a.DataAvaliacao).ToList();
+
+                // Retorna a nova view que iremos criar, passando o estagiário com suas avaliações
+                return View(estagiario);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Erro ao carregar histórico do estagiário. ID: {Id}", id);
+                TempData["ErrorMessage"] = "Erro ao carregar o histórico de avaliações.";
+                return RedirectToAction("Index");
+            }
+        }
+
+        private async Task<List<FrequenciaStatusViewModel>> ObterDadosFrequencia(int? estagiarioId)
+        {
+            var query = context.Frequencias.AsQueryable();
+
+            if (estagiarioId.HasValue)
+            {
+                query = query.Where(f => f.EstagiarioId == estagiarioId.Value);
+            }
+
+            var dados = await query
+                .GroupBy(f => f.Presente)
+                .Select(g => new
+                {
+                    Status = g.Key,
+                    Quantidade = g.Count()
+                })
+                .ToListAsync();
+
+            // Transforma o resultado (true/false) em um formato legível para o gráfico
+            var resultado = new List<FrequenciaStatusViewModel>();
+            var presencas = dados.FirstOrDefault(d => d.Status);
+            var faltas = dados.FirstOrDefault(d => !d.Status);
+
+            resultado.Add(new FrequenciaStatusViewModel { Status = "Presenças", Quantidade = presencas?.Quantidade ?? 0 });
+            resultado.Add(new FrequenciaStatusViewModel { Status = "Faltas", Quantidade = faltas?.Quantidade ?? 0 });
+
+            return resultado;
         }
     }
 }

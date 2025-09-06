@@ -182,6 +182,22 @@
                 </div>
             }
 
+            @if (Model.DadosFrequencia.Any(d => d.Quantidade > 0))
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-calendar-check me-2"></i>Resumo de Frequência
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="pieChartFrequencia" width="400" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            }
+
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
@@ -197,6 +213,7 @@
                                         <th>Nome</th>
                                         <th>Última Nota</th>
                                         <th>Status</th>
+                                        <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -223,6 +240,14 @@
                                                     <span class="badge bg-secondary">@estagiario.Status</span>
                                                 }
                                             </td>
+                                            <td>
+                                                <a asp-action="Historico" asp-controller="Dashboard" asp-route-id="@estagiario.Id" class="btn btn-sm btn-outline-info me-1" title="Ver Histórico">
+                                                    <i class="fas fa-history"></i>
+                                                </a>
+                                                <a asp-action="Create" asp-controller="Avaliacao" asp-route-estagiarioId="@estagiario.Id" class="btn btn-sm btn-outline-success" title="Nova Avaliação">
+                                                    <i class="fas fa-star"></i>
+                                                </a>
+                                            </td>
                                         </tr>
                                     }
                                 </tbody>
@@ -244,159 +269,222 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Configurações globais do Chart.js
-            Chart.defaults.responsive = true;
-            Chart.defaults.maintainAspectRatio = false;
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Configurações globais do Chart.js
+                    Chart.defaults.responsive = true;
+                    Chart.defaults.maintainAspectRatio = false;
 
-            @if (Model.MediasCategorias.Any())
-            {
-                <text>
-                // Radar Chart - Médias por Categoria
-                const radarCtx = document.getElementById('radarChart');
-                if (radarCtx) {
-                    new Chart(radarCtx, {
-                        type: 'radar',
-                        data: {
-                            labels: [@Html.Raw(string.Join(", ", Model.MediasCategorias.Select(m => $"'{m.Categoria}'")))],
-                            datasets: [{
-                                label: 'Média das Categorias',
-                                data: [@string.Join(", ", Model.MediasCategorias.Select(m => m.Media.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)))],
-                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                                borderColor: 'rgba(54, 162, 235, 1)',
-                                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                                pointBorderColor: '#fff',
-                                pointHoverBackgroundColor: '#fff',
-                                pointHoverBorderColor: 'rgba(54, 162, 235, 1)',
-                                borderWidth: 2
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                r: {
-                                    angleLines: { display: true },
-                                    suggestedMin: 0,
-                                    suggestedMax: 5,
-                                    ticks: {
-                                        stepSize: 1
+                    @if (Model.MediasCategorias.Any())
+                    {
+                                    <text>
+                                    // Radar Chart - Médias por Categoria
+                                    const radarCtx = document.getElementById('radarChart');
+                                    if (radarCtx) {
+                                        new Chart(radarCtx, {
+                                            type: 'radar',
+                                            data: {
+                                                labels: [@Html.Raw(string.Join(", ", Model.MediasCategorias.Select(m => $"'{m.Categoria}'")))],
+                                                datasets: [{
+                                                    label: 'Média das Categorias',
+                                                    data: [@string.Join(", ", Model.MediasCategorias.Select(m => m.Media.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)))],
+                                                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                                                    pointBorderColor: '#fff',
+                                                    pointHoverBackgroundColor: '#fff',
+                                                    pointHoverBorderColor: 'rgba(54, 162, 235, 1)',
+                                                    borderWidth: 2
+                                                }]
+                                            },
+                                            options: {
+                                                responsive: true,
+                                                maintainAspectRatio: false,
+                                                scales: {
+                                                    r: {
+                                                        angleLines: { display: true },
+                                                        suggestedMin: 0,
+                                                        suggestedMax: 5,
+                                                        ticks: {
+                                                            stepSize: 1
+                                                        }
+                                                    }
+                                                },
+                                                plugins: {
+                                                    legend: {
+                                                        position: 'bottom'
+                                                    }
+                                                }
+                                            }
+                                        });
                                     }
-                                }
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'bottom'
-                                }
+                                    </text>
+                    }
+
+                    @if (Model.EvolucaoDesempenho.Any())
+                    {
+                                    <text>
+                                    // Line Chart - Evolução do Desempenho
+                                    const lineCtx = document.getElementById('lineChart');
+                                    if (lineCtx) {
+                                        new Chart(lineCtx, {
+                                            type: 'line',
+                                            data: {
+                                                labels: [@Html.Raw(string.Join(", ", Model.EvolucaoDesempenho.Select(e => $"'{e.Periodo}'")))],
+                                                datasets: [{
+                                                    label: 'Média de Desempenho',
+                                                    data: [@string.Join(", ", Model.EvolucaoDesempenho.Select(e => e.Media.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)))],
+                                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                                    borderWidth: 3,
+                                                    fill: true,
+                                                    tension: 0.4
+                                                }]
+                                            },
+                                            options: {
+                                                responsive: true,
+                                                maintainAspectRatio: false,
+                                                scales: {
+                                                    y: {
+                                                        beginAtZero: true,
+                                                        max: 5,
+                                                        ticks: {
+                                                            stepSize: 1
+                                                        }
+                                                    }
+                                                },
+                                                plugins: {
+                                                    legend: {
+                                                        position: 'bottom'
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    }
+                                    </text>
+                    }
+
+                    @if (Model.MapeamentoTalentos.Any())
+                    {
+                            <text>
+                            // Scatter Chart - Mapeamento de Talentos
+                            const scatterCtx = document.getElementById('scatterChart');
+                            if (scatterCtx) {
+                                new Chart(scatterCtx, {
+                                    type: 'scatter',
+                                    data: {
+                                        datasets: [{
+                                            label: 'Estagiários',
+                                            data: [
+                                                @Html.Raw(string.Join(", ", Model.MapeamentoTalentos.Select(t =>
+                                                    $"{{x: {t.MediaHabilidadesTecnicas.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)}, y: {t.MediaHabilidadesComportamentais.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)}, label: '{t.Estagiario}'}}")))
+                    ],
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Habilidades Técnicas'
+                        },
+                        min: 0,
+                        max: 5
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Habilidades Comportamentais'
+                        },
+                        min: 0,
+                        max: 5
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.raw.label + ': (' + context.parsed.x + ', ' + context.parsed.y + ')';
                             }
                         }
-                    });
+                    }
                 }
-                </text>
-            }
-
-            @if (Model.EvolucaoDesempenho.Any())
-            {
-                <text>
-                // Line Chart - Evolução do Desempenho
-                const lineCtx = document.getElementById('lineChart');
-                if (lineCtx) {
-                    new Chart(lineCtx, {
-                        type: 'line',
-                        data: {
-                            labels: [@Html.Raw(string.Join(", ", Model.EvolucaoDesempenho.Select(e => $"'{e.Periodo}'")))],
-                            datasets: [{
-                                label: 'Média de Desempenho',
-                                data: [@string.Join(", ", Model.EvolucaoDesempenho.Select(e => e.Media.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)))],
-                                borderColor: 'rgba(75, 192, 192, 1)',
-                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                                borderWidth: 3,
-                                fill: true,
-                                tension: 0.4
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    max: 5,
-                                    ticks: {
-                                        stepSize: 1
-                                    }
-                                }
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'bottom'
-                                }
-                            }
-                        }
-                    });
-                }
-                </text>
-            }
-
-            @if (Model.MapeamentoTalentos.Any())
-            {
-                <text>
-                // Scatter Chart - Mapeamento de Talentos
-                const scatterCtx = document.getElementById('scatterChart');
-                if (scatterCtx) {
-                    new Chart(scatterCtx, {
-                        type: 'scatter',
-                        data: {
-                            datasets: [{
-                                label: 'Estagiários',
-                                data: [
-                                    @Html.Raw(string.Join(", ", Model.MapeamentoTalentos.Select(t => 
-                                        $"{{x: {t.MediaHabilidadesTecnicas.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)}, y: {t.MediaHabilidadesComportamentais.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)}, label: '{t.Estagiario}'}}")))
-                                ],
-                                backgroundColor: 'rgba(255, 99, 132, 0.6)',
-                                borderColor: 'rgba(255, 99, 132, 1)',
-                                borderWidth: 2
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: 'Habilidades Técnicas'
-                                    },
-                                    min: 0,
-                                    max: 5
-                                },
-                                y: {
-                                    title: {
-                                        display: true,
-                                        text: 'Habilidades Comportamentais'
-                                    },
-                                    min: 0,
-                                    max: 5
-                                }
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'bottom'
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            return context.raw.label + ': (' + context.parsed.x + ', ' + context.parsed.y + ')';
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-                </text>
             }
         });
+    }
+    </text>
+                                                        }
+
+                    @if (Model.DadosFrequencia.Any(d => d.Quantidade > 0))
+                    {
+                            <text>
+                            // Pie Chart - Resumo de Frequência
+                            const pieCtx = document.getElementById('pieChartFrequencia');
+                            if (pieCtx) {
+                                new Chart(pieCtx, {
+                                    type: 'pie',
+                                    data: {
+                                        labels: [@Html.Raw(string.Join(", ", Model.DadosFrequencia.Select(d => $"'{d.Status}'")))],
+                                        datasets: [{
+                                            label: 'Total',
+                                            data: [@string.Join(", ", Model.DadosFrequencia.Select(d => d.Quantidade))],
+                                            backgroundColor: [
+                                                'rgba(75, 192, 192, 0.6)', // Cor para Presenças (Verde)
+                                                'rgba(255, 99, 132, 0.6)'  // Cor para Faltas (Vermelho)
+                                            ],
+                                            borderColor: [
+                                                'rgba(75, 192, 192, 1)',
+                                                'rgba(255, 99, 132, 1)'
+                                            ],
+                                            borderWidth: 1
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                position: 'bottom', // Garante que a legenda fique na parte inferior
+                                                labels: {
+                                                    boxWidth: 20, // Largura da caixa de cor da legenda
+                                                    padding: 20,  // Espaçamento entre os itens da legenda
+                                                    font: {
+                                                        size: 12 // Tamanho da fonte da legenda
+                                                    }
+                                                }
+                                            },
+                                            tooltip: {
+                                                callbacks: {
+                                                    label: function(context) {
+                                                        let label = context.label || '';
+                                                        if (label) {
+                                                            label += ': ';
+                                                        }
+                                                        if (context.parsed !== null) {
+                                                            label += context.parsed;
+                                                            // Adiciona a porcentagem
+                                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                                            const percentage = ((context.parsed / total) * 100).toFixed(2);
+                                                            label += ` (${percentage}%)`;
+                                                        }
+                                                        return label;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                            </text>
+                }
+                });
     </script>
 }
 

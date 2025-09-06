@@ -6,19 +6,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace EstagioGO.Areas.Identity.Pages.Account.Manage
 {
-    public class IndexModel : PageModel
+    public class IndexModel(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager) : PageModel
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-
-        public IndexModel(
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-        }
-
         public string Username { get; set; }
 
         [TempData]
@@ -40,7 +31,7 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
 
         private async Task LoadAsync(ApplicationUser user)
         {
-            var userName = await _userManager.GetUserNameAsync(user);
+            var userName = await userManager.GetUserNameAsync(user);
             Username = userName;
 
             Input = new InputModel
@@ -51,10 +42,10 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var user = await _userManager.GetUserAsync(User);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Não foi possível carregar o usuário com ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"Não foi possível carregar o usuário com ID '{userManager.GetUserId(User)}'.");
             }
 
             await LoadAsync(user);
@@ -63,10 +54,10 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var user = await _userManager.GetUserAsync(User);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Não foi possível carregar o usuário com ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"Não foi possível carregar o usuário com ID '{userManager.GetUserId(User)}'.");
             }
 
             // Verificar se é o administrador padrão
@@ -85,7 +76,7 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
             // Atualizar apenas o email se foi alterado
             if (Input.NewEmail != user.Email)
             {
-                var setEmailResult = await _userManager.SetEmailAsync(user, Input.NewEmail);
+                var setEmailResult = await userManager.SetEmailAsync(user, Input.NewEmail);
                 if (!setEmailResult.Succeeded)
                 {
                     foreach (var error in setEmailResult.Errors)
@@ -97,7 +88,7 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
                 }
 
                 // Atualizar também o nome de usuário
-                var setUserNameResult = await _userManager.SetUserNameAsync(user, Input.NewEmail);
+                var setUserNameResult = await userManager.SetUserNameAsync(user, Input.NewEmail);
                 if (!setUserNameResult.Succeeded)
                 {
                     foreach (var error in setUserNameResult.Errors)
@@ -109,12 +100,12 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
                 }
 
                 // Atualizar o NormalizedEmail e NormalizedUserName também
-                user.NormalizedEmail = _userManager.NormalizeEmail(Input.NewEmail);
-                user.NormalizedUserName = _userManager.NormalizeName(Input.NewEmail);
-                await _userManager.UpdateAsync(user);
+                user.NormalizedEmail = userManager.NormalizeEmail(Input.NewEmail);
+                user.NormalizedUserName = userManager.NormalizeName(Input.NewEmail);
+                await userManager.UpdateAsync(user);
 
                 // Forçar novo login com as credenciais atualizadas
-                await _userManager.UpdateSecurityStampAsync(user);
+                await userManager.UpdateSecurityStampAsync(user);
             }
 
             StatusMessage = "Seu email foi atualizado com sucesso.";

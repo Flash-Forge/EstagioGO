@@ -12,7 +12,7 @@ public class ApplicationUser : IdentityUser
 
     // Relacionamentos
     public ICollection<Estagiario> EstagiariosSupervisionados { get; set; }
-    public ICollection<Estagiario> EstagiariosComoUsuario { get; set; }
+    public Estagiario EstagiarioProfile { get; set; }
     public ICollection<Avaliacao> AvaliacoesRealizadas { get; set; }
     public ICollection<Frequencia> FrequenciasRegistradas { get; set; }
 }

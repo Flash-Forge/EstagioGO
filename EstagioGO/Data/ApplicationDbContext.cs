@@ -73,8 +73,8 @@ namespace EstagioGO.Data
 
             builder.Entity<Estagiario>()
                 .HasOne(e => e.User)
-                .WithMany(u => u.EstagiariosComoUsuario)
-                .HasForeignKey(e => e.UserId)
+                .WithOne(u => u.EstagiarioProfile)
+                .HasForeignKey<Estagiario>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Estagiario>()

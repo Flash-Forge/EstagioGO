@@ -4,107 +4,104 @@
 @using EstagioGO.Constants
 @inject UserManager<ApplicationUser> UserManager
 @{
-    ViewData["Title"] = "Meus Dados de Estagiário";
+    ViewData["Title"] = "Meu Perfil de Estagiário";
     ViewData["ActivePage"] = ManageNavPages.EstagiarioProfile;
-
-    var user = await UserManager.GetUserAsync(User);
-    var isDefaultAdmin = user?.Email == AppConstants.DefaultAdminEmail;
 }
 
-<h4>@ViewData["Title"]</h4>
 <partial name="_StatusMessage" model="Model.StatusMessage" />
 
 @if (Model.Estagiario != null)
 {
     <div class="row">
-        <div class="col-md-6">
-            <h5>Dados Pessoais</h5>
-            <dl class="row">
-                <dt class="col-sm-4">Nome:</dt>
-                <dd class="col-sm-8">@Model.Estagiario.Nome</dd>
-
-                <dt class="col-sm-4">CPF:</dt>
-                <dd class="col-sm-8">@Model.Estagiario.CPFFormatado</dd>
-
-                <dt class="col-sm-4">Telefone:</dt>
-                <dd class="col-sm-8">@Model.Estagiario.TelefoneFormatado</dd>
-
-                <dt class="col-sm-4">Matrícula:</dt>
-                <dd class="col-sm-8">@Model.Estagiario.Matricula</dd>
-
-                <dt class="col-sm-4">Curso:</dt>
-                <dd class="col-sm-8">@Model.Estagiario.Curso</dd>
-
-                <dt class="col-sm-4">Instituição de Ensino:</dt>
-                <dd class="col-sm-8">@Model.Estagiario.InstituicaoEnsino</dd>
-
-                <dt class="col-sm-4">Data de Início:</dt>
-                <dd class="col-sm-8">@Model.Estagiario.DataInicio.ToShortDateString()</dd>
-
-                @if (Model.Estagiario.DataTermino.HasValue)
-                {
-                    <dt class="col-sm-4">Data de Término:</dt>
-                    <dd class="col-sm-8">@Model.Estagiario.DataTermino.Value.ToShortDateString()</dd>
-                }
-
-                <dt class="col-sm-4">Supervisor:</dt>
-                <dd class="col-sm-8">@Model.Estagiario.Supervisor?.NomeCompleto</dd>
-
-                <dt class="col-sm-4">Status:</dt>
-                <dd class="col-sm-8">@(Model.Estagiario.Ativo ? "Ativo" : "Inativo")</dd>
-            </dl>
-
-            @if (!isDefaultAdmin)
-            {
-                <h5>Alterar Email</h5>
-                <form id="email-form" method="post">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-                    <div class="form-group">
-                        <label asp-for="Input.NewEmail" class="form-label"></label>
-                        <input asp-for="Input.NewEmail" class="form-control" />
-                        <span asp-validation-for="Input.NewEmail" class="text-danger"></span>
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light d-flex align-items-center">
+                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                        <span class="text-white fw-bold fs-4">@Model.Estagiario.Nome.FirstOrDefault()</span>
                     </div>
-
-                    <div class="form-group">
-                        <label asp-for="Input.ConfirmEmail" class="form-label"></label>
-                        <input asp-for="Input.ConfirmEmail" class="form-control" />
-                        <span asp-validation-for="Input.ConfirmEmail" class="text-danger"></span>
+                    <div>
+                        <h4 class="mb-0">@Model.Estagiario.Nome</h4>
+                        <p class="text-muted mb-0">@Model.Estagiario.Curso</p>
                     </div>
-
-                    <button id="update-email-button" type="submit" class="btn btn-primary">Salvar alterações de email</button>
-                </form>
-            }
-            else
-            {
-                <div class="alert alert-info mt-3" role="alert">
-                    <i class="bi bi-info-circle"></i> @AppConstants.DefaultAdminEditError
                 </div>
-            }
+                <div class="card-body">
+                    <h5 class="card-title mb-3 border-bottom pb-2">
+                        <i class="fas fa-file-contract me-2"></i>Detalhes do Contrato
+                    </h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-user-tie me-2 text-muted"></i><strong>Supervisor</strong></div>
+                            <span class="text-end">@(Model.Estagiario.Supervisor?.NomeCompleto ?? "Não definido")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-building me-2 text-muted"></i><strong>Instituição</strong></div>
+                            <span class="text-end">@Model.Estagiario.InstituicaoEnsino</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-calendar-alt me-2 text-muted"></i><strong>Início do Estágio</strong></div>
+                            <span class="badge bg-success">@Model.Estagiario.DataInicio.ToShortDateString()</span>
+                        </li>
+                        @if (Model.Estagiario.DataTermino.HasValue)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div><i class="fas fa-calendar-times me-2 text-muted"></i><strong>Término do Estágio</strong></div>
+                                <span class="badge bg-danger">@Model.Estagiario.DataTermino.Value.ToShortDateString()</span>
+                            </li>
+                        }
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-toggle-on me-2 text-muted"></i><strong>Status</strong></div>
+                            <span class="badge bg-@(Model.Estagiario.Ativo ? "primary" : "secondary")">@(Model.Estagiario.Ativo ? "Ativo" : "Inativo")</span>
+                        </li>
+                    </ul>
+
+                    <h5 class="card-title mt-4 mb-3 border-bottom pb-2">
+                        <i class="fas fa-address-card me-2"></i>Informações Pessoais
+                    </h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-id-card me-2 text-muted"></i><strong>CPF</strong></div>
+                            <span>@Model.Estagiario.CPFFormatado</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-phone me-2 text-muted"></i><strong>Telefone</strong></div>
+                            <span>@Model.Estagiario.TelefoneFormatado</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-hashtag me-2 text-muted"></i><strong>Matrícula</strong></div>
+                            <span>@Model.Estagiario.Matricula</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
 
-        <div class="col-md-6">
-            <h5>Estatísticas</h5>
-            <dl class="row">
-                <dt class="col-sm-6">Total de Frequências Registradas:</dt>
-                <dd class="col-sm-6">@Model.Estagiario.Frequencias.Count</dd>
-
-                <dt class="col-sm-6">Total de Avaliações:</dt>
-                <dd class="col-sm-6">@Model.Estagiario.Avaliacoes.Count</dd>
-
-                <dt class="col-sm-6">Data de Cadastro:</dt>
-                <dd class="col-sm-6">@Model.Estagiario.DataCadastro.ToShortDateString()</dd>
-            </dl>
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Resumo de Desempenho</h5>
+                </div>
+                <div class="card-body">
+                    <div class="card text-center mb-3">
+                        <div class="card-body">
+                            <h2 class="card-title fw-bold text-primary">@Model.Estagiario.Frequencias.Count</h2>
+                            <p class="card-text text-muted">Frequências Registradas</p>
+                        </div>
+                    </div>
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h2 class="card-title fw-bold text-primary">@Model.Estagiario.Avaliacoes.Count</h2>
+                            <p class="card-text text-muted">Avaliações Recebidas</p>
+                        </div>
+                    </div>
+                    <div class="text-center text-muted mt-3">
+                        <small>Cadastro realizado em @Model.Estagiario.DataCadastro.ToShortDateString()</small>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 }
 else
 {
-    <div class="alert alert-warning" role="alert">
-        Dados de estagiário não encontrados para este usuário.
-    </div>
-}
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    // A mensagem de erro agora é controlada pelo StatusMessage no PageModel
 }

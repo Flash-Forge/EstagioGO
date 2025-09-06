@@ -7,11 +7,12 @@
         public decimal MediaDesempenhoGeral { get; set; }
         public int EstagiariosEmRisco { get; set; }
 
-        public List<MediaCategoriaViewModel> MediasCategorias { get; set; } = new List<MediaCategoriaViewModel>();
-        public List<EvolucaoDesempenhoViewModel> EvolucaoDesempenho { get; set; } = new List<EvolucaoDesempenhoViewModel>();
-        public List<MapeamentoTalentoViewModel> MapeamentoTalentos { get; set; } = new List<MapeamentoTalentoViewModel>();
-        public List<EstagiarioResumoViewModel> Estagiarios { get; set; } = new List<EstagiarioResumoViewModel>();
+        public List<MediaCategoriaViewModel> MediasCategorias { get; set; } = [];
+        public List<EvolucaoDesempenhoViewModel> EvolucaoDesempenho { get; set; } = [];
+        public List<MapeamentoTalentoViewModel> MapeamentoTalentos { get; set; } = [];
+        public List<EstagiarioResumoViewModel> Estagiarios { get; set; } = [];
 
+        public List<FrequenciaStatusViewModel> DadosFrequencia { get; set; } = [];
         public int? EstagiarioSelecionadoId { get; set; }
     }
 
@@ -44,5 +45,11 @@
         public decimal UltimaNota { get; set; }
         public DateTime? UltimaAvaliacao { get; set; }
         public string Status { get; set; }
+    }
+
+    public class FrequenciaStatusViewModel
+    {
+        public string Status { get; set; }
+        public int Quantidade { get; set; }
     }
 }

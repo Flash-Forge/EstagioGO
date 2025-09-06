@@ -1,6 +1,7 @@
 ﻿using EstagioGO.Data;
 using EstagioGO.Models.Analise;
 using EstagioGO.Models.Analise.ViewModels;
+using EstagioGO.Models.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +15,7 @@ namespace EstagioGO.Controllers
     {
 
         // GET: Avaliacao/Create
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(int? estagiarioId)
         {
             logger.LogInformation("Carregando página de criação de avaliação");
 
@@ -31,6 +32,7 @@ namespace EstagioGO.Controllers
 
                 var viewModel = new AvaliacaoViewModel
                 {
+                    EstagiarioId = estagiarioId ?? 0,
                     Categorias = [.. categorias.Select(c => new CategoriaAvaliacaoViewModel
                     {
                         CategoriaId = c.Id,
@@ -56,7 +58,7 @@ namespace EstagioGO.Controllers
 
                 logger.LogInformation("Encontrados {Count} estagiários ativos", estagiarios.Count);
 
-                ViewBag.Estagiarios = new SelectList(estagiarios, "Id", "Nome");
+                ViewBag.Estagiarios = new SelectList(estagiarios, "Id", "Nome", estagiarioId);
 
                 return View(viewModel);
             }

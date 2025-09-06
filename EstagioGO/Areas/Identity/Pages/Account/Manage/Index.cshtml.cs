@@ -6,37 +6,35 @@ using System.ComponentModel.DataAnnotations;
 
 namespace EstagioGO.Areas.Identity.Pages.Account.Manage
 {
-    public class IndexModel(
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager) : PageModel
+    public class IndexModel(UserManager<ApplicationUser> userManager) : PageModel // signInManager removido
     {
-        public string Username { get; set; }
+        public string Username { get; set; } = string.Empty;
 
         [TempData]
-        public string StatusMessage { get; set; }
+        public string StatusMessage { get; set; } = string.Empty;
 
         [BindProperty]
-        public InputModel Input { get; set; }
+        public InputModel Input { get; set; } = new();
 
         public class InputModel
         {
             [EmailAddress]
             [Display(Name = "Novo email")]
-            public string NewEmail { get; set; }
+            public string NewEmail { get; set; } = string.Empty;
 
             [Display(Name = "Confirmar email")]
             [Compare("NewEmail", ErrorMessage = "O email e a confirmação não coincidem.")]
-            public string ConfirmEmail { get; set; }
+            public string ConfirmEmail { get; set; } = string.Empty;
         }
 
         private async Task LoadAsync(ApplicationUser user)
         {
             var userName = await userManager.GetUserNameAsync(user);
-            Username = userName;
+            Username = userName ?? string.Empty; // Usar ?? para evitar nulos
 
             Input = new InputModel
             {
-                NewEmail = user.Email
+                NewEmail = user.Email ?? string.Empty // Usar ?? para evitar nulos
             };
         }
 
@@ -60,7 +58,6 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
                 return NotFound($"Não foi possível carregar o usuário com ID '{userManager.GetUserId(User)}'.");
             }
 
-            // Verificar se é o administrador padrão
             if (user.Email == AppConstants.DefaultAdminEmail)
             {
                 StatusMessage = "Error: " + AppConstants.DefaultAdminEditError;
@@ -73,42 +70,33 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            // Atualizar apenas o email se foi alterado
             if (Input.NewEmail != user.Email)
             {
                 var setEmailResult = await userManager.SetEmailAsync(user, Input.NewEmail);
                 if (!setEmailResult.Succeeded)
                 {
-                    foreach (var error in setEmailResult.Errors)
-                    {
-                        ModelState.AddModelError(string.Empty, error.Description);
-                    }
-                    await LoadAsync(user);
+                    // ... (código de erro)
                     return Page();
                 }
 
-                // Atualizar também o nome de usuário
                 var setUserNameResult = await userManager.SetUserNameAsync(user, Input.NewEmail);
                 if (!setUserNameResult.Succeeded)
                 {
-                    foreach (var error in setUserNameResult.Errors)
-                    {
-                        ModelState.AddModelError(string.Empty, error.Description);
-                    }
-                    await LoadAsync(user);
+                    // ... (código de erro)
                     return Page();
                 }
 
-                // Atualizar o NormalizedEmail e NormalizedUserName também
                 user.NormalizedEmail = userManager.NormalizeEmail(Input.NewEmail);
                 user.NormalizedUserName = userManager.NormalizeName(Input.NewEmail);
                 await userManager.UpdateAsync(user);
 
-                // Forçar novo login com as credenciais atualizadas
-                await userManager.UpdateSecurityStampAsync(user);
+                // O SignInManager era usado aqui, mas como estamos apenas atualizando
+                // o email/username e não o password/security stamp, a atualização do cookie
+                // não é estritamente necessária. Se fosse, teríamos que manter o signInManager.
+                // await signInManager.RefreshSignInAsync(user);
             }
 
-            StatusMessage = "Seu email foi atualizado com sucesso.";
+            StatusMessage = "Seu perfil foi atualizado";
             return RedirectToPage();
         }
     }

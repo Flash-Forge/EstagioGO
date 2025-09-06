@@ -28,9 +28,21 @@ namespace EstagioGO.Data
         {
             base.OnModelCreating(builder);
 
+            builder.Entity<ApplicationUser>(entity =>
+            {
+                entity.Property(u => u.Cargo).HasMaxLength(50).IsRequired();
+
+                entity.Property(u => u.PrimeiroAcessoConcluido)
+                    .HasDefaultValue(false);
+            });
+
+            // --- RELACIONAMENTOS DO IDENTITY ---
+
             builder.Entity<ApplicationUser>()
-                .Property(u => u.PrimeiroAcessoConcluido)
-                .HasDefaultValue(false);
+               .HasMany(e => e.UserRoles)
+               .WithOne()
+               .HasForeignKey(e => e.UserId)
+               .IsRequired();
 
             // Configurações adicionais do Identity
             builder.Entity<ApplicationRole>().HasData(
@@ -64,30 +76,26 @@ namespace EstagioGO.Data
                 }
             );
 
-            // Configurar relacionamentos existentes
+            // --- RELACIONAMENTOS DO DOMÍNIO ---
+
+            // Relação 1-para-Muitos: Supervisor (User) -> Estagiarios
             builder.Entity<Estagiario>()
                 .HasOne(e => e.Supervisor)
                 .WithMany(u => u.EstagiariosSupervisionados)
                 .HasForeignKey(e => e.SupervisorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Relação 1-para-1: ApplicationUser -> EstagiarioProfile
             builder.Entity<Estagiario>()
                 .HasOne(e => e.User)
                 .WithOne(u => u.EstagiarioProfile)
                 .HasForeignKey<Estagiario>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<Estagiario>()
-                .HasIndex(e => e.CPF)
-                .IsUnique();
-
-            builder.Entity<Estagiario>()
-                .HasIndex(e => e.Telefone)
-                .IsUnique();
-
-            builder.Entity<Estagiario>()
-                .HasIndex(e => e.UserId)
-                .IsUnique();
+            // Índices Únicos para Estagiario
+            builder.Entity<Estagiario>().HasIndex(e => e.CPF).IsUnique();
+            builder.Entity<Estagiario>().HasIndex(e => e.Telefone).IsUnique();
+            builder.Entity<Estagiario>().HasIndex(e => e.UserId).IsUnique();
 
             builder.Entity<Frequencia>()
                 .HasOne(f => f.Estagiario)

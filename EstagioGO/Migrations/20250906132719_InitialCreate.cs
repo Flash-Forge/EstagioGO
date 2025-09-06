@@ -33,8 +33,8 @@ namespace EstagioGO.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    NomeCompleto = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Cargo = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    NomeCompleto = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Cargo = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     DataCadastro = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Ativo = table.Column<bool>(type: "bit", nullable: false),
                     PrimeiroAcessoConcluido = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),

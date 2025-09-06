@@ -230,7 +230,7 @@ namespace EstagioGO.Controllers
                 }
 
                 // Ordena as avaliações da mais recente para a mais antiga para melhor visualização
-                estagiario.Avaliacoes = estagiario.Avaliacoes.OrderByDescending(a => a.DataAvaliacao).ToList();
+                estagiario.Avaliacoes = [.. estagiario.Avaliacoes.OrderByDescending(a => a.DataAvaliacao)];
 
                 // Retorna a nova view que iremos criar, passando o estagiário com suas avaliações
                 return View(estagiario);

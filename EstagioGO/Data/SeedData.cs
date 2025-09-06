@@ -45,12 +45,12 @@ namespace EstagioGO.Data
                                 Descricao = ObterDescricaoRole(roleName),
                                 DataCriacao = DateTime.Now
                             });
-                            logger.LogInformation($"Papel '{roleName}' criado com sucesso.");
+                            logger.LogInformation("Papel '{RoleName}' criado com sucesso.", roleName);
                         }
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError(ex, $"Erro ao criar papel '{roleName}'");
+                        logger.LogError(ex, "Erro ao criar papel '{RoleName}'", roleName);
                     }
                 }
 
@@ -84,7 +84,7 @@ namespace EstagioGO.Data
                             logger.LogError("Falha ao criar administrador padrão:");
                             foreach (var error in result.Errors)
                             {
-                                logger.LogError($"- {error.Code}: {error.Description}");
+                                logger.LogError("- {ErrorCode}: {ErrorDescription}", error.Code, error.Description);
                             }
                         }
                         else
@@ -98,7 +98,7 @@ namespace EstagioGO.Data
                                 logger.LogError("Falha ao adicionar administrador ao papel:");
                                 foreach (var error in roleResult.Errors)
                                 {
-                                    logger.LogError($"- {error.Description}");
+                                    logger.LogError("- {ErrorDescription}", error.Description);
                                 }
                             }
                             else

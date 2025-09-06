@@ -4,22 +4,40 @@
     ViewData["Title"] = "Frequência";
 }
 
-<h2>Calendário de Frequência do Estagiário</h2>
-
-<select id="estagiarioSelect" class="form-control mb-3" style="max-width:300px;">
-    <option value="">Selecione um estagiário</option>
-    @foreach (var estagiario in ViewBag.Estagiarios as List<EstagioGO.Models.Domain.Estagiario>)
-    {
-        <option value="@estagiario.Id">@estagiario.Nome</option>
-    }
-</select>
-
-<div>
-    <button id="btnCriar" class="btn btn-success" disabled>Criar Frequência</button>
-    <button id="btnEditar" class="btn btn-primary" disabled>Editar Frequências</button>
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h3 class="card-title mb-0"><i class="fas fa-calendar-alt me-2"></i>Calendário de Frequência</h3>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label for="estagiarioSelect" class="form-label">Selecione um estagiário:</label>
+                <select id="estagiarioSelect" class="form-select">
+                    <option value="">-- Selecione --</option>
+                    @{
+                        // CORREÇÃO: Verificação de nulidade para o ViewBag
+                        var estagiariosList = ViewBag.Estagiarios as List<EstagioGO.Models.Domain.Estagiario>;
+                        if (estagiariosList != null)
+                        {
+                            foreach (var estagiario in estagiariosList)
+                            {
+                                <option value="@estagiario.Id">@estagiario.Nome</option>
+                            }
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-8 d-flex align-items-end">
+                <div class="btn-group">
+                    <button id="btnCriar" class="btn btn-success" disabled><i class="fas fa-plus me-1"></i>Criar Frequência</button>
+                    <button id="btnEditar" class="btn btn-primary" disabled><i class="fas fa-edit me-1"></i>Editar Frequências</button>
+                </div>
+            </div>
+        </div>
+        <div id="calendar"></div>
+    </div>
 </div>
 
-<div id="calendar" class="mt-3"></div>
 
 @section Scripts {
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/index.global.min.css" rel="stylesheet" />

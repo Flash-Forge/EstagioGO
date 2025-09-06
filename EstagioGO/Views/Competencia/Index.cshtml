@@ -45,9 +45,15 @@
                                 <div class="input-group">
                                     <select name="categoriaId" class="form-select" onchange="this.form.submit()">
                                         <option value="">Todas as categorias</option>
-                                        @foreach (var categoria in ViewBag.Categorias as SelectList)
-                                        {
-                                            <option value="@categoria.Value" selected="@categoria.Selected">@categoria.Text</option>
+                                        @{
+                                            var categoriasList = ViewBag.Categorias as SelectList;
+                                            if (categoriasList != null)
+                                            {
+                                                foreach (var categoria in categoriasList)
+                                                {
+                                                    <option value="@categoria.Value" selected="@categoria.Selected">@categoria.Text</option>
+                                                }
+                                            }
                                         }
                                     </select>
                                     <button class="btn btn-outline-secondary" type="submit">
@@ -72,16 +78,12 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @{
-                                        string categoriaAtual = "";
-                                    }
                                     @foreach (var item in Model)
                                     {
                                         <tr class="@(item.Ativo ? "" : "table-secondary")">
                                             <td>
-                                                @if (categoriaAtual != item.Categoria.Nome)
+                                                @if (item.Categoria != null)
                                                 {
-                                                    categoriaAtual = item.Categoria.Nome;
                                                     <strong class="text-primary">@item.Categoria.Nome</strong>
                                                 }
                                             </td>
@@ -126,7 +128,7 @@
                                                             <i class="fas @(item.Ativo ? "fa-toggle-off" : "fa-toggle-on")"></i>
                                                         </button>
                                                     </form>
-                                                    @if (!item.AvaliacoesCompetencia.Any())
+                                                    @if (item.AvaliacoesCompetencia?.Any() != true)
                                                     {
                                                         <a asp-action="Delete" asp-route-id="@item.Id" 
                                                            class="btn btn-sm btn-outline-danger" title="Excluir">

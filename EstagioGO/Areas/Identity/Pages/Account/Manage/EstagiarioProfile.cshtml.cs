@@ -14,9 +14,9 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
         ApplicationDbContext context) : PageModel
     {
         [TempData]
-        public string StatusMessage { get; set; }
+        public string StatusMessage { get; set; } = string.Empty;
 
-        public Estagiario Estagiario { get; set; }
+        public Estagiario? Estagiario { get; set; } // Declarado como anulável
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -35,9 +35,8 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
 
             if (Estagiario == null)
             {
-                // Esta mensagem pode ser útil para debug, caso o problema volte
                 StatusMessage = "Erro: Dados de estagiário não encontrados. Verifique se o perfil está ativo e corretamente associado ao seu usuário.";
-                return Page(); // Retorna a página para mostrar a mensagem de erro
+                return Page();
             }
 
             return Page();

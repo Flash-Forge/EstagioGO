@@ -20,48 +20,34 @@ namespace EstagioGO.Controllers
         // GET: Admin/UserManagement
         public async Task<IActionResult> UserManagement()
         {
-            var usersQuery = userManager.Users.AsQueryable();
+            // Usamos IQueryable para construir a consulta sem executar no banco ainda
+            IQueryable<ApplicationUser> usersQuery = userManager.Users;
 
-            // Se for coordenador, filtrar apenas usuários com role Estagiario
+            // Se for coordenador, pré-filtrar apenas usuários com a role Estagiario
             if (User.IsInRole("Coordenador") && !User.IsInRole("Administrador"))
             {
-                // Obter IDs dos usuários com role Estagiario
                 var estagiarios = await userManager.GetUsersInRoleAsync("Estagiario");
                 var estagiariosIds = estagiarios.Select(e => e.Id).ToList();
-
-                // Filtrar usando Contains que é traduzível para SQL
                 usersQuery = usersQuery.Where(u => estagiariosIds.Contains(u.Id));
             }
 
-            var users = await usersQuery
-                .Select(u => new UserManagementViewModel
-                {
-                    Id = u.Id,
-                    NomeCompleto = u.NomeCompleto,
-                    Email = u.Email!,
-                    Cargo = u.Cargo,
-                    DataCadastro = u.DataCadastro,
-                    Ativo = u.Ativo,
-                    PrimeiroAcessoConcluido = u.PrimeiroAcessoConcluido
-                })
-                .ToListAsync();
+            // Agora, buscamos os usuários e suas roles de forma mais otimizada
+            var usersWithRoles = await (from user in usersQuery
+                                        from userRole in user.UserRoles
+                                        join role in roleManager.Roles on userRole.RoleId equals role.Id
+                                        select new UserManagementViewModel
+                                        {
+                                            Id = user.Id,
+                                            NomeCompleto = user.NomeCompleto ?? string.Empty,
+                                            Email = user.Email ?? string.Empty,
+                                            Cargo = user.Cargo ?? string.Empty,
+                                            DataCadastro = user.DataCadastro,
+                                            Ativo = user.Ativo,
+                                            PrimeiroAcessoConcluido = user.PrimeiroAcessoConcluido,
+                                            Role = role.Name ?? string.Empty
+                                        }).ToListAsync();
 
-            // Adicionar roles para cada usuário
-            foreach (var user in users)
-            {
-                var appUser = await userManager.FindByIdAsync(user.Id);
-                if (appUser != null)
-                {
-                    var roles = await userManager.GetRolesAsync(appUser);
-                    user.Role = roles.FirstOrDefault() ?? string.Empty;
-                }
-                else
-                {
-                    user.Role = string.Empty;
-                }
-            }
-
-            return View(users);
+            return View(usersWithRoles);
         }
 
         // GET: Criar novo usuário

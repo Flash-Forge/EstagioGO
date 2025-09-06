@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EstagioGO.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250905184305_InitialCreate")]
+    [Migration("20250906132719_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -38,7 +38,8 @@ namespace EstagioGO.Migrations
 
                     b.Property<string>("Cargo")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -62,7 +63,8 @@ namespace EstagioGO.Migrations
 
                     b.Property<string>("NomeCompleto")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -802,8 +804,8 @@ namespace EstagioGO.Migrations
                         .IsRequired();
 
                     b.HasOne("ApplicationUser", "User")
-                        .WithMany("EstagiariosComoUsuario")
-                        .HasForeignKey("UserId")
+                        .WithOne("EstagiarioProfile")
+                        .HasForeignKey("EstagioGO.Models.Domain.Estagiario", "UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -867,7 +869,7 @@ namespace EstagioGO.Migrations
                         .IsRequired();
 
                     b.HasOne("ApplicationUser", null)
-                        .WithMany()
+                        .WithMany("UserRoles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -886,11 +888,13 @@ namespace EstagioGO.Migrations
                 {
                     b.Navigation("AvaliacoesRealizadas");
 
-                    b.Navigation("EstagiariosComoUsuario");
+                    b.Navigation("EstagiarioProfile");
 
                     b.Navigation("EstagiariosSupervisionados");
 
                     b.Navigation("FrequenciasRegistradas");
+
+                    b.Navigation("UserRoles");
                 });
 
             modelBuilder.Entity("EstagioGO.Models.Analise.Avaliacao", b =>

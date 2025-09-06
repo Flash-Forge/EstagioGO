@@ -122,7 +122,8 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Configure the HTTP request pipeline.
+app.UseStatusCodePagesWithReExecute("/Error/{0}");
+
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -130,12 +131,11 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    // MUDANÇA #1: O manipulador de erros 500 agora aponta para uma rota genérica
-    app.UseExceptionHandler("/Error/500"); // Você pode criar um ErrorController para isso
-    app.UseStatusCodePagesWithReExecute("/Error/{0}"); // O {0} será o código de erro (ex: 404)
+    // Em produção, para erros 500 (exceções não tratadas), ele irá para esta rota.
+    // Sugestão: apontar para o ErrorController para manter a consistência.
+    app.UseExceptionHandler("/Error/500");
     app.UseHsts();
 }
-
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -144,6 +144,11 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "error",
+    pattern: "Error/{statusCode}",
+    defaults: new { controller = "Error", action = "HttpStatusCodeHandler" });
 
 app.MapControllerRoute(
     name: "admin",

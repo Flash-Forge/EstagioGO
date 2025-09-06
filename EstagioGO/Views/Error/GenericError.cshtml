@@ -1,0 +1,17 @@
+﻿@{
+    ViewData["Title"] = $"Erro {ViewBag.StatusCode}";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 70vh;">
+    <div class="text-center">
+        <h1 class="display-1 fw-bold text-info">@ViewBag.StatusCode</h1>
+        <p class="fs-3"> <span class="text-info">Opps!</span> Ocorreu um erro.</p>
+        <p class="lead">
+            Algo deu errado durante o processamento da sua solicitação.
+        </p>
+        <a href="@Url.Content("~/")" class="btn btn-primary mt-3">
+            <i class="fas fa-home me-2"></i>Voltar para a Página Inicial
+        </a>
+    </div>
+</div>

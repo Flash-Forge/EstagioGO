@@ -1,0 +1,46 @@
+﻿@inject IWebHostEnvironment Env
+
+@{
+    ViewData["Title"] = "Erro Inesperado";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 70vh;">
+    <div class="text-center">
+        <h1 class="display-1 fw-bold text-danger">500</h1>
+        <p class="fs-3"> <span class="text-danger">Opps!</span> Erro Interno do Servidor.</p>
+        <p class="lead">
+            Ocorreu um erro inesperado em nosso sistema.
+            <br>
+            Nossa equipe já foi notificada e está trabalhando para corrigir.
+        </p>
+        <a href="@Url.Content("~/")" class="btn btn-primary mt-3">
+            <i class="fas fa-home me-2"></i>Voltar para a Página Inicial
+        </a>
+
+        @if (Env.IsDevelopment() && ViewBag.Exception != null)
+        {
+            var exception = ViewBag.Exception as Exception;
+
+            @if (exception != null)
+            {
+                <div class="card mt-4 text-start shadow-sm">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">Detalhes Técnicos (Modo Desenvolvimento)</h5>
+                    </div>
+                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                        <p><strong>Rota do Erro:</strong> <code>@ViewBag.Path</code></p>
+                        <p><strong>Mensagem:</strong> <code class="text-danger">@exception.Message</code></p>
+                        <hr />
+                        <h6>Stack Trace:</h6>
+                        <pre><code>@exception.StackTrace</code></pre>
+                    </div>
+                </div>
+            }
+        }
+
+        <div class="text-muted mt-4">
+            <small>ID da Requisição: <code>@ViewBag.RequestId</code></small>
+        </div>
+    </div>
+</div>

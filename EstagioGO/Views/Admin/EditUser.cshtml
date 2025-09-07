@@ -1,63 +1,79 @@
 ﻿@using EstagioGO.Models
+@using Microsoft.AspNetCore.Identity
 @model EditUserViewModel
+
+@inject UserManager<ApplicationUser> UserManager
 
 @{
     ViewData["Title"] = "Editar Usuário";
-    var isDefaultAdmin = Model.Email.Equals("admin@estagio.com", StringComparison.OrdinalIgnoreCase);
 }
 
 <div class="container mt-4">
-    <h1>@ViewData["Title"]</h1>
-
-    <!-- Mostrar o container de erro apenas se houver erros -->
-    @if (!ViewData.ModelState.IsValid)
-    {
-        <div class="alert alert-danger" role="alert">
-            <h4 class="alert-heading">Erros de Validação</h4>
-            <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h4 class="mb-0">@ViewData["Title"]: @Model.NomeCompleto</h4>
         </div>
-    }
+        <div class="card-body">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger" role="alert">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                </div>
+            }
 
-    <div class="row">
-        <div class="col-md-8">
             <form asp-action="EditUser" asp-route-id="@Model.Id" method="post">
                 <input type="hidden" asp-for="Id" />
 
-                <div class="form-group mb-3">
-                    <label asp-for="NomeCompleto" class="control-label"></label>
-                    <input asp-for="NomeCompleto" class="form-control" />
-                    <span asp-validation-for="NomeCompleto" class="text-danger"></span>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label asp-for="Email" class="control-label"></label>
-                    @if (isDefaultAdmin)
-                    {
-                        <input asp-for="Email" class="form-control" readonly />
-                        <small class="form-text text-muted">O email do administrador padrão não pode ser alterado.</small>
-                    }
-                    else
-                    {
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="NomeCompleto" class="form-label"></label>
+                        <input asp-for="NomeCompleto" class="form-control" />
+                        <span asp-validation-for="NomeCompleto" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Email" class="form-label"></label>
                         <input asp-for="Email" class="form-control" />
-                        <small class="form-text text-muted">Ao alterar o email, uma nova senha será enviada se o primeiro acesso ainda não foi concluído.</small>
-                    }
-                    <span asp-validation-for="Email" class="text-danger"></span>
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
                 </div>
 
-                <div class="form-group mb-3">
-                    <label asp-for="Role" class="control-label"></label>
-                    <select asp-for="Role" asp-items="Model.Roles" class="form-control">
-                    </select>
-                    <span asp-validation-for="Role" class="text-danger"></span>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Role" class="form-label"></label>
+                        <select asp-for="Role" asp-items="Model.Roles" class="form-select">
+                        </select>
+                        <span asp-validation-for="Role" class="text-danger"></span>
+                    </div>
                 </div>
 
                 <div class="form-group mb-3 form-check">
                     <input type="checkbox" asp-for="Ativo" class="form-check-input" />
-                    <label asp-for="Ativo" class="form-check-label">Usuário ativo</label>
+                    <label asp-for="Ativo" class="form-check-label"></label>
+                </div>
+
+                @{
+                    var userParaVerificar = await UserManager.FindByIdAsync(Model.Id);
+                    bool primeiroAcessoPendente = userParaVerificar != null && !userParaVerificar.PrimeiroAcessoConcluido;
+                }
+
+                @if (primeiroAcessoPendente)
+                {
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Este usuário ainda não completou o primeiro acesso. Você pode reenviar o email de boas-vindas.
+                    </div>
+                }
+
+                <div class="form-group mb-3 form-check">
+                    <input asp-for="ForcarRedefinicaoSenha" class="form-check-input" />
+                    <label asp-for="ForcarRedefinicaoSenha" class="form-check-label"></label>
+                    <small class="form-text text-muted d-block">
+                        Marque esta opção para redefinir o status do usuário como "primeiro acesso pendente" e enviar um novo link para criação de senha.
+                    </small>
                 </div>
 
                 <div class="form-group mt-4">
-                    <input type="submit" value="Salvar Alterações" class="btn btn-primary" />
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Salvar Alterações</button>
                     <a asp-action="UserManagement" class="btn btn-secondary ms-2">Cancelar</a>
                 </div>
             </form>

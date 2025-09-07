@@ -55,16 +55,19 @@ namespace EstagioGO.Models
         [Display(Name = "Ativo")]
         public bool Ativo { get; set; } = true;
 
-        public List<SelectListItem> Roles { get; set; } = []; // ← Inicialização
+        public List<SelectListItem> Roles { get; set; } = [];
+
+        [Display(Name = "Forçar redefinição de senha no próximo login")]
+        public bool ForcarRedefinicaoSenha { get; set; }
     }
 
     public class UserDetailViewModel
     {
-        public required string Id { get; set; } = string.Empty; // ← Inicialização
-        public required string NomeCompleto { get; set; } = string.Empty; // ← Inicialização
-        public required string Email { get; set; } = string.Empty; // ← Inicialização
-        public required string Cargo { get; set; } = string.Empty; // ← Inicialização
-        public required string Role { get; set; } = string.Empty; // ← Inicialização
+        public required string Id { get; set; } = string.Empty;
+        public required string NomeCompleto { get; set; } = string.Empty;
+        public required string Email { get; set; } = string.Empty;
+        public required string Cargo { get; set; } = string.Empty;
+        public required string Role { get; set; } = string.Empty;
         public DateTime DataCadastro { get; set; }
         public bool Ativo { get; set; }
         public bool PrimeiroAcessoConcluido { get; set; }

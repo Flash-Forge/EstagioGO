@@ -53,7 +53,19 @@ builder.Services.ConfigureApplicationCookie(options =>
     // options.LogoutPath = "/Identity/Account/Logout";
 });
 
+// Carrega a seção EmailSettings do appsettings.json ou do Secret Manager
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+
+// Sistema HÍBRIDO de envio de email:
+#if DEBUG
+// Em modo DEBUG, usa o logger que apenas escreve no console
 builder.Services.AddSingleton<IEmailSender, EmailSender>();
+Console.WriteLine("--> Usando EmailSender de DESENVOLVIMENTO (Console Logger).");
+#else
+// Em modo RELEASE (produção), usa o SmtpEmailSender que envia emails reais
+builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+Console.WriteLine("--> Usando SmtpEmailSender de PRODUÇÃO (Email Real).");
+#endif
 
 // Políticas de autorização
 builder.Services.AddAuthorizationBuilder()

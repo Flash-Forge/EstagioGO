@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 namespace EstagioGO.Controllers
 {
@@ -161,13 +163,24 @@ namespace EstagioGO.Controllers
             var result = await userManager.CreateAsync(user, password);
             if (result.Succeeded)
             {
-                // Adicionar ao role selecionado
                 await userManager.AddToRoleAsync(user, model.Role);
 
                 if (model.SendEmail)
                 {
-                    // Enviar email com credenciais
-                    await SendCredentialsEmail(user, password);
+                    // --- MUDANÇA PRINCIPAL AQUI ---
+                    // 1. Gerar o token de redefinição de senha
+                    var token = await userManager.GeneratePasswordResetTokenAsync(user);
+                    token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+                    // 2. Criar o link de callback seguro
+                    var callbackUrl = Url.Page(
+                        "/Account/ResetPassword",
+                        pageHandler: null,
+                        values: new { area = "Identity", code = token },
+                        protocol: Request.Scheme);
+
+                    // 3. Enviar o email com o link de primeiro acesso
+                    await SendFirstAccessEmail(user, callbackUrl!);
                 }
 
                 TempData["SuccessMessage"] = $"Usuário {user.NomeCompleto} criado com sucesso.";
@@ -182,7 +195,6 @@ namespace EstagioGO.Controllers
                 logger.LogError("Erro ao criar usuário: {Error}", error.Description);
             }
 
-            // Preencher as roles disponíveis para o usuário atual
             model.Roles = await GetRolesForCurrentUser();
             return View(model);
         }
@@ -382,22 +394,23 @@ namespace EstagioGO.Controllers
                 }
                 await userManager.AddToRoleAsync(userToEdit, model.Role);
 
-                // Enviar nova senha apenas se o email foi alterado E primeiro acesso pendente
-                if (emailAlterado && primeiroAcessoPendente)
+                if (model.ForcarRedefinicaoSenha)
                 {
-                    var novaSenha = GenerateTemporaryPassword();
-                    var token = await userManager.GeneratePasswordResetTokenAsync(userToEdit);
-                    var passwordResult = await userManager.ResetPasswordAsync(userToEdit, token, novaSenha);
+                    // Define o primeiro acesso como NÃO concluído
+                    userToEdit.PrimeiroAcessoConcluido = false;
+                    await userManager.UpdateAsync(userToEdit);
 
-                    if (passwordResult.Succeeded)
-                    {
-                        await SendCredentialsEmail(userToEdit, novaSenha);
-                        TempData["SuccessMessage"] = $"Usuário {userToEdit.NomeCompleto} atualizado com sucesso. Uma nova senha foi enviada para o email.";
-                    }
-                    else
-                    {
-                        TempData["WarningMessage"] = $"Usuário {userToEdit.NomeCompleto} atualizado, mas houve um erro ao redefinir a senha.";
-                    }
+                    // Gera um novo token e envia o email de redefinição
+                    var token = await userManager.GeneratePasswordResetTokenAsync(userToEdit);
+                    token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+                    var callbackUrl = Url.Page(
+                        "/Account/ResetPassword",
+                        pageHandler: null,
+                        values: new { area = "Identity", code = token },
+                        protocol: Request.Scheme);
+
+                    await SendFirstAccessEmail(userToEdit, callbackUrl!);
+                    TempData["SuccessMessage"] = $"Usuário {userToEdit.NomeCompleto} atualizado. Um novo email para definição de senha foi enviado.";
                 }
                 else
                 {
@@ -620,24 +633,29 @@ namespace EstagioGO.Controllers
             user.Email != null &&
             user.Email.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase);
 
-        private async Task SendCredentialsEmail(ApplicationUser user, string password)
+        // Método de envio de email foi renomeado e atualizado para ser mais seguro
+        private async Task SendFirstAccessEmail(ApplicationUser user, string callbackUrl)
         {
             if (string.IsNullOrEmpty(user.Email)) return;
 
-            var subject = "Suas credenciais de acesso foram atualizadas";
+            var subject = "Bem-vindo(a) ao Sistema de Gestão de Estágios - Defina sua Senha";
             var message = $@"
-        <h3>Suas credenciais de acesso foram atualizadas</h3>
-        <p>Prezado(a) {user.NomeCompleto},</p>
-        <p>Suas credenciais de acesso ao Sistema de Gestão de Estágios foram atualizadas:</p>
-        <p><strong>Email:</strong> {user.Email}</p>
-        <p><strong>Senha temporária:</strong> {password}</p>
-        <p><strong>Importante:</strong> Você deve usar esta senha para fazer seu primeiro acesso ao sistema.</p>
-        <p>Após o primeiro acesso, você será solicitado a criar uma nova senha.</p>
-        <br>
-        <p>Acesse o sistema em: <a href='{Url.Action("Login", "Account", new { area = "Identity" }, Request.Scheme)}'>{Url.Action("Login", "Account", new { area = "Identity" }, Request.Scheme)}</a></p>
-        <br>
-        <p>Atenciosamente,<br>Equipe de Gestão de Estágios</p>
-    ";
+                <html>
+                <body>
+                    <h3>Bem-vindo(a) ao Sistema de Gestão de Estágios, {user.NomeCompleto}!</h3>
+                    <p>Sua conta foi criada com sucesso. Para seu primeiro acesso, você precisa definir uma senha segura.</p>
+                    <p>Por favor, clique no link abaixo para criar sua senha:</p>
+                    <p><a href='{callbackUrl}' style='background-color: #0d6efd; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px;'>Definir Minha Senha</a></p>
+                    <br>
+                    <p>Se você não conseguir clicar no botão, copie e cole o seguinte link no seu navegador:</p>
+                    <p><code>{callbackUrl}</code></p>
+                    <br>
+                    <p>Seu login é o seu email: <strong>{user.Email}</strong></p>
+                    <p>Este link é válido por um tempo limitado. Se expirar, você pode usar a opção 'Esqueci minha senha' na tela de login.</p>
+                    <br>
+                    <p>Atenciosamente,<br>Equipe de Gestão de Estágios</p>
+                </body>
+                </html>";
 
             await emailSender.SendEmailAsync(user.Email, subject, message);
         }

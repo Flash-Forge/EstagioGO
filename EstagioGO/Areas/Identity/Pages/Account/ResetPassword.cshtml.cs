@@ -95,6 +95,13 @@ namespace EstagioGO.Areas.Identity.Pages.Account
             var result = await userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
             if (result.Succeeded)
             {
+                // Se a senha foi redefinida com sucesso, consideramos o primeiro acesso concluído.
+                if (!user.PrimeiroAcessoConcluido)
+                {
+                    user.PrimeiroAcessoConcluido = true;
+                    await userManager.UpdateAsync(user);
+                }
+
                 return RedirectToPage("./ResetPasswordConfirmation");
             }
 

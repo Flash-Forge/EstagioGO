@@ -53,39 +53,25 @@ namespace EstagioGO.Controllers
         }
 
         // GET: Criar novo usuário
-        public IActionResult CreateUser(string? contexto)
+        public async Task<IActionResult> CreateUser(string? contexto)
         {
             var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
-
-            var roles = roleManager.Roles
-                .Select(r => new SelectListItem { Value = r.Name, Text = r.Name }).ToList();
-
-            // Coordenador só pode criar estagiários
-            if (isCoordenador)
-            {
-                roles = [.. roles.Where(r => r.Value == "Estagiario")];
-            }
+            var roles = await GetRolesForCurrentUser();
 
             var model = new CreateUserViewModel
             {
                 NomeCompleto = "",
                 Email = "",
-                Role = "Estagiario",
+                Role = isCoordenador ? "Estagiario" : "Estagiario",
                 Roles = roles
             };
 
-            // Pré-selecionar a role com base no contexto
             if (!string.IsNullOrEmpty(contexto))
             {
-                if (contexto == "supervisor")
+                if (contexto == "supervisor" && !isCoordenador)
                     model.Role = "Supervisor";
                 else if (contexto == "estagiario")
                     model.Role = "Estagiario";
-            }
-            // Se for coordenador e não tiver contexto, forçar Estagiario
-            else if (isCoordenador)
-            {
-                model.Role = "Estagiario";
             }
 
             ViewBag.Contexto = contexto;
@@ -167,19 +153,15 @@ namespace EstagioGO.Controllers
 
                 if (model.SendEmail)
                 {
-                    // --- MUDANÇA PRINCIPAL AQUI ---
-                    // 1. Gerar o token de redefinição de senha
                     var token = await userManager.GeneratePasswordResetTokenAsync(user);
                     token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
-                    // 2. Criar o link de callback seguro
                     var callbackUrl = Url.Page(
                         "/Account/ResetPassword",
                         pageHandler: null,
                         values: new { area = "Identity", code = token },
                         protocol: Request.Scheme);
 
-                    // 3. Enviar o email com o link de primeiro acesso
                     await SendFirstAccessEmail(user, callbackUrl!);
                 }
 
@@ -202,33 +184,25 @@ namespace EstagioGO.Controllers
         // GET: Editar usuário
         public async Task<IActionResult> EditUser(string? id)
         {
-            if (string.IsNullOrEmpty(id))
-            {
-                return NotFound();
-            }
+            if (string.IsNullOrEmpty(id)) return NotFound();
 
             var user = await userManager.FindByIdAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
+            if (user == null) return NotFound();
 
-            // Impedir a edição do usuário administrador padrão
+            // Validações de permissão
             if (IsDefaultAdministrator(user))
             {
-                TempData["ErrorMessage"] = "Não é possível editar o usuário administrador padrão.";
+                TempData["ErrorMessage"] = AppConstants.DefaultAdminEditError;
                 return RedirectToAction(nameof(UserManagement));
             }
 
-            // Verificar se usuário atual não é admin padrão tentando editar outro admin
             var currentUser = await userManager.GetUserAsync(User);
             if (currentUser != null && !IsDefaultAdministrator(currentUser) && await IsUserAdministrator(user))
             {
-                TempData["ErrorMessage"] = "Administradores comuns não podem editar outros administradores.";
+                TempData["ErrorMessage"] = AppConstants.RegularAdminEditError;
                 return RedirectToAction(nameof(UserManagement));
             }
 
-            // Coordenador só pode editar estagiários
             var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
             if (isCoordenador)
             {
@@ -241,20 +215,7 @@ namespace EstagioGO.Controllers
             }
 
             var userRolesList = await userManager.GetRolesAsync(user);
-            var roles = roleManager.Roles
-                .Select(r => new SelectListItem
-                {
-                    Value = r.Name,
-                    Text = r.Name,
-                    Selected = userRolesList.Contains(r.Name!)
-                })
-                .ToList();
-
-            // Coordenador só pode ver role de Estagiario
-            if (isCoordenador)
-            {
-                roles = [.. roles.Where(r => r.Value == "Estagiario")];
-            }
+            var roles = await GetRolesForCurrentUser();
 
             var model = new EditUserViewModel
             {
@@ -432,18 +393,11 @@ namespace EstagioGO.Controllers
         // GET: Visualizar usuário
         public async Task<IActionResult> ViewUser(string? id)
         {
-            if (string.IsNullOrEmpty(id))
-            {
-                return NotFound();
-            }
+            if (string.IsNullOrEmpty(id)) return NotFound();
 
             var user = await userManager.FindByIdAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
+            if (user == null) return NotFound();
 
-            // Coordenador só pode visualizar estagiários
             var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
             if (isCoordenador)
             {
@@ -455,7 +409,6 @@ namespace EstagioGO.Controllers
                 }
             }
 
-            // Obter a role do usuário
             var userRolesList = await userManager.GetRolesAsync(user);
 
             var model = new UserDetailViewModel
@@ -476,18 +429,11 @@ namespace EstagioGO.Controllers
         // GET: Deletar usuário
         public async Task<IActionResult> DeleteUser(string? id)
         {
-            if (string.IsNullOrEmpty(id))
-            {
-                return NotFound();
-            }
+            if (string.IsNullOrEmpty(id)) return NotFound();
 
             var user = await userManager.FindByIdAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
+            if (user == null) return NotFound();
 
-            // Coordenador não pode deletar usuários
             var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
             if (isCoordenador)
             {
@@ -495,14 +441,12 @@ namespace EstagioGO.Controllers
                 return RedirectToAction(nameof(UserManagement));
             }
 
-            // Impedir a exclusão do usuário administrador padrão
             if (IsDefaultAdministrator(user))
             {
-                TempData["ErrorMessage"] = "Não é possível excluir o usuário administrador padrão.";
+                TempData["ErrorMessage"] = AppConstants.DefaultAdminEditError;
                 return RedirectToAction(nameof(UserManagement));
             }
 
-            // Verificar se usuário atual não é admin padrão tentando excluir outro admin
             var currentUser = await userManager.GetUserAsync(User);
             if (currentUser == null)
             {
@@ -512,7 +456,7 @@ namespace EstagioGO.Controllers
 
             if (!IsDefaultAdministrator(currentUser) && await IsUserAdministrator(user))
             {
-                TempData["ErrorMessage"] = "Administradores comuns não podem excluir outros administradores.";
+                TempData["ErrorMessage"] = AppConstants.RegularAdminDeleteError;
                 return RedirectToAction(nameof(UserManagement));
             }
 
@@ -582,31 +526,27 @@ namespace EstagioGO.Controllers
             return Task.FromResult(roles);
         }
 
-        // Gerar senha temporária segura
         private static string GenerateTemporaryPassword()
         {
             const string uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             const string lowercase = "abcdefghijklmnopqrstuvwxyz";
             const string digits = "0123456789";
-            const string special = "!@#$%^&*()_-+=[{]};:<>|./?";
+            const string special = "!@#$%^&*()_-+={[]}|:;?";
+            const string allChars = uppercase + lowercase + digits + special;
 
-            var random = new Random();
             var password = new char[12];
+            var random = new Random();
 
-            // Garantir pelo menos um de cada tipo
             password[0] = uppercase[random.Next(uppercase.Length)];
             password[1] = lowercase[random.Next(lowercase.Length)];
             password[2] = digits[random.Next(digits.Length)];
             password[3] = special[random.Next(special.Length)];
 
-            // Preencher o restante
-            const string allChars = uppercase + lowercase + digits + special;
             for (int i = 4; i < 12; i++)
             {
                 password[i] = allChars[random.Next(allChars.Length)];
             }
 
-            // Embaralhar
             return new string([.. password.OrderBy(x => random.Next())]);
         }
 
@@ -660,4 +600,4 @@ namespace EstagioGO.Controllers
             await emailSender.SendEmailAsync(user.Email, subject, message);
         }
     }
-}
+}   

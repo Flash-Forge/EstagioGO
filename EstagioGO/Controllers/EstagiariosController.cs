@@ -101,6 +101,12 @@ namespace EstagioGO.Controllers
                 ModelState.AddModelError("DataTermino", "A data de término deve ser posterior à data de início.");
             }
 
+            //Validação de data de nascimento
+            if(estagiario.DataNascimento >= estagiario.DataInicio || estagiario.DataNascimento >= estagiario.DataTermino)
+            {
+                ModelState.AddModelError("DataNascimento", "Data de nascimento inválida");
+            }
+
             // Verificar se o ModelState é válido antes de qualquer coisa
             if (!ModelState.IsValid)
             {

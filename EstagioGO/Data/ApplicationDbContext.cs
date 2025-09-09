@@ -13,7 +13,7 @@ namespace EstagioGO.Data
         public DbSet<Frequencia> Frequencias { get; set; }
         public DbSet<Avaliacao> Avaliacoes { get; set; }
 
-        // Novos DbSets para o sistema de avaliação por categorias
+        // DbSets para o sistema de avaliação por categorias
         public DbSet<Categoria> Categorias { get; set; }
         public DbSet<Competencia> Competencias { get; set; }
         public DbSet<AvaliacaoCompetencia> AvaliacaoCompetencias { get; set; }

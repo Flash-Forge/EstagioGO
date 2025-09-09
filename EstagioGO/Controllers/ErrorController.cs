@@ -16,10 +16,10 @@ namespace EstagioGO.Controllers
                 case 404:
                     ViewBag.ErrorMessage = "Desculpe, a página que você procurava não foi encontrada.";
                     return View("NotFound");
-                    // Você poderia adicionar outros casos aqui (ex: case 403, 401, etc.)
+
             }
 
-            // Para qualquer outro código, podemos usar uma view genérica
+
             ViewBag.StatusCode = statusCode;
             return View("GenericError");
         }
@@ -27,7 +27,7 @@ namespace EstagioGO.Controllers
         [Route("Error/500")] // Rota para o ExceptionHandler
         public IActionResult Error500()
         {
-            // Pega os detalhes da exceção que ocorreu
+            // Detalhe de execeção
             var exceptionHandlerPathFeature = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
 
             if (exceptionHandlerPathFeature != null)
@@ -35,12 +35,12 @@ namespace EstagioGO.Controllers
                 // Loga o erro com detalhes importantes
                 logger.LogError(exceptionHandlerPathFeature.Error, "Erro não tratado na rota {Path}", exceptionHandlerPathFeature.Path);
 
-                // Passa os detalhes do erro para a View, para exibição em modo de desenvolvimento
+                // Passa os detalhes do erro para a View
                 ViewBag.Exception = exceptionHandlerPathFeature.Error;
                 ViewBag.Path = exceptionHandlerPathFeature.Path;
             }
 
-            // Exibe o RequestId para ajudar no rastreamento de erros em logs
+            // Exibe o RequestId
             ViewBag.RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
 
             return View("Error");

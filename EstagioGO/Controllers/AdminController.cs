@@ -33,7 +33,7 @@ namespace EstagioGO.Controllers
                 usersQuery = usersQuery.Where(u => estagiariosIds.Contains(u.Id));
             }
 
-            // Agora, buscamos os usuários e suas roles de forma mais otimizada
+            // Agora, buscamos os usuários
             var usersWithRoles = await (from user in usersQuery
                                         from userRole in user.UserRoles
                                         join role in roleManager.Roles on userRole.RoleId equals role.Id
@@ -84,10 +84,8 @@ namespace EstagioGO.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateUser(CreateUserViewModel model)
         {
-            // Remover a validação da propriedade Roles do ModelState
             ModelState.Remove("Roles");
 
-            // Adicionar logging para diagnóstico
             logger.LogInformation("Tentativa de criação de usuário por: {UserName}", User.Identity?.Name);
             logger.LogInformation("Dados do modelo: {Email}, {Role}", model.Email, model.Role);
 
@@ -106,12 +104,11 @@ namespace EstagioGO.Controllers
                         .SelectMany(v => v.Errors)
                         .Select(e => e.ErrorMessage)));
 
-                // Preencher as roles disponíveis para o usuário atual
                 model.Roles = await GetRolesForCurrentUser();
                 return View(model);
             }
 
-            if (string.IsNullOrEmpty(model.Email)) // ← Verificação adicional
+            if (string.IsNullOrEmpty(model.Email))
             {
                 ModelState.AddModelError("Email", "Email é obrigatório.");
                 model.Roles = await GetRolesForCurrentUser();
@@ -127,7 +124,6 @@ namespace EstagioGO.Controllers
                 ModelState.AddModelError("Email", "Este email já está em uso.");
                 logger.LogWarning("Tentativa de criar usuário com email já existente: {Email}", model.Email);
 
-                // Preencher as roles disponíveis para o usuário atual
                 model.Roles = await GetRolesForCurrentUser();
                 return View(model);
             }
@@ -273,7 +269,6 @@ namespace EstagioGO.Controllers
                 model.Roles = [.. model.Roles.Where(r => r.Value == "Estagiario")];
             }
 
-            // Remover a validação da propriedade Roles do ModelState
             ModelState.Remove("Roles");
 
             if (!ModelState.IsValid)
@@ -600,4 +595,4 @@ namespace EstagioGO.Controllers
             await emailSender.SendEmailAsync(user.Email, subject, message);
         }
     }
-}   
+}

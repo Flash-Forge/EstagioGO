@@ -14,8 +14,6 @@ namespace EstagioGO.Controllers
     public partial class EstagiariosController(ApplicationDbContext context, UserManager<ApplicationUser> userManager) : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager = userManager;
-
-        // Expressão regular corrigida para ser instanciada diretamente
         private static readonly Regex NonDigitsRegex = new(@"[^\d]", RegexOptions.Compiled);
 
         // GET: Estagiarios
@@ -77,13 +75,11 @@ namespace EstagioGO.Controllers
             // Remover formatação do CPF e Telefone antes de validar
             if (!string.IsNullOrEmpty(estagiario.CPF))
             {
-                // A chamada ao método continua igual, pois o nome da variável não mudou
                 estagiario.CPF = NonDigitsRegex.Replace(estagiario.CPF, "");
             }
 
             if (!string.IsNullOrEmpty(estagiario.Telefone))
             {
-                // A chamada ao método continua igual, pois o nome da variável não mudou
                 estagiario.Telefone = NonDigitsRegex.Replace(estagiario.Telefone, "");
             }
 
@@ -133,7 +129,6 @@ namespace EstagioGO.Controllers
 
             try
             {
-                // A data de cadastro é definida automaticamente
                 estagiario.DataCadastro = DateTime.Now;
 
                 context.Add(estagiario);
@@ -323,13 +318,11 @@ namespace EstagioGO.Controllers
                             Url.Action("CreateUser", "Admin", new { contexto = "estagiario" }));
                 }
 
-                // Obter IDs de usuários já vinculados
                 var usuariosVinculados = await context.Estagiarios
                     .Where(e => e.UserId != null && e.UserId != userIdAtual)
                     .Select(e => e.UserId)
                     .ToListAsync();
 
-                // Filtrar usuários não vinculados
                 var usuariosDisponiveis = estagiariosUsers
                     .Where(u => !usuariosVinculados.Contains(u.Id))
                     .ToList();

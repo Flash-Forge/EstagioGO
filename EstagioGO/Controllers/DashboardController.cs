@@ -111,7 +111,7 @@ namespace EstagioGO.Controllers
                 .Select(g => new MediaCategoriaViewModel
                 {
                     Categoria = g.Key,
-                    Media = (decimal)g.Average(ac => ac.Nota) // Conversão explícita para decimal
+                    Media = (decimal)g.Average(ac => ac.Nota)
                 })
                 .ToListAsync();
 
@@ -220,7 +220,7 @@ namespace EstagioGO.Controllers
             {
                 var estagiario = await context.Estagiarios
                     .Include(e => e.Avaliacoes)
-                        .ThenInclude(a => a.Avaliador) // Inclui os dados de quem avaliou
+                        .ThenInclude(a => a.Avaliador)
                     .FirstOrDefaultAsync(e => e.Id == id);
 
                 if (estagiario == null)

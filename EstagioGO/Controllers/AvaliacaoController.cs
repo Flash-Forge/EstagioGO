@@ -99,13 +99,13 @@ namespace EstagioGO.Controllers
                 }
             }
 
-            // Se chegamos aqui, houve um erro. Recarregar o ViewModel com os dados necessários.
+            // Linha de erro
             logger.LogWarning("ModelState inválido ao criar avaliação. Recarregando dados do formulário.");
             var repopulatedViewModel = await BuildAvaliacaoViewModel(viewModel);
             return View(repopulatedViewModel);
         }
 
-        // Método auxiliar para construir e popular o ViewModel
+        // Método auxiliar para construir ViewModel
         private async Task<AvaliacaoViewModel?> BuildAvaliacaoViewModel(AvaliacaoViewModel existingViewModel)
         {
             try
@@ -152,7 +152,7 @@ namespace EstagioGO.Controllers
                 var estagiarios = await context.Estagiarios
                     .Where(e => e.Ativo)
                     .OrderBy(e => e.Nome)
-                    .Select(e => new { e.Id, e.Nome }) // Selecionar apenas o necessário
+                    .Select(e => new { e.Id, e.Nome })
                     .ToListAsync();
 
                 ViewBag.Estagiarios = new SelectList(estagiarios, "Id", "Nome", existingViewModel.EstagiarioId);

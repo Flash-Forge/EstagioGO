@@ -22,7 +22,7 @@ namespace EstagioGO.Controllers
             {
                 ViewBag.MensagemSemRecursos = "Não há estagiários cadastrados. Você precisa cadastrar um estagiário primeiro.";
                 ViewBag.RedirecionarPara = Url.Action("Create", "Estagiarios");
-                return View("SemEstagiarios"); // Usa a nova view específica
+                return View("SemEstagiarios");
             }
 
             var user = await userManager.GetUserAsync(User);

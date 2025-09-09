@@ -1,0 +1,44 @@
+﻿@model EstagioGO.Models.Analise.Competencia
+
+@{
+    ViewData["Title"] = "Detalhes da Competência";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-eye me-2"></i>@ViewData["Title"]</h4>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Descrição</dt>
+                        <dd class="col-sm-8">@Model.Descricao</dd>
+
+                        <dt class="col-sm-4">Categoria</dt>
+                        <dd class="col-sm-8">@(Model.Categoria?.Nome ?? "N/A")</dd>
+
+                        <dt class="col-sm-4">Ordem de Exibição</dt>
+                        <dd class="col-sm-8">@Model.OrdemExibicao</dd>
+
+                        <dt class="col-sm-4">Status</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge @(Model.Ativo ? "bg-success" : "bg-secondary")">
+                                @(Model.Ativo ? "Ativa" : "Inativa")
+                            </span>
+                        </dd>
+                    </dl>
+                </div>
+                <div class="card-footer bg-light text-end">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                        <i class="fas fa-edit me-1"></i>Editar
+                    </a>
+                    <a asp-action="Index" asp-route-categoriaId="@Model.CategoriaId" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Voltar para a Lista
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

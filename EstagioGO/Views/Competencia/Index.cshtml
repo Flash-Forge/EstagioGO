@@ -7,10 +7,10 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="card shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">
-                        <i class="fas fa-list-check me-2"></i>Gerenciar Competências
+                        <i class="fas fa-list-check me-2"></i>@ViewData["Title"]
                     </h3>
                     <div>
                         <a asp-action="Create" asp-route-categoriaId="@ViewBag.CategoriaIdSelecionada" class="btn btn-primary">
@@ -22,13 +22,12 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <!-- Filtro por Categoria -->
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <form method="get">
+                            <form method="get" id="filtroForm">
                                 <div class="input-group">
                                     <select name="categoriaId" class="form-select" onchange="this.form.submit()">
-                                        <option value="">Todas as categorias</option>
+                                        <option value="">Filtrar por todas as categorias</option>
                                         @{
                                             var categoriasList = ViewBag.Categorias as SelectList;
                                             if (categoriasList != null)
@@ -40,9 +39,6 @@
                                             }
                                         }
                                     </select>
-                                    <button class="btn btn-outline-secondary" type="submit">
-                                        <i class="fas fa-filter"></i>
-                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -51,24 +47,24 @@
                     @if (Model.Any())
                     {
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover">
+                            <table id="competenciasTable" class="table table-striped table-hover w-100">
                                 <thead class="table-dark">
                                     <tr>
                                         <th>Categoria</th>
                                         <th>Ordem</th>
                                         <th>Descrição</th>
                                         <th>Status</th>
-                                        <th class="text-center">Ações</th>
+                                        <th class="text-center no-sort">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach (var item in Model)
                                     {
-                                        <tr class="@(item.Ativo ? "" : "table-secondary")">
+                                        <tr class="@(item.Ativo ? "" : "table-secondary text-muted")">
                                             <td>
                                                 @if (item.Categoria != null)
                                                 {
-                                                    <strong class="text-primary">@item.Categoria.Nome</strong>
+                                                    <strong>@item.Categoria.Nome</strong>
                                                 }
                                             </td>
                                             <td>@item.OrdemExibicao</td>
@@ -83,14 +79,9 @@
                                                 }
                                             </td>
                                             <td>
-                                                @if (item.Ativo)
-                                                {
-                                                    <span class="badge bg-success">Ativa</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-secondary">Inativa</span>
-                                                }
+                                                <span class="badge @(item.Ativo ? "bg-success" : "bg-secondary")">
+                                                    @(item.Ativo ? "Ativa" : "Inativa")
+                                                </span>
                                             </td>
                                             <td class="text-center">
                                                 <div class="btn-group" role="group">
@@ -102,15 +93,6 @@
                                                        class="btn btn-sm btn-outline-warning" title="Editar">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <form asp-action="ToggleStatus" asp-route-id="@item.Id" method="post" class="d-inline">
-                                                        @Html.AntiForgeryToken()
-                                                        <button type="submit"
-                                                                class="btn btn-sm @(item.Ativo ? "btn-outline-success" : "btn-outline-secondary")"
-                                                                title="@(item.Ativo ? "Desativar" : "Ativar")"
-                                                                onclick="return confirm('Tem certeza que deseja @(item.Ativo ? "DESATIVAR" : "ATIVAR") esta competência?')">
-                                                            <i class="fas @(item.Ativo ? "fa-toggle-on" : "fa-toggle-off")"></i>
-                                                        </button>
-                                                    </form>
                                                     @if (item.AvaliacoesCompetencia?.Any() != true)
                                                     {
                                                         <a asp-action="Delete" asp-route-id="@item.Id"
@@ -128,22 +110,6 @@
                     }
                     else
                     {
-                        <div class="text-center py-5">
-                            <i class="fas fa-list-check fa-3x text-muted mb-3"></i>
-                            @if (ViewBag.CategoriaIdSelecionada != null)
-                            {
-                                <h5 class="text-muted">Nenhuma competência encontrada para esta categoria</h5>
-                                <p class="text-muted">Comece criando competências para esta categoria.</p>
-                            }
-                            else
-                            {
-                                <h5 class="text-muted">Nenhuma competência cadastrada</h5>
-                                <p class="text-muted">Comece criando suas primeiras competências.</p>
-                            }
-                            <a asp-action="Create" asp-route-categoriaId="@ViewBag.CategoriaIdSelecionada" class="btn btn-primary">
-                                <i class="fas fa-plus me-1"></i>Criar Primeira Competência
-                            </a>
-                        </div>
                     }
                 </div>
             </div>
@@ -153,10 +119,18 @@
 
 @section Scripts {
     <script>
-        // Auto-hide alerts after 5 seconds
-        setTimeout(function () {
-            $('.alert').fadeOut('slow');
-        }, 5000);
+        $(document).ready(function () {
+            $('#competenciasTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
+                },
+                responsive: true,
+                order: [[0, 'asc'], [1, 'asc']], // Ordena primeiro por Categoria, depois por Ordem
+                columnDefs: [{
+                    "orderable": false,
+                    "targets": 'no-sort'
+                }]
+            });
+        });
     </script>
 }
-

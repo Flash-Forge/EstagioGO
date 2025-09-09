@@ -9,15 +9,13 @@ namespace EstagioGO.Controllers
     [Authorize(Roles = "Administrador,Coordenador")]
     public class CategoriaController(ApplicationDbContext context, ILogger<CategoriaController> logger) : Controller
     {
-        private readonly ApplicationDbContext _context = context;
-        private readonly ILogger<CategoriaController> _logger = logger;
 
         // GET: Categoria
         public async Task<IActionResult> Index()
         {
             try
             {
-                var categorias = await _context.Categorias
+                var categorias = await context.Categorias
                     .Include(c => c.Competencias)
                     .OrderBy(c => c.OrdemExibicao)
                     .ThenBy(c => c.Nome)
@@ -27,7 +25,7 @@ namespace EstagioGO.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao carregar lista de categorias");
+                logger.LogError(ex, "Erro ao carregar lista de categorias");
                 TempData["ErrorMessage"] = "Erro ao carregar as categorias.";
                 return RedirectToAction("Index", "Home");
             }
@@ -41,7 +39,7 @@ namespace EstagioGO.Controllers
                 return NotFound();
             }
 
-            var categoria = await _context.Categorias
+            var categoria = await context.Categorias
                 .Include(c => c.Competencias.Where(comp => comp.Ativo))
                 .FirstOrDefaultAsync(m => m.Id == id);
 
@@ -68,14 +66,14 @@ namespace EstagioGO.Controllers
             {
                 try
                 {
-                    _context.Add(categoria);
-                    await _context.SaveChangesAsync();
+                    context.Add(categoria);
+                    await context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "Categoria criada com sucesso!";
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Erro ao criar categoria");
+                    logger.LogError(ex, "Erro ao criar categoria");
                     ModelState.AddModelError("", "Erro ao salvar a categoria. Tente novamente.");
                 }
             }
@@ -90,7 +88,7 @@ namespace EstagioGO.Controllers
                 return NotFound();
             }
 
-            var categoria = await _context.Categorias.FindAsync(id);
+            var categoria = await context.Categorias.FindAsync(id);
             if (categoria == null)
             {
                 return NotFound();
@@ -112,8 +110,8 @@ namespace EstagioGO.Controllers
             {
                 try
                 {
-                    _context.Update(categoria);
-                    await _context.SaveChangesAsync();
+                    context.Update(categoria);
+                    await context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "Categoria atualizada com sucesso!";
                     return RedirectToAction(nameof(Index));
                 }
@@ -130,7 +128,7 @@ namespace EstagioGO.Controllers
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Erro ao atualizar categoria");
+                    logger.LogError(ex, "Erro ao atualizar categoria");
                     ModelState.AddModelError("", "Erro ao atualizar a categoria. Tente novamente.");
                 }
             }
@@ -145,7 +143,7 @@ namespace EstagioGO.Controllers
                 return NotFound();
             }
 
-            var categoria = await _context.Categorias
+            var categoria = await context.Categorias
                 .Include(c => c.Competencias)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
@@ -164,7 +162,7 @@ namespace EstagioGO.Controllers
         {
             try
             {
-                var categoria = await _context.Categorias
+                var categoria = await context.Categorias
                     .Include(c => c.Competencias)
                     .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -177,14 +175,14 @@ namespace EstagioGO.Controllers
                         return RedirectToAction(nameof(Index));
                     }
 
-                    _context.Categorias.Remove(categoria);
-                    await _context.SaveChangesAsync();
+                    context.Categorias.Remove(categoria);
+                    await context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "Categoria excluída com sucesso!";
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao excluir categoria");
+                logger.LogError(ex, "Erro ao excluir categoria");
                 TempData["ErrorMessage"] = "Erro ao excluir a categoria. Tente novamente.";
             }
 
@@ -198,11 +196,11 @@ namespace EstagioGO.Controllers
         {
             try
             {
-                var categoria = await _context.Categorias.FindAsync(id);
+                var categoria = await context.Categorias.FindAsync(id);
                 if (categoria != null)
                 {
                     categoria.Ativo = !categoria.Ativo;
-                    await _context.SaveChangesAsync();
+                    await context.SaveChangesAsync();
 
                     string status = categoria.Ativo ? "ativada" : "desativada";
                     TempData["SuccessMessage"] = $"Categoria {status} com sucesso!";
@@ -210,7 +208,7 @@ namespace EstagioGO.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao alterar status da categoria");
+                logger.LogError(ex, "Erro ao alterar status da categoria");
                 TempData["ErrorMessage"] = "Erro ao alterar o status da categoria.";
             }
 
@@ -219,7 +217,7 @@ namespace EstagioGO.Controllers
 
         private bool CategoriaExists(int id)
         {
-            return _context.Categorias.Any(e => e.Id == id);
+            return context.Categorias.Any(e => e.Id == id);
         }
     }
 }

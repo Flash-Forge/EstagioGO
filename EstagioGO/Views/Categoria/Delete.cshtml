@@ -1,0 +1,68 @@
+﻿@model EstagioGO.Models.Analise.Categoria
+
+@{
+    ViewData["Title"] = "Excluir Categoria";
+    bool podeExcluir = Model.Competencias?.Any() != true;
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="fas fa-trash-alt me-2"></i>@ViewData["Title"]</h4>
+                </div>
+                <div class="card-body">
+
+                    @if (podeExcluir)
+                    {
+                        <h5 class="card-title text-danger">Você tem certeza que deseja excluir esta categoria?</h5>
+                        <p>Esta ação não pode ser desfeita.</p>
+                    }
+                    else
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <h4 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Ação Bloqueada</h4>
+                            <p>
+                                Esta categoria **não pode** ser excluída porque possui
+                                <strong>@Model.Competencias.Count</strong> competência(s) associada(s).
+                            </p>
+                            <hr>
+                            <p class="mb-0">
+                                Para excluir esta categoria, você deve primeiro remover ou reassociar todas as suas competências. Se preferir, você pode simplesmente <a asp-action="Index" class="alert-link">voltar para a lista</a> e desativá-la.
+                            </p>
+                        </div>
+                    }
+
+                    <hr />
+
+                    <dl class="row">
+                        <dt class="col-sm-4">Nome da Categoria</dt>
+                        <dd class="col-sm-8">@Model.Nome</dd>
+
+                        <dt class="col-sm-4">Descrição</dt>
+                        <dd class="col-sm-8">@(Model.Descricao ?? "Sem descrição")</dd>
+                    </dl>
+
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Voltar para a Lista
+                        </a>
+                        @if (podeExcluir)
+                        {
+                            <form asp-action="Delete">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" asp-for="Id" />
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash-alt me-1"></i>Confirmar Exclusão
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

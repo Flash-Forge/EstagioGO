@@ -140,6 +140,8 @@ namespace EstagioGO.Controllers
                 return NotFound();
             }
 
+            ModelState.Remove("Categoria");
+
             if (ModelState.IsValid)
             {
                 try

@@ -11,6 +11,7 @@
         <tr>
             <th>@Html.DisplayNameFor(m => m.Nome)</th>
             <th>@Html.DisplayNameFor(m => m.CPF)</th>
+
             <th>@Html.DisplayNameFor(m => m.Telefone)</th>
             <th>@Html.DisplayNameFor(m => m.Matricula)</th>
             <th>@Html.DisplayNameFor(m => m.Curso)</th>
@@ -20,6 +21,7 @@
             <th>Supervisor</th>
             <th>Usuário</th>
             <th>@Html.DisplayNameFor(m => m.Ativo)</th>
+            <th>@Html.DisplayNameFor(m => m.DataNascimento)</th>
             <th>@Html.DisplayNameFor(m => m.DataCadastro)</th>
             <th>Ações</th>
         </tr>
@@ -39,6 +41,7 @@
                 <td>@item.Supervisor.NomeCompleto</td>
                 <td>@item.User.NomeCompleto</td>
                 <td>@(item.Ativo ? "Sim" : "Não")</td>
+                <td>@item.DataNascimento.ToString("dd/MM/yyyy")</td>
                 <td>@item.DataCadastro.ToString("dd/MM/yyyy")</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.Id">Editar</a> |

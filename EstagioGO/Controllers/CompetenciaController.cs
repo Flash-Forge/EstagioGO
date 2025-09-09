@@ -87,8 +87,10 @@ namespace EstagioGO.Controllers
         // POST: Competencia/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Descricao,CategoriaId,OrdemExibicao,Ativo")] Competencia competencia)
+        public async Task<IActionResult> Create(Competencia competencia)
         {
+            ModelState.Remove("Categoria");
+
             if (ModelState.IsValid)
             {
                 try
@@ -105,6 +107,7 @@ namespace EstagioGO.Controllers
                 }
             }
 
+            // Se houver erro, recarrega o dropdown de categorias.
             await CarregarCategoriasDropdown(competencia.CategoriaId);
             return View(competencia);
         }

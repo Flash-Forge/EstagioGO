@@ -94,27 +94,26 @@
                                             </td>
                                             <td class="text-center">
                                                 <div class="btn-group" role="group">
-                                                    <a asp-action="Details" asp-route-id="@item.Id" 
+                                                    <a asp-action="Details" asp-route-id="@item.Id"
                                                        class="btn btn-sm btn-outline-info" title="Detalhes">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <a asp-action="Edit" asp-route-id="@item.Id" 
+                                                    <a asp-action="Edit" asp-route-id="@item.Id"
                                                        class="btn btn-sm btn-outline-warning" title="Editar">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <form asp-action="ToggleStatus" asp-route-id="@item.Id" 
-                                                          method="post" class="d-inline">
+                                                    <form asp-action="ToggleStatus" asp-route-id="@item.Id" method="post" class="d-inline">
                                                         @Html.AntiForgeryToken()
-                                                        <button type="submit" 
-                                                                class="btn btn-sm @(item.Ativo ? "btn-outline-secondary" : "btn-outline-success")" 
+                                                        <button type="submit"
+                                                                class="btn btn-sm @(item.Ativo ? "btn-outline-success" : "btn-outline-secondary")"
                                                                 title="@(item.Ativo ? "Desativar" : "Ativar")"
-                                                                onclick="return confirm('@(item.Ativo ? "Desativar" : "Ativar") esta competência?')">
-                                                            <i class="fas @(item.Ativo ? "fa-toggle-off" : "fa-toggle-on")"></i>
+                                                                onclick="return confirm('Tem certeza que deseja @(item.Ativo ? "DESATIVAR" : "ATIVAR") esta competência?')">
+                                                            <i class="fas @(item.Ativo ? "fa-toggle-on" : "fa-toggle-off")"></i>
                                                         </button>
                                                     </form>
                                                     @if (item.AvaliacoesCompetencia?.Any() != true)
                                                     {
-                                                        <a asp-action="Delete" asp-route-id="@item.Id" 
+                                                        <a asp-action="Delete" asp-route-id="@item.Id"
                                                            class="btn btn-sm btn-outline-danger" title="Excluir">
                                                             <i class="fas fa-trash"></i>
                                                         </a>
@@ -155,7 +154,7 @@
 @section Scripts {
     <script>
         // Auto-hide alerts after 5 seconds
-        setTimeout(function() {
+        setTimeout(function () {
             $('.alert').fadeOut('slow');
         }, 5000);
     </script>

@@ -15,7 +15,6 @@ namespace EstagioGO.Controllers
         // GET: Avaliacao/Create
         public async Task<IActionResult> Create(int? estagiarioId)
         {
-            // VALIDAÇÃO ADICIONADA AQUI
             var existemEstagiariosAtivos = await context.Estagiarios.AnyAsync(e => e.Ativo);
             if (!existemEstagiariosAtivos)
             {
@@ -104,7 +103,205 @@ namespace EstagioGO.Controllers
             var repopulatedViewModel = await BuildAvaliacaoViewModel(viewModel);
             return View(repopulatedViewModel);
         }
+        // Dentro de AvaliacaoController.cs
 
+        // GET: Avaliacao/Edit/5
+        [Authorize(Roles = "Administrador,Coordenador")] // Apenas Admins e Coordenadores podem editar
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var avaliacao = await context.Avaliacoes
+                .Include(a => a.Estagiario)
+                .Include(a => a.CompetenciasAvaliadas)
+                    .ThenInclude(ac => ac.Competencia)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (avaliacao == null)
+            {
+                return NotFound();
+            }
+
+            // Mapear a entidade 'Avaliacao' para o 'AvaliacaoViewModel' para preencher o formulário
+            var viewModel = await BuildAvaliacaoViewModelParaEdicao(avaliacao);
+            if (viewModel == null)
+            {
+                TempData["ErrorMessage"] = "Erro ao carregar a avaliação para edição.";
+                return RedirectToAction("Index", "Dashboard");
+            }
+
+            return View(viewModel);
+        }
+
+        // POST: Avaliacao/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador,Coordenador")]
+        public async Task<IActionResult> Edit(int id, AvaliacaoViewModel viewModel)
+        {
+            if (id != viewModel.AvaliacaoId)
+            {
+                return NotFound();
+            }
+
+            // Buscamos a avaliação original do banco de dados para garantir que estamos editando a correta
+            var avaliacaoParaAtualizar = await context.Avaliacoes
+                .Include(a => a.CompetenciasAvaliadas)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (avaliacaoParaAtualizar == null)
+            {
+                ModelState.AddModelError("", "A avaliação que você está tentando editar não foi encontrada.");
+            }
+
+            if (ModelState.IsValid && avaliacaoParaAtualizar != null)
+            {
+                try
+                {
+                    var avaliadorAtual = await userManager.GetUserAsync(User);
+
+                    // Atualiza os campos principais
+                    avaliacaoParaAtualizar.ComentariosGerais = viewModel.ComentariosGerais;
+                    avaliacaoParaAtualizar.AvaliadorId = avaliadorAtual!.Id; // Registra o último editor
+                    avaliacaoParaAtualizar.DataAvaliacao = DateTime.Now; // Atualiza a data da edição
+
+                    // Atualiza as notas e comentários das competências
+                    foreach (var categoriaVM in viewModel.Categorias)
+                    {
+                        foreach (var competenciaVM in categoriaVM.Competencias)
+                        {
+                            var competenciaParaAtualizar = avaliacaoParaAtualizar.CompetenciasAvaliadas
+                                .FirstOrDefault(ac => ac.CompetenciaId == competenciaVM.CompetenciaId);
+
+                            if (competenciaParaAtualizar != null)
+                            {
+                                competenciaParaAtualizar.Nota = competenciaVM.Nota;
+                                competenciaParaAtualizar.Comentario = competenciaVM.Comentario;
+                            }
+                        }
+                    }
+
+                    // Recalcula a média
+                    if (avaliacaoParaAtualizar.CompetenciasAvaliadas.Any())
+                    {
+                        avaliacaoParaAtualizar.MediaNotas = (decimal)Math.Round(
+                            avaliacaoParaAtualizar.CompetenciasAvaliadas.Average(c => c.Nota), 2);
+                    }
+
+                    context.Update(avaliacaoParaAtualizar);
+                    await context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = "Avaliação atualizada com sucesso!";
+                    // Redireciona para o histórico do estagiário específico
+                    return RedirectToAction("Historico", "Dashboard", new { id = avaliacaoParaAtualizar.EstagiarioId });
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Erro ao atualizar a avaliação {AvaliacaoId}", id);
+                    ModelState.AddModelError("", "Ocorreu um erro inesperado ao salvar as alterações.");
+                }
+            }
+
+            // Se houver um erro, precisamos repopular o ViewModel com os dados para exibir o formulário novamente
+            var repopulatedViewModel = await BuildAvaliacaoViewModelParaEdicao(avaliacaoParaAtualizar, viewModel);
+            return View(repopulatedViewModel);
+        }
+
+        // Dentro de AvaliacaoController.cs
+
+        // GET: Avaliacao/Delete/5
+        [Authorize(Roles = "Administrador,Coordenador")]
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var avaliacao = await context.Avaliacoes
+                .Include(a => a.Estagiario)
+                .Include(a => a.Avaliador)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (avaliacao == null)
+            {
+                return NotFound();
+            }
+
+            return View(avaliacao);
+        }
+
+        // POST: Avaliacao/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador,Coordenador")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var avaliacao = await context.Avaliacoes.FindAsync(id);
+            if (avaliacao == null)
+            {
+                TempData["ErrorMessage"] = "A avaliação que você tentou excluir não foi encontrada.";
+                return RedirectToAction("Index", "Dashboard");
+            }
+
+            try
+            {
+                var estagiarioId = avaliacao.EstagiarioId;
+                context.Avaliacoes.Remove(avaliacao);
+                await context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Avaliação excluída com sucesso!";
+                // Retorna para o histórico do estagiário de quem a avaliação foi excluída
+                return RedirectToAction("Historico", "Dashboard", new { id = estagiarioId });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Erro ao excluir a avaliação {AvaliacaoId}", id);
+                TempData["ErrorMessage"] = "Ocorreu um erro ao excluir a avaliação.";
+                return RedirectToAction("Historico", "Dashboard", new { id = avaliacao.EstagiarioId });
+            }
+        }
+
+        // MÉTODO AUXILIAR NOVO: Para mapear uma Avaliacao existente para um ViewModel
+        private async Task<AvaliacaoViewModel?> BuildAvaliacaoViewModelParaEdicao(Avaliacao avaliacao, AvaliacaoViewModel? postedViewModel = null)
+        {
+            // Reutilizamos o método que já existe para buscar a estrutura de categorias
+            var baseViewModel = await BuildAvaliacaoViewModel(new AvaliacaoViewModel());
+            if (baseViewModel == null) return null;
+
+            var viewModel = new AvaliacaoViewModel
+            {
+                AvaliacaoId = avaliacao.Id,
+                EstagiarioId = avaliacao.EstagiarioId,
+                EstagiarioNome = avaliacao.Estagiario?.Nome,
+                ComentariosGerais = postedViewModel?.ComentariosGerais ?? avaliacao.ComentariosGerais,
+                Categorias = baseViewModel.Categorias
+            };
+
+            // Preenche as notas e comentários com os valores salvos no banco (ou do formulário com erro)
+            foreach (var categoriaVM in viewModel.Categorias)
+            {
+                foreach (var competenciaVM in categoriaVM.Competencias)
+                {
+                    var competenciaSalva = avaliacao.CompetenciasAvaliadas
+                        .FirstOrDefault(ac => ac.CompetenciaId == competenciaVM.CompetenciaId);
+
+                    var competenciaPostada = postedViewModel?.Categorias
+                        .SelectMany(c => c.Competencias)
+                        .FirstOrDefault(c => c.CompetenciaId == competenciaVM.CompetenciaId);
+
+                    if (competenciaSalva != null)
+                    {
+                        competenciaVM.Nota = competenciaPostada?.Nota ?? competenciaSalva.Nota;
+                        competenciaVM.Comentario = competenciaPostada?.Comentario ?? competenciaSalva.Comentario;
+                    }
+                }
+            }
+
+            return viewModel;
+        }
         // Método auxiliar para construir ViewModel
         private async Task<AvaliacaoViewModel?> BuildAvaliacaoViewModel(AvaliacaoViewModel existingViewModel)
         {

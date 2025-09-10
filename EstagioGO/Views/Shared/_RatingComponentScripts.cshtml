@@ -1,0 +1,108 @@
+﻿<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- INÍCIO: Lógica do componente de notas (já existente) ---
+        const ratingContainers = document.querySelectorAll('.rating-icons');
+        const ratingLabels = {
+            0: "Não se aplica",
+            1: "Muito Abaixo do Esperado",
+            2: "Abaixo do Esperado",
+            3: "Atende às Expectativas",
+            4: "Acima do Esperado",
+            5: "Excelente"
+        };
+        const ratingColors = {
+            0: "#6c757d", // Cinza
+            1: "#dc3545", // Vermelho
+            2: "#dc3545",
+            3: "#fd7e14", // Laranja
+            4: "#198754", // Verde
+            5: "#198754"
+        };
+
+        function updateRatingDisplay(ratingIconsContainer, selectedValue) {
+            const icons = ratingIconsContainer.querySelectorAll('.rating-icon-wrapper i');
+            const label = ratingIconsContainer.closest('.rating-container').querySelector('.rating-label');
+
+            icons.forEach(icon => {
+                const wrapper = icon.parentElement;
+                const iconValue = parseInt(wrapper.dataset.value, 10);
+
+                // Adiciona ou remove a classe 'selected' para controle de cor
+                if (iconValue <= selectedValue) {
+                    wrapper.classList.add('selected');
+                } else {
+                    wrapper.classList.remove('selected');
+                }
+            });
+
+            label.textContent = `(${selectedValue}) ${ratingLabels[selectedValue]}`;
+            // Atualiza o atributo de dados para aplicar a cor no CSS
+            ratingIconsContainer.dataset.ratingValue = selectedValue;
+        }
+
+        ratingContainers.forEach(container => {
+            const i = container.dataset.competenciaIndexI;
+            const j = container.dataset.competenciaIndexJ;
+            const hiddenInput = document.querySelector(`input[name='Categorias[${i}].Competencias[${j}].Nota']`);
+
+            // Inicializar com o valor atual do modelo
+            updateRatingDisplay(container, parseInt(hiddenInput.value, 10));
+
+            container.addEventListener('mouseleave', () => {
+                updateRatingDisplay(container, parseInt(hiddenInput.value, 10));
+            });
+
+            container.querySelectorAll('.rating-icon-wrapper').forEach(wrapper => {
+                wrapper.addEventListener('mouseover', (e) => {
+                    updateRatingDisplay(container, parseInt(e.currentTarget.dataset.value, 10));
+                });
+
+                wrapper.addEventListener('click', (e) => {
+                    const selectedValue = parseInt(e.currentTarget.dataset.value, 10);
+                    hiddenInput.value = selectedValue;
+                    updateRatingDisplay(container, selectedValue);
+
+                    const event = new Event('change', { bubbles: true });
+                    hiddenInput.dispatchEvent(event);
+                });
+            });
+        });
+        // --- FIM: Lógica do componente de notas ---
+
+
+        // --- INÍCIO: Lógica de confirmação de notas zero (ADICIONADA) ---
+
+        // Seletor genérico que funciona tanto no Create quanto no Edit.
+        const avaliacaoForm = document.querySelector('#avaliacaoForm');
+
+        if (avaliacaoForm) {
+            avaliacaoForm.addEventListener('submit', function (event) {
+                const notaInputs = avaliacaoForm.querySelectorAll('input[type="hidden"][name$=".Nota"]');
+
+                if (notaInputs.length === 0) {
+                    return;
+                }
+
+                let zeroCount = 0;
+                notaInputs.forEach(input => {
+                    // Considera tanto '0' quanto um campo vazio como nota zero.
+                    if (!input.value || parseInt(input.value, 10) === 0) {
+                        zeroCount++;
+                    }
+                });
+
+                // Define o limiar (ex: mais de 50% das notas são zero)
+                const threshold = notaInputs.length / 2;
+
+                if (zeroCount > threshold) {
+                    const userConfirmed = confirm('A maioria das competências está com nota 0 ou não foi avaliada. Deseja realmente submeter a avaliação com estes valores?');
+
+                    if (!userConfirmed) {
+                        event.preventDefault(); // Impede o envio do formulário
+                    }
+                }
+            });
+        }
+        // --- FIM: Lógica de confirmação de notas zero ---
+    });
+</script>

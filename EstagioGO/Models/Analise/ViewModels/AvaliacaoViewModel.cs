@@ -4,6 +4,8 @@ namespace EstagioGO.Models.Analise.ViewModels
 {
     public class AvaliacaoViewModel
     {
+        public int AvaliacaoId { get; set; }
+        public string? EstagiarioNome { get; set; }
         [Required(ErrorMessage = "O estagiário é obrigatório")]
         [Display(Name = "Estagiário")]
         public int EstagiarioId { get; set; }

@@ -1,35 +1,29 @@
 ﻿@model EstagioGO.Models.Analise.ViewModels.AvaliacaoViewModel
 
 @{
-    ViewData["Title"] = "Nova Avaliação de Desempenho";
+    ViewData["Title"] = "Editar Avaliação de Desempenho";
 }
 
 <div class="container mt-4">
-    <form id="avaliacaoForm" asp-action="Create" method="post">
+    <form id="avaliacaoForm" asp-action="Edit" asp-route-id="@Model.AvaliacaoId" method="post">
+        <input type="hidden" asp-for="AvaliacaoId" />
+        <input type="hidden" asp-for="EstagiarioId" />
+
         <div class="card shadow-sm">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0"><i class="fas fa-clipboard-check me-2"></i>@ViewData["Title"]</h4>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Salvar Avaliação</button>
+                    <div>
+                        <h4 class="mb-0"><i class="fas fa-edit me-2"></i>@ViewData["Title"]</h4>
+                        <span class="text-muted">Estagiário: <strong>@Model.EstagiarioNome</strong></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Salvar Alterações</button>
                 </div>
             </div>
             <div class="card-body">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="EstagiarioId" class="form-label fw-bold"></label>
-                        <select asp-for="EstagiarioId" class="form-select" asp-items="ViewBag.Estagiarios">
-                            <option value="">-- Selecione o Estagiário --</option>
-                        </select>
-                        <span asp-validation-for="EstagiarioId" class="text-danger"></span>
-                    </div>
-                </div>
-
-                <hr />
-
-                <h5 class="mt-4">Avaliação por Competências</h5>
-                <p class="text-muted">Avalie cada competência de 0 a 5.</p>
+                <h5 class="mt-2">Avaliação por Competências</h5>
+                <p class="text-muted">Edite as notas e comentários de cada competência de 0 a 5.</p>
 
                 <div class="accordion" id="accordionCategorias">
                     @for (int i = 0; i < Model.Categorias.Count; i++)
@@ -64,7 +58,7 @@
                                                                     </div>
                                                                 }
                                                             </div>
-                                                            <span class="rating-label">Selecione uma nota</span>
+                                                            <span class="rating-label"></span>
                                                         </div>
                                                         <input type="hidden" asp-for="@Model.Categorias[i].Competencias[j].Nota" />
                                                         <span asp-validation-for="@Model.Categorias[i].Competencias[j].Nota" class="text-danger d-block mt-1"></span>
@@ -89,13 +83,12 @@
                 </div>
             </div>
             <div class="card-footer text-end">
-                <a asp-action="Index" asp-controller="Home" class="btn btn-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Salvar Avaliação</button>
+                <a asp-action="Historico" asp-controller="Dashboard" asp-route-id="@Model.EstagiarioId" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Salvar Alterações</button>
             </div>
         </div>
     </form>
 </div>
-
 
 @section Scripts {
     @{

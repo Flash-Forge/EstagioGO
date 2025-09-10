@@ -7,13 +7,13 @@
         public decimal MediaDesempenhoGeral { get; set; }
         public int EstagiariosEmRisco { get; set; }
 
+        public string? NomeEstagiarioFiltrado { get; set; }
+        public int? EstagiarioSelecionadoId { get; set; }
+        public List<EstagiarioResumoViewModel> Estagiarios { get; set; } = [];
         public List<MediaCategoriaViewModel> MediasCategorias { get; set; } = [];
         public List<EvolucaoDesempenhoViewModel> EvolucaoDesempenho { get; set; } = [];
         public List<MapeamentoTalentoViewModel> MapeamentoTalentos { get; set; } = [];
-        public List<EstagiarioResumoViewModel> Estagiarios { get; set; } = [];
-
         public List<FrequenciaStatusViewModel> DadosFrequencia { get; set; } = [];
-        public int? EstagiarioSelecionadoId { get; set; }
     }
 
     public class MediaCategoriaViewModel

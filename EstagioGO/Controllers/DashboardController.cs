@@ -14,31 +14,29 @@ namespace EstagioGO.Controllers
         {
             try
             {
-                var viewModel = new DashboardViewModel
-                {
-                    EstagiarioSelecionadoId = estagiarioId
-                };
-
-                // Carregar estagiários para o dropdown de filtro
                 var estagiariosDropdown = await context.Estagiarios
                     .Where(e => e.Ativo)
                     .OrderBy(e => e.Nome)
+                    .Select(e => new { e.Id, e.Nome })
                     .ToListAsync();
 
                 ViewBag.Estagiarios = new SelectList(estagiariosDropdown, "Id", "Nome", estagiarioId);
 
-                // KPIs
-                viewModel.TotalEstagiariosAtivos = estagiariosDropdown.Count;
-                viewModel.AvaliacoesPendentes = await CalcularAvaliacoesPendentes();
-                viewModel.MediaDesempenhoGeral = await CalcularMediaDesempenhoGeral();
-                viewModel.EstagiariosEmRisco = await CalcularEstagiariosEmRisco();
-
-                // Dados para gráficos
-                viewModel.MediasCategorias = await ObterMediasPorCategoria();
-                viewModel.EvolucaoDesempenho = await ObterEvolucaoDesempenho();
-                viewModel.MapeamentoTalentos = await ObterMapeamentoTalentos();
-                viewModel.Estagiarios = await ObterListaEstagiarios();
-                viewModel.DadosFrequencia = await ObterDadosFrequencia(estagiarioId);
+                var viewModel = new DashboardViewModel
+                {
+                    EstagiarioSelecionadoId = estagiarioId,
+                    // ALTERAÇÃO: Passar o estagiarioId para os métodos de cálculo
+                    TotalEstagiariosAtivos = estagiariosDropdown.Count,
+                    AvaliacoesPendentes = await CalcularAvaliacoesPendentes(), // KPI geral, não filtra
+                    MediaDesempenhoGeral = await CalcularMediaDesempenhoGeral(estagiarioId),
+                    EstagiariosEmRisco = await CalcularEstagiariosEmRisco(), // KPI geral, não filtra
+                    MediasCategorias = await ObterMediasPorCategoria(estagiarioId),
+                    EvolucaoDesempenho = await ObterEvolucaoDesempenho(estagiarioId),
+                    MapeamentoTalentos = await ObterMapeamentoTalentos(), // Este gráfico é comparativo, não deve ser filtrado
+                    Estagiarios = await ObterListaEstagiarios(estagiarioId),
+                    DadosFrequencia = await ObterDadosFrequencia(estagiarioId),
+                    NomeEstagiarioFiltrado = estagiarioId.HasValue ? estagiariosDropdown.FirstOrDefault(e => e.Id == estagiarioId)?.Nome : null
+                };
 
                 return View(viewModel);
             }
@@ -76,12 +74,18 @@ namespace EstagioGO.Controllers
             return pendentes;
         }
 
-        private async Task<decimal> CalcularMediaDesempenhoGeral()
+        private async Task<decimal> CalcularMediaDesempenhoGeral(int? estagiarioId)
         {
-            var media = await context.Avaliacoes
-                .Where(a => a.Estagiario.Ativo)
-                .AverageAsync(a => (decimal?)a.MediaNotas) ?? 0;
+            var query = context.Avaliacoes.Where(a => a.Estagiario.Ativo);
 
+            if (estagiarioId.HasValue)
+            {
+                query = query.Where(a => a.EstagiarioId == estagiarioId.Value);
+            }
+
+            if (!await query.AnyAsync()) return 0;
+
+            var media = await query.AverageAsync(a => a.MediaNotas);
             return Math.Round(media, 2);
         }
 
@@ -102,27 +106,38 @@ namespace EstagioGO.Controllers
             return estagiariosEmRisco;
         }
 
-        private async Task<List<MediaCategoriaViewModel>> ObterMediasPorCategoria()
+        private async Task<List<MediaCategoriaViewModel>> ObterMediasPorCategoria(int? estagiarioId)
         {
-            var medias = await context.AvaliacaoCompetencias
+            var query = context.AvaliacaoCompetencias.AsQueryable();
+
+            if (estagiarioId.HasValue)
+            {
+                query = query.Where(ac => ac.Avaliacao.EstagiarioId == estagiarioId.Value);
+            }
+
+            return await query
                 .Include(ac => ac.Competencia)
                 .ThenInclude(c => c.Categoria)
                 .GroupBy(ac => ac.Competencia.Categoria.Nome)
                 .Select(g => new MediaCategoriaViewModel
                 {
                     Categoria = g.Key,
-                    Media = (decimal)g.Average(ac => ac.Nota)
+                    Media = g.Any() ? (decimal)g.Average(ac => ac.Nota) : 0
                 })
                 .ToListAsync();
-
-            return medias;
         }
 
-        private async Task<List<EvolucaoDesempenhoViewModel>> ObterEvolucaoDesempenho()
+        private async Task<List<EvolucaoDesempenhoViewModel>> ObterEvolucaoDesempenho(int? estagiarioId)
         {
-            // Primeiro, obtemos os dados agrupados do banco de dados sem a formatação de string
-            var dados = await context.Avaliacoes
-                .Where(a => a.DataAvaliacao >= DateTime.Now.AddMonths(-6))
+            var query = context.Avaliacoes
+                .Where(a => a.DataAvaliacao >= DateTime.Now.AddMonths(-6));
+
+            if (estagiarioId.HasValue)
+            {
+                query = query.Where(a => a.EstagiarioId == estagiarioId.Value);
+            }
+
+            var dados = await query
                 .GroupBy(a => new { a.DataAvaliacao.Year, a.DataAvaliacao.Month })
                 .Select(g => new
                 {
@@ -134,14 +149,11 @@ namespace EstagioGO.Controllers
                 .ThenBy(x => x.Month)
                 .ToListAsync();
 
-            // Agora, formatamos os períodos em memória (client-side)
-            var ultimosMeses = dados.Select(g => new EvolucaoDesempenhoViewModel
+            return dados.Select(g => new EvolucaoDesempenhoViewModel
             {
                 Periodo = $"{g.Month:00}/{g.Year}",
                 Media = (decimal)g.Media
             }).ToList();
-
-            return ultimosMeses;
         }
 
         private async Task<List<MapeamentoTalentoViewModel>> ObterMapeamentoTalentos()
@@ -171,14 +183,22 @@ namespace EstagioGO.Controllers
             })];
         }
 
-        private async Task<List<EstagiarioResumoViewModel>> ObterListaEstagiarios()
+        private async Task<List<EstagiarioResumoViewModel>> ObterListaEstagiarios(int? estagiarioId)
         {
             try
             {
-                var estagiarios = await context.Estagiarios
-                    .Include(e => e.Supervisor)
-                    .Include(e => e.Avaliacoes)
-                    .Where(e => e.Ativo)
+                // A consulta começa com todos os estagiários ativos
+                var query = context.Estagiarios.Where(e => e.Ativo);
+
+                // ALTERAÇÃO: Se um ID de estagiário foi fornecido no filtro,
+                // a consulta é modificada para buscar apenas esse estagiário.
+                if (estagiarioId.HasValue)
+                {
+                    query = query.Where(e => e.Id == estagiarioId.Value);
+                }
+
+                // O restante da consulta projeta os dados necessários do banco
+                var estagiarios = await query
                     .Select(e => new
                     {
                         Estagiario = e,
@@ -188,6 +208,7 @@ namespace EstagioGO.Controllers
                     })
                     .ToListAsync();
 
+                // O mapeamento para o ViewModel é feito em memória
                 var resultado = estagiarios.Select(x => new EstagiarioResumoViewModel
                 {
                     Id = x.Estagiario.Id,
@@ -204,12 +225,12 @@ namespace EstagioGO.Controllers
                 .OrderByDescending(e => e.UltimaNota)
                 .ToList();
 
-                logger.LogInformation("Encontrados {Count} estagiários para a lista", resultado.Count);
+                logger.LogInformation("Encontrados {Count} estagiários para a lista do dashboard.", resultado.Count);
                 return resultado;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Erro ao obter lista de estagiários");
+                logger.LogError(ex, "Erro ao obter lista de estagiários para o dashboard.");
                 return [];
             }
         }

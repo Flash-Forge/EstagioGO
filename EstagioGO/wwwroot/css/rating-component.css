@@ -1,0 +1,59 @@
+﻿.rating-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.rating-icons {
+    display: flex;
+    gap: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.rating-icon-wrapper {
+    color: #adb5bd;
+    font-size: 1.4rem;
+    transition: color 0.2s, transform 0.2s;
+}
+
+    .rating-icon-wrapper:hover {
+        transform: scale(1.2);
+    }
+
+.rating-label {
+    font-weight: bold;
+    text-align: left;
+    flex-grow: 1;
+    min-width: 200px;
+}
+
+/* Cores baseadas na nota */
+.rating-icons[data-rating-value='0'] .rating-label {
+    color: #6c757d;
+}
+
+.rating-icons[data-rating-value='1'] .rating-label,
+.rating-icons[data-rating-value='1'] .selected {
+    color: #dc3545;
+}
+
+.rating-icons[data-rating-value='2'] .rating-label,
+.rating-icons[data-rating-value='2'] .selected {
+    color: #dc3545;
+}
+
+.rating-icons[data-rating-value='3'] .rating-label,
+.rating-icons[data-rating-value='3'] .selected {
+    color: #fd7e14;
+}
+
+.rating-icons[data-rating-value='4'] .rating-label,
+.rating-icons[data-rating-value='4'] .selected {
+    color: #198754;
+}
+
+.rating-icons[data-rating-value='5'] .rating-label,
+.rating-icons[data-rating-value='5'] .selected {
+    color: #198754;
+}

@@ -54,60 +54,84 @@
     <!-- KPIs -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card bg-primary text-white">
+            <div class="card bg-primary text-white shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4 class="card-title">@Model.TotalEstagiariosAtivos</h4>
-                            <p class="card-text">Estagiários Ativos</p>
+                            <p class="card-text">
+                                Estagiários Ativos
+                                <i class="fas fa-info-circle ms-1"
+                                   data-bs-toggle="tooltip"
+                                   data-bs-placement="top"
+                                   title="Total de estagiários com status 'Ativo' no sistema."></i>
+                            </p>
                         </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-users fa-2x"></i>
+                        <div class="align-self-center opacity-50">
+                            <i class="fas fa-users fa-3x"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-warning text-white">
+            <div class="card bg-warning text-dark shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4 class="card-title">@Model.AvaliacoesPendentes</h4>
-                            <p class="card-text">Avaliações Pendentes</p>
+                            <p class="card-text">
+                                Avaliações Pendentes
+                                <i class="fas fa-info-circle ms-1"
+                                   data-bs-toggle="tooltip"
+                                   data-bs-placement="top"
+                                   title="Estagiários ativos que não receberam uma avaliação no último mês."></i>
+                            </p>
                         </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-clock fa-2x"></i>
+                        <div class="align-self-center opacity-50">
+                            <i class="fas fa-clock fa-3x"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-success text-white">
+            <div class="card bg-success text-white shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4 class="card-title">@Model.MediaDesempenhoGeral.ToString("N2")</h4>
-                            <p class="card-text">Média Geral</p>
+                            <p class="card-text">
+                                Média Geral
+                                <i class="fas fa-info-circle ms-1"
+                                   data-bs-toggle="tooltip"
+                                   data-bs-placement="top"
+                                   title="Média de todas as notas de todas as avaliações de estagiários ativos."></i>
+                            </p>
                         </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-chart-line fa-2x"></i>
+                        <div class="align-self-center opacity-50">
+                            <i class="fas fa-chart-line fa-3x"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-danger text-white">
+            <div class="card bg-danger text-white shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4 class="card-title">@Model.EstagiariosEmRisco</h4>
-                            <p class="card-text">Estagiários em Risco</p>
+                            <p class="card-text">
+                                Estagiários em Risco
+                                <i class="fas fa-info-circle ms-1"
+                                   data-bs-toggle="tooltip"
+                                   data-bs-placement="top"
+                                   title="Estagiários cuja última avaliação teve média inferior a 3.0."></i>
+                            </p>
                         </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        <div class="align-self-center opacity-50">
+                            <i class="fas fa-exclamation-triangle fa-3x"></i>
                         </div>
                     </div>
                 </div>
@@ -139,6 +163,10 @@
                         <div class="card-header">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-chart-radar me-2"></i>Médias por Categoria
+                                @if (!string.IsNullOrEmpty(Model.NomeEstagiarioFiltrado))
+                                {
+                                    <small class="text-muted fw-normal">(@Model.NomeEstagiarioFiltrado)</small>
+                                }
                             </h5>
                         </div>
                         <div class="card-body">
@@ -155,6 +183,10 @@
                         <div class="card-header">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-chart-line me-2"></i>Evolução do Desempenho
+                                @if (!string.IsNullOrEmpty(Model.NomeEstagiarioFiltrado))
+                                {
+                                    <small class="text-muted fw-normal">(@Model.NomeEstagiarioFiltrado)</small>
+                                }
                             </h5>
                         </div>
                         <div class="card-body">
@@ -186,11 +218,13 @@
             {
                 <div class="col-md-6 mb-4">
                     <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-calendar-check me-2"></i>Resumo de Frequência
-                            </h5>
-                        </div>
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-calendar-check me-2"></i>Resumo de Frequência
+                            @if (!string.IsNullOrEmpty(Model.NomeEstagiarioFiltrado))
+                            {
+                                <small class="text-muted fw-normal">(@Model.NomeEstagiarioFiltrado)</small>
+                            }
+                        </h5>
                         <div class="card-body">
                             <canvas id="pieChartFrequencia" width="400" height="400"></canvas>
                         </div>
@@ -207,13 +241,13 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-sm table-hover">
+                            <table id="tabelaEstagiarios" class="table table-hover w-100">
                                 <thead class="table-dark">
                                     <tr>
                                         <th>Nome</th>
-                                        <th>Última Nota</th>
+                                        <th class="text-center">Última Nota</th>
                                         <th>Status</th>
-                                        <th>Ações</th>
+                                        <th class="text-center no-sort">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -273,6 +307,11 @@
                     // Configurações globais do Chart.js
                     Chart.defaults.responsive = true;
                     Chart.defaults.maintainAspectRatio = false;
+
+                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
 
                     @if (Model.MediasCategorias.Any())
                     {
@@ -485,6 +524,19 @@
                             </text>
                 }
                 });
+                    // --- ADICIONE ESTE BLOCO DE CÓDIGO NO FINAL ---
+                $('#tabelaEstagiarios').DataTable({
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
+                    },
+                    responsive: true,
+                    order: [[1, 'desc']], // Ordena pela última nota (índice 1), da maior para a menor
+                    columnDefs: [{
+                        "orderable": false,
+                        "targets": 'no-sort'
+                    }]
+                });
+                // --- FIM DO BLOCO ADICIONADO ---
     </script>
 }
 

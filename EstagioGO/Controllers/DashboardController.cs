@@ -149,11 +149,11 @@ namespace EstagioGO.Controllers
                 .ThenBy(x => x.Month)
                 .ToListAsync();
 
-            return dados.Select(g => new EvolucaoDesempenhoViewModel
+            return [.. dados.Select(g => new EvolucaoDesempenhoViewModel
             {
                 Periodo = $"{g.Month:00}/{g.Year}",
                 Media = (decimal)g.Media
-            }).ToList();
+            })];
         }
 
         private async Task<List<MapeamentoTalentoViewModel>> ObterMapeamentoTalentos()

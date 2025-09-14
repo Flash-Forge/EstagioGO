@@ -185,7 +185,7 @@ namespace EstagioGO.Controllers
                     }
 
                     // Recalcula a média
-                    if (avaliacaoParaAtualizar.CompetenciasAvaliadas.Any())
+                    if (avaliacaoParaAtualizar.CompetenciasAvaliadas.Count != 0)
                     {
                         avaliacaoParaAtualizar.MediaNotas = (decimal)Math.Round(
                             avaliacaoParaAtualizar.CompetenciasAvaliadas.Average(c => c.Nota), 2);

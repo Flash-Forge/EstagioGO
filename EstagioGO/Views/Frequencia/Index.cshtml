@@ -1,4 +1,5 @@
-﻿@model IEnumerable<EstagioGO.Models.Domain.Frequencia>
+﻿@using EstagioGO.Models.Estagio
+@model IEnumerable<EstagioGO.Models.Domain.Frequencia>
 
 @{
     ViewData["Title"] = "Frequência";
@@ -16,7 +17,7 @@
                     <option value="">-- Selecione --</option>
                     @{
                         // CORREÇÃO: Verificação de nulidade para o ViewBag
-                        var estagiariosList = ViewBag.Estagiarios as List<EstagioGO.Models.Domain.Estagiario>;
+                        var estagiariosList = ViewBag.Estagiarios as List<Estagiario>;
                         if (estagiariosList != null)
                         {
                             foreach (var estagiario in estagiariosList)

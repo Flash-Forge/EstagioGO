@@ -188,6 +188,7 @@ namespace EstagioGO.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Nome = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     CPF = table.Column<string>(type: "nvarchar(14)", maxLength: 14, nullable: false),
+                    DataNascimento = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Telefone = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
                     Matricula = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Curso = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),

@@ -1,4 +1,4 @@
-﻿using EstagioGO.Models.Domain;
+﻿using EstagioGO.Models.Estagio;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

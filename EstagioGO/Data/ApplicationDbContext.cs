@@ -1,5 +1,6 @@
 ﻿using EstagioGO.Models.Analise;
 using EstagioGO.Models.Domain;
+using EstagioGO.Models.Estagio;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 

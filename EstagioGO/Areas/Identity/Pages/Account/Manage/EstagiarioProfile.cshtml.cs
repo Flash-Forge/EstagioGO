@@ -1,5 +1,5 @@
 using EstagioGO.Data;
-using EstagioGO.Models.Domain;
+using EstagioGO.Models.Estagio;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

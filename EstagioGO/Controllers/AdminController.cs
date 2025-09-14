@@ -8,11 +8,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 using System.Text;
 
 namespace EstagioGO.Controllers
 {
-    [Authorize(Roles = "Administrador,Coordenador")]
+    [Authorize(Roles = "Administrador")]
     public class AdminController(
         UserManager<ApplicationUser> userManager,
         RoleManager<ApplicationRole> roleManager,
@@ -22,8 +23,6 @@ namespace EstagioGO.Controllers
         // GET: Admin/UserManagement
         public async Task<IActionResult> UserManagement()
         {
-            var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
-
             // A consulta base para usuários.
             var usersQuery = userManager.Users;
 
@@ -44,12 +43,6 @@ namespace EstagioGO.Controllers
                                           Role = role.Name ?? string.Empty
                                       };
 
-            // O filtro para coordenador continua funcionando perfeitamente.
-            if (isCoordenador)
-            {
-                usersWithRolesQuery = usersWithRolesQuery.Where(u => u.Role == "Estagiario");
-            }
-
             var usersWithRoles = await usersWithRolesQuery.OrderBy(u => u.NomeCompleto).ToListAsync();
 
             return View(usersWithRoles);
@@ -58,11 +51,12 @@ namespace EstagioGO.Controllers
         // GET: Criar novo usuário
         public async Task<IActionResult> CreateUser()
         {
+            var roles = await GetRolesForCurrentUser();
             var model = new CreateUserViewModel
             {
                 NomeCompleto = string.Empty,
                 Email = string.Empty,
-                Role = "Estagiario",
+                Role = roles.FirstOrDefault()?.Value ?? string.Empty,
                 Roles = await GetRolesForCurrentUser()
             };
 
@@ -75,12 +69,6 @@ namespace EstagioGO.Controllers
         public async Task<IActionResult> CreateUser(CreateUserViewModel model)
         {
             ModelState.Remove("Roles");
-
-            var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
-            if (isCoordenador && model.Role != "Estagiario")
-            {
-                ModelState.AddModelError("Role", "Coordenadores só podem criar usuários com perfil de Estagiário.");
-            }
 
             if (await userManager.FindByEmailAsync(model.Email) != null)
             {
@@ -233,17 +221,6 @@ namespace EstagioGO.Controllers
             var user = await userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
 
-            var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
-            if (isCoordenador)
-            {
-                var userRoles = await userManager.GetRolesAsync(user);
-                if (!userRoles.Contains("Estagiario"))
-                {
-                    TempData["ErrorMessage"] = "Coordenadores só podem visualizar usuários com perfil de Estagiário.";
-                    return RedirectToAction(nameof(UserManagement));
-                }
-            }
-
             var userRolesList = await userManager.GetRolesAsync(user);
 
             var model = new UserDetailViewModel
@@ -275,15 +252,6 @@ namespace EstagioGO.Controllers
                 return result!; // Retorna NotFound ou Redirect se não autorizado
             }
 
-            // Validação específica para a ação de DELETAR
-            var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
-            if (isCoordenador)
-            {
-                TempData["ErrorMessage"] = "Coordenadores não têm permissão para excluir usuários.";
-                return RedirectToAction(nameof(UserManagement));
-            }
-
-            // Passa o objeto de usuário (já buscado) para a view de confirmação
             return View(user);
         }
 
@@ -297,13 +265,6 @@ namespace EstagioGO.Controllers
             if (!isAuthorized || user == null)
             {
                 return result!;
-            }
-
-            var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
-            if (isCoordenador)
-            {
-                TempData["ErrorMessage"] = "Coordenadores não têm permissão para excluir usuários.";
-                return RedirectToAction(nameof(UserManagement));
             }
 
             var deleteResult = await userManager.DeleteAsync(user);
@@ -324,12 +285,7 @@ namespace EstagioGO.Controllers
         private async Task<List<SelectListItem>> GetRolesForCurrentUser(string? selectedRole = null)
         {
             var rolesQuery = roleManager.Roles;
-
-            var isCoordenador = User.IsInRole("Coordenador") && !User.IsInRole("Administrador");
-            if (isCoordenador)
-            {
-                rolesQuery = rolesQuery.Where(r => r.Name == "Estagiario");
-            }
+            rolesQuery = rolesQuery.Where(r => r.Name != "Estagiario");
 
             return await rolesQuery.Select(r => new SelectListItem
             {
@@ -403,13 +359,6 @@ namespace EstagioGO.Controllers
             if (!IsDefaultAdministrator(currentUser) && await userManager.IsInRoleAsync(targetUser, "Administrador"))
             {
                 TempData["ErrorMessage"] = "Administradores comuns não podem gerenciar outros administradores.";
-                return (false, RedirectToAction(nameof(UserManagement)), null);
-            }
-
-            var isCoordenador = await userManager.IsInRoleAsync(currentUser, "Coordenador") && !await userManager.IsInRoleAsync(currentUser, "Administrador");
-            if (isCoordenador && !await userManager.IsInRoleAsync(targetUser, "Estagiario"))
-            {
-                TempData["ErrorMessage"] = "Coordenadores só podem gerenciar usuários com perfil de Estagiário.";
                 return (false, RedirectToAction(nameof(UserManagement)), null);
             }
 

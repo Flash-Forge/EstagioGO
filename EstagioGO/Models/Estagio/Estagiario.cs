@@ -1,9 +1,10 @@
 ﻿using EstagioGO.Models.Analise;
+using EstagioGO.Models.Domain;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.RegularExpressions;
 
-namespace EstagioGO.Models.Domain
+namespace EstagioGO.Models.Estagio
 {
     public class Estagiario
     {
@@ -19,7 +20,7 @@ namespace EstagioGO.Models.Domain
         [Display(Name = "CPF")]
         public required string CPF { get; set; }
 
-        [Required(ErrorMessage ="A data de nascimento é obrigatória")]
+        [Required(ErrorMessage = "A data de nascimento é obrigatória")]
         [Display(Name = "Data de Nascimento")]
         [DataType(DataType.Date)]
         public DateTime DataNascimento { get; set; }
@@ -57,14 +58,14 @@ namespace EstagioGO.Models.Domain
         public required string SupervisorId { get; set; }
 
         [ForeignKey("SupervisorId")]
-        public required ApplicationUser Supervisor { get; set; }
+        public virtual ApplicationUser? Supervisor { get; set; }
 
         [Required(ErrorMessage = "O usuário é obrigatório")]
         [Display(Name = "Usuário do Sistema")]
         public required string UserId { get; set; }
 
         [ForeignKey("UserId")]
-        public required ApplicationUser User { get; set; }
+        public virtual ApplicationUser? User { get; set; }
 
         public bool Ativo { get; set; } = true;
 

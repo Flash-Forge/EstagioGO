@@ -1,97 +1,128 @@
-﻿@model EstagioGO.Models.Domain.Estagiario
+﻿@using EstagioGO.Models.Estagio
+@model EditEstagiarioViewModel
 
 @{
     ViewData["Title"] = "Editar Estagiário";
 }
 
-<h1>Editar Estagiário</h1>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-user-edit me-2"></i>@ViewData["Title"]</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" asp-route-id="@Model.Id">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        <input type="hidden" asp-for="Id" />
 
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <input type="hidden" asp-for="UserId" />
+                        <h5><i class="fas fa-id-card me-2 text-primary"></i>Dados Pessoais</h5>
+                        <hr class="mt-2 mb-3" />
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label asp-for="Nome" class="form-label"></label>
+                                <input asp-for="Nome" class="form-control" />
+                                <span asp-validation-for="Nome" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="DataNascimento" class="form-label"></label>
+                                <input asp-for="DataNascimento" type="date" class="form-control" />
+                                <span asp-validation-for="DataNascimento" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CPF" class="form-label"></label>
+                                <input asp-for="CPF" class="form-control cpf-mask" placeholder="000.000.000-00" />
+                                <span asp-validation-for="CPF" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Telefone" class="form-label"></label>
+                                <input asp-for="Telefone" class="form-control phone-mask" placeholder="(00) 00000-0000" />
+                                <span asp-validation-for="Telefone" class="text-danger"></span>
+                            </div>
+                        </div>
 
-            <div class="form-group">
-                <label asp-for="Nome" class="control-label"></label>
-                <input asp-for="Nome" class="form-control" />
-                <span asp-validation-for="Nome" class="text-danger"></span>
+                        <h5 class="mt-4"><i class="fas fa-at me-2 text-primary"></i>Dados da Conta de Acesso</h5>
+                        <hr class="mt-2 mb-3" />
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" type="email" class="form-control" placeholder="exemplo@email.com" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                            <small class="form-text text-muted">Alterar este campo atualizará o login do estagiário no sistema.</small>
+                        </div>
+
+                        <h5 class="mt-4"><i class="fas fa-briefcase me-2 text-primary"></i>Dados do Estágio</h5>
+                        <hr class="mt-2 mb-3" />
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SupervisorId" class="form-label"></label>
+                                <select asp-for="SupervisorId" class="form-select" asp-items="ViewBag.SupervisorId">
+                                    <option value="">-- Selecione o Supervisor --</option>
+                                </select>
+                                <span asp-validation-for="SupervisorId" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Matricula" class="form-label"></label>
+                                <input asp-for="Matricula" class="form-control" />
+                                <span asp-validation-for="Matricula" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Curso" class="form-label"></label>
+                                <input asp-for="Curso" class="form-control" />
+                                <span asp-validation-for="Curso" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="InstituicaoEnsino" class="form-label"></label>
+                                <input asp-for="InstituicaoEnsino" class="form-control" />
+                                <span asp-validation-for="InstituicaoEnsino" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DataInicio" class="form-label"></label>
+                                <input asp-for="DataInicio" type="date" class="form-control" />
+                                <span asp-validation-for="DataInicio" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DataTermino" class="form-label"></label>
+                                <input asp-for="DataTermino" type="date" class="form-control" />
+                                <span asp-validation-for="DataTermino" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-check mb-3">
+                            <input class="form-check-input" asp-for="Ativo" />
+                            <label class="form-check-label" asp-for="Ativo"></label>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-action="Index" class="btn btn-secondary"><i class="fas fa-arrow-left me-1"></i>Voltar</a>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Salvar Alterações</button>
+                        </div>
+                    </form>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-key me-2"></i>Gerenciamento da Conta</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">Clique no botão abaixo para enviar um e-mail ao estagiário com um link para redefinição de senha.</p>
+                            <form asp-action="ResetPassword" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Tem certeza que deseja enviar um link de redefinição de senha para este usuário?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-envelope me-1"></i>Enviar Link de Redefinição
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="CPF" class="control-label"></label>
-                <input asp-for="CPF" class="form-control cpf-mask" placeholder="000.000.000-00" />
-                <span asp-validation-for="CPF" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DataNascimento" class="control-label"></label>
-                <input asp-for="DataNascimento" class="form-control" />
-                <span asp-validation-for="DataNascimento" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Telefone" class="control-label"></label>
-                <input asp-for="Telefone" class="form-control phone-mask" placeholder="(00) 00000-0000" />
-                <span asp-validation-for="Telefone" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Matricula" class="control-label"></label>
-                <input asp-for="Matricula" class="form-control" />
-                <span asp-validation-for="Matricula" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Curso" class="control-label"></label>
-                <input asp-for="Curso" class="form-control" />
-                <span asp-validation-for="Curso" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="InstituicaoEnsino" class="control-label"></label>
-                <input asp-for="InstituicaoEnsino" class="form-control" />
-                <span asp-validation-for="InstituicaoEnsino" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DataInicio" class="control-label"></label>
-                <input asp-for="DataInicio" class="form-control" />
-                <span asp-validation-for="DataInicio" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DataTermino" class="control-label"></label>
-                <input asp-for="DataTermino" class="form-control" />
-                <span asp-validation-for="DataTermino" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="SupervisorId" class="control-label">Supervisor</label>
-                <select asp-for="SupervisorId" class="form-control" asp-items="ViewBag.SupervisorId">
-                    <option value="">-- Selecione o Supervisor --</option>
-                </select>
-                <span asp-validation-for="SupervisorId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label class="control-label">Usuário (Estagiário)</label>
-                <p class="form-control-static">@ViewBag.NomeUsuario</p>
-                <small class="form-text text-muted">O usuário associado não pode ser alterado após o cadastro inicial.</small>
-                <input asp-for="UserId" type="hidden" />
-                <span asp-validation-for="UserId" class="text-danger"></span>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="Ativo" /> @Html.DisplayNameFor(model => model.Ativo)
-                </label>
-            </div>
-            <div class="form-group">
-                <label asp-for="DataCadastro" class="control-label"></label>
-                <input asp-for="DataCadastro" class="form-control" readonly />
-                <span asp-validation-for="DataCadastro" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Salvar" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Voltar para a lista</a>
 </div>
 
 @section Scripts {

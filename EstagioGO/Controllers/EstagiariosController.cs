@@ -1,19 +1,20 @@
 ﻿using EstagioGO.Data;
-using EstagioGO.Models.Domain;
+using EstagioGO.Models.Estagio;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services; // Para envio de e-mail
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.WebUtilities; // Para o token
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
+using System.Text; // Para o token
 using System.Text.RegularExpressions;
 
 namespace EstagioGO.Controllers
 {
     [Authorize(Roles = "Administrador,Coordenador")]
-    public partial class EstagiariosController(ApplicationDbContext context, UserManager<ApplicationUser> userManager) : Controller
+    public class EstagiariosController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IEmailSender emailSender) : Controller
     {
-        private readonly UserManager<ApplicationUser> _userManager = userManager;
         private static readonly Regex NonDigitsRegex = new(@"[^\d]", RegexOptions.Compiled);
 
         // GET: Estagiarios
@@ -46,196 +47,213 @@ namespace EstagioGO.Controllers
             return View(estagiario);
         }
 
-        // GET: Estagiarios/Create
+        // GET: Estagiarios/Create (Atualizado)
         public async Task<IActionResult> Create()
         {
-            var (recursosDisponiveis, mensagemErro, redirecionarPara) = await CarregarViewBags();
-
-            if (!recursosDisponiveis)
+            var supervisores = await userManager.GetUsersInRoleAsync("Supervisor");
+            if (!supervisores.Any())
             {
-                ViewBag.MensagemSemRecursos = mensagemErro;
-                ViewBag.RedirecionarPara = redirecionarPara;
+                // Redireciona para uma view de erro se não houver supervisores
+                ViewBag.MensagemSemRecursos = "Não há supervisores cadastrados. Por favor, cadastre um supervisor antes de adicionar um estagiário.";
+                ViewBag.RedirecionarPara = Url.Action("CreateUser", "Admin", new { contexto = "supervisor" });
                 return View("SemRecursos");
             }
 
-            return View();
+            ViewBag.SupervisorId = new SelectList(supervisores, "Id", "NomeCompleto");
+            return View(new CreateEstagiarioViewModel());
         }
 
-        // POST: Estagiarios/Create
+        // POST: Estagiarios/Create (Totalmente refeito)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Estagiario estagiario)
+        public async Task<IActionResult> Create(CreateEstagiarioViewModel viewModel)
         {
-            // Remover a validação das propriedades de navegação
-            ModelState.Remove("User");
-            ModelState.Remove("Supervisor");
-            ModelState.Remove("Frequencias");
-            ModelState.Remove("Avaliacoes");
-
-            // Remover formatação do CPF e Telefone antes de validar
-            if (!string.IsNullOrEmpty(estagiario.CPF))
+            // Validações personalizadas
+            if (viewModel.DataTermino.HasValue && viewModel.DataInicio >= viewModel.DataTermino.Value)
             {
-                estagiario.CPF = NonDigitsRegex.Replace(estagiario.CPF, "");
+                ModelState.AddModelError("DataInicio", "A data de início deve ser anterior à data de término.");
             }
 
-            if (!string.IsNullOrEmpty(estagiario.Telefone))
+            var existingUser = await userManager.FindByEmailAsync(viewModel.Email);
+            if (existingUser != null)
             {
-                estagiario.Telefone = NonDigitsRegex.Replace(estagiario.Telefone, "");
+                ModelState.AddModelError("Email", "Este e-mail já está em uso por outro usuário no sistema.");
             }
 
-            // DEBUG: Log dos valores recebidos
-            Debug.WriteLine($"=== DADOS RECEBIDOS ===");
-            Debug.WriteLine($"Nome: {estagiario.Nome}");
-            Debug.WriteLine($"Matricula: {estagiario.Matricula}");
-            Debug.WriteLine($"UserId: {estagiario.UserId}");
-            Debug.WriteLine($"SupervisorId: {estagiario.SupervisorId}");
-
-            // Validação das datas
-            if (estagiario.DataInicio >= estagiario.DataTermino)
-            {
-                ModelState.AddModelError("DataInicio", "A data de início não pode ser posterior ou igual à data de término.");
-                ModelState.AddModelError("DataTermino", "A data de término deve ser posterior à data de início.");
-            }
-
-            //Validação de data de nascimento
-            if(estagiario.DataNascimento >= estagiario.DataInicio || estagiario.DataNascimento >= estagiario.DataTermino)
-            {
-                ModelState.AddModelError("DataNascimento", "Data de nascimento inválida");
-            }
-
-            // Verificar se o ModelState é válido antes de qualquer coisa
             if (!ModelState.IsValid)
             {
-                Debug.WriteLine("=== ERROS DE VALIDAÇÃO ===");
-                foreach (var key in ModelState.Keys)
+                // Recarrega o dropdown de supervisores em caso de erro
+                ViewBag.SupervisorId = new SelectList(await userManager.GetUsersInRoleAsync("Supervisor"), "Id", "NomeCompleto", viewModel.SupervisorId);
+                return View(viewModel);
+            }
+
+            // 1. Criar a conta de usuário (ApplicationUser)
+            var newUser = new ApplicationUser
+            {
+                UserName = viewModel.Email,
+                Email = viewModel.Email,
+                NomeCompleto = viewModel.Nome,
+                Cargo = "Estagiario",
+                PrimeiroAcessoConcluido = false
+            };
+
+            // É preciso uma senha temporária, mas o usuário definirá a sua no primeiro acesso
+            var tempPassword = GenerateTemporaryPassword();
+            var result = await userManager.CreateAsync(newUser, tempPassword);
+
+            if (result.Succeeded)
+            {
+                // Adiciona o usuário ao Role "Estagiario"
+                await userManager.AddToRoleAsync(newUser, "Estagiario");
+
+                // 2. Criar o perfil do Estagiário
+                var estagiario = new Estagiario
                 {
-                    var state = ModelState[key];
-                    if (state != null && state.Errors.Count > 0)
-                    {
-                        Debug.WriteLine($"{key}: {string.Join(", ", state.Errors.Select(e => e.ErrorMessage))}");
-                    }
-                }
-
-                await CarregarViewBags();
-                return View(estagiario);
-            }
-
-            // Verificar se o UserId já está em uso
-            bool usuarioJaVinculado = await context.Estagiarios.AnyAsync(e => e.UserId == estagiario.UserId);
-            Debug.WriteLine($"Usuário já vinculado: {usuarioJaVinculado}");
-
-            if (usuarioJaVinculado)
-            {
-                ModelState.AddModelError("UserId", "Este usuário já está vinculado a outro estagiário.");
-                Debug.WriteLine("Erro: Usuário já vinculado");
-
-                await CarregarViewBags();
-                return View(estagiario);
-            }
-
-            try
-            {
-                estagiario.DataCadastro = DateTime.Now;
+                    Nome = viewModel.Nome,
+                    CPF = NonDigitsRegex.Replace(viewModel.CPF, ""),
+                    DataNascimento = viewModel.DataNascimento,
+                    Telefone = !string.IsNullOrEmpty(viewModel.Telefone) ? NonDigitsRegex.Replace(viewModel.Telefone, "") : null,
+                    Matricula = viewModel.Matricula,
+                    Curso = viewModel.Curso,
+                    InstituicaoEnsino = viewModel.InstituicaoEnsino,
+                    DataInicio = viewModel.DataInicio,
+                    DataTermino = viewModel.DataTermino,
+                    SupervisorId = viewModel.SupervisorId,
+                    Ativo = viewModel.Ativo,
+                    DataCadastro = DateTime.Now,
+                    UserId = newUser.Id // Vincula o perfil do estagiário ao usuário recém-criado
+                };
 
                 context.Add(estagiario);
                 await context.SaveChangesAsync();
 
-                Debug.WriteLine("Estagiário salvo com sucesso!");
-                TempData["SuccessMessage"] = "Estagiário cadastrado com sucesso!";
+                // Enviar e-mail de boas-vindas para definição de senha
+                await SendFirstAccessEmail(newUser);
+
+                TempData["SuccessMessage"] = $"Estagiário {estagiario.Nome} e seu usuário de acesso foram criados com sucesso!";
                 return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateException ex)
-            {
-                Debug.WriteLine($"Erro ao salvar no banco de dados: {ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    Debug.WriteLine($"Inner Exception: {ex.InnerException.Message}");
-                }
 
-                ModelState.AddModelError("", "Não foi possível salvar o estagiário. Verifique os dados e tente novamente.");
-            }
-            catch (Exception ex)
+            // Se a criação do usuário falhar, adiciona os erros ao ModelState
+            foreach (var error in result.Errors)
             {
-                Debug.WriteLine($"Erro inesperado: {ex.Message}");
-                ModelState.AddModelError("", "Ocorreu um erro inesperado. Tente novamente.");
+                ModelState.AddModelError(string.Empty, error.Description);
             }
 
-            await CarregarViewBags();
-            return View(estagiario);
+            ViewBag.SupervisorId = new SelectList(await userManager.GetUsersInRoleAsync("Supervisor"), "Id", "NomeCompleto", viewModel.SupervisorId);
+            return View(viewModel);
         }
 
-        // GET: Estagiarios/Edit/5
+        // Em EstagiariosController.cs
+
+        // GET: Estagiarios/Edit/5 (Atualizado para usar ViewModel)
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
 
-            var estagiario = await context.Estagiarios.FindAsync(id);
-            if (estagiario == null) return NotFound();
-
-            var (recursosDisponiveis, mensagemErro, redirecionarPara) = await CarregarViewBags(estagiario.UserId);
-
-            if (!recursosDisponiveis)
-            {
-                ViewBag.MensagemSemRecursos = mensagemErro;
-                ViewBag.RedirecionarPara = redirecionarPara;
-                return View("SemRecursos");
-            }
-
-            return View(estagiario);
-        }
-
-        // POST: Estagiarios/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Estagiario estagiario)
-        {
-            // Remover a validação das propriedades de navegação
-            ModelState.Remove("User");
-            ModelState.Remove("Supervisor");
-            ModelState.Remove("Frequencias");
-            ModelState.Remove("Avaliacoes");
-
-            // Remover formatação do CPF e Telefone antes de validar
-            if (!string.IsNullOrEmpty(estagiario.CPF))
-            {
-                estagiario.CPF = NonDigitsRegex.Replace(estagiario.CPF, "");
-            }
-
-            if (!string.IsNullOrEmpty(estagiario.Telefone))
-            {
-                estagiario.Telefone = NonDigitsRegex.Replace(estagiario.Telefone, "");
-            }
-
-            // Validação das datas
-            if (estagiario.DataInicio >= estagiario.DataTermino)
-            {
-                ModelState.AddModelError("DataInicio", "A data de início não pode ser posterior ou igual à data de término.");
-                ModelState.AddModelError("DataTermino", "A data de término deve ser posterior à data de início.");
-            }
-
-            if (id != estagiario.Id)
-            {
-                return NotFound();
-            }
-
-            // Buscar o estagiário existente para preservar o UserId original
-            var estagiarioExistente = await context.Estagiarios
-                .AsNoTracking()
+            // Busca o estagiário e seu usuário associado
+            var estagiario = await context.Estagiarios
+                .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
-            if (estagiarioExistente == null)
+            if (estagiario == null || estagiario.User == null) return NotFound();
+
+            // Mapeia os dados da entidade para o ViewModel
+            var viewModel = new EditEstagiarioViewModel
+            {
+                Id = estagiario.Id,
+                Nome = estagiario.Nome,
+                Email = estagiario.User.Email, // Pega o e-mail do usuário associado
+                CPF = estagiario.CPF,
+                DataNascimento = estagiario.DataNascimento,
+                Telefone = estagiario.Telefone,
+                Matricula = estagiario.Matricula,
+                Curso = estagiario.Curso,
+                InstituicaoEnsino = estagiario.InstituicaoEnsino,
+                DataInicio = estagiario.DataInicio,
+                DataTermino = estagiario.DataTermino,
+                SupervisorId = estagiario.SupervisorId,
+                Ativo = estagiario.Ativo
+            };
+
+            ViewBag.SupervisorId = new SelectList(await userManager.GetUsersInRoleAsync("Supervisor"), "Id", "NomeCompleto", estagiario.SupervisorId);
+            return View(viewModel);
+        }
+
+        // POST: Estagiarios/Edit/5 (Atualizado para usar ViewModel e lógica de e-mail)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, EditEstagiarioViewModel viewModel)
+        {
+            if (id != viewModel.Id)
             {
                 return NotFound();
             }
 
-            // Manter o UserId original, ignorando qualquer alteração
-            estagiario.UserId = estagiarioExistente.UserId;
+            // Validações personalizadas
+            if (viewModel.DataTermino.HasValue && viewModel.DataInicio >= viewModel.DataTermino.Value)
+            {
+                ModelState.AddModelError("DataInicio", "A data de início deve ser anterior à data de término.");
+            }
+
+            // Busca o estagiário original e seu usuário
+            var estagiarioParaAtualizar = await context.Estagiarios
+                .Include(e => e.User)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            if (estagiarioParaAtualizar?.User == null)
+            {
+                return NotFound();
+            }
+
+            // Verifica se o e-mail mudou e se o novo e-mail já está em uso por OUTRO usuário
+            var emailChanged = !string.Equals(estagiarioParaAtualizar.User.Email, viewModel.Email, StringComparison.OrdinalIgnoreCase);
+            if (emailChanged)
+            {
+                var ownerOfEmail = await userManager.FindByEmailAsync(viewModel.Email);
+                if (ownerOfEmail != null && ownerOfEmail.Id != estagiarioParaAtualizar.UserId)
+                {
+                    ModelState.AddModelError("Email", "Este e-mail já está em uso por outro usuário.");
+                }
+            }
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    context.Update(estagiario);
+                    // 1. Atualiza as propriedades do perfil do Estagiário
+                    estagiarioParaAtualizar.Nome = viewModel.Nome;
+                    estagiarioParaAtualizar.CPF = NonDigitsRegex.Replace(viewModel.CPF, "");
+                    estagiarioParaAtualizar.DataNascimento = viewModel.DataNascimento;
+                    estagiarioParaAtualizar.Telefone = NonDigitsRegex.Replace(viewModel.Telefone, "");
+                    estagiarioParaAtualizar.Matricula = viewModel.Matricula;
+                    estagiarioParaAtualizar.Curso = viewModel.Curso;
+                    estagiarioParaAtualizar.InstituicaoEnsino = viewModel.InstituicaoEnsino;
+                    estagiarioParaAtualizar.DataInicio = viewModel.DataInicio;
+                    estagiarioParaAtualizar.DataTermino = viewModel.DataTermino;
+                    estagiarioParaAtualizar.SupervisorId = viewModel.SupervisorId;
+                    estagiarioParaAtualizar.Ativo = viewModel.Ativo;
+
+                    // 2. Atualiza e sincroniza as propriedades do usuário (ApplicationUser)
+                    var user = estagiarioParaAtualizar.User;
+                    user.NomeCompleto = viewModel.Nome;
+                    user.Ativo = viewModel.Ativo;
+
+                    if (emailChanged)
+                    {
+                        user.Email = viewModel.Email.ToLowerInvariant();
+                        user.UserName = viewModel.Email.ToLowerInvariant();
+                        user.NormalizedEmail = userManager.NormalizeEmail(viewModel.Email);
+                        user.NormalizedUserName = userManager.NormalizeName(viewModel.Email);
+                    }
+
+                    await userManager.UpdateAsync(user);
+                    if (emailChanged)
+                    {
+                        await userManager.UpdateSecurityStampAsync(user);
+                    }
+
+                    // 3. Salva as alterações no perfil do estagiário
                     await context.SaveChangesAsync();
 
                     TempData["SuccessMessage"] = "Estagiário atualizado com sucesso!";
@@ -243,7 +261,7 @@ namespace EstagioGO.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!EstagiarioExists(estagiario.Id))
+                    if (!context.Estagiarios.Any(e => e.Id == estagiarioParaAtualizar.Id))
                     {
                         return NotFound();
                     }
@@ -254,8 +272,8 @@ namespace EstagioGO.Controllers
                 }
             }
 
-            await CarregarViewBags(estagiario.UserId);
-            return View(estagiario);
+            ViewBag.SupervisorId = new SelectList(await userManager.GetUsersInRoleAsync("Supervisor"), "Id", "NomeCompleto", viewModel.SupervisorId);
+            return View(viewModel);
         }
 
         // GET: Estagiarios/Delete/5
@@ -283,14 +301,40 @@ namespace EstagioGO.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var estagiario = await context.Estagiarios.FindAsync(id);
+            // Usamos 'Include' para garantir que a propriedade 'User' seja carregada
+            var estagiario = await context.Estagiarios
+                .Include(e => e.User)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
             if (estagiario != null)
             {
+                // 1. Encontra o usuário associado (se existir)
+                var user = estagiario.User;
+
+                // 2. Remove primeiro o perfil do estagiário
                 context.Estagiarios.Remove(estagiario);
+
+                // 3. Se um usuário estava vinculado, remove-o também
+                if (user != null)
+                {
+                    var result = await userManager.DeleteAsync(user);
+                    if (!result.Succeeded)
+                    {
+                        // Se houver um erro ao deletar o usuário, exibe a mensagem de erro
+                        var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                        TempData["ErrorMessage"] = $"Não foi possível excluir a conta de usuário associada: {errors}";
+                        return RedirectToAction(nameof(Index));
+                    }
+                }
+
                 await context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Estagiário e sua conta de usuário foram excluídos com sucesso!";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Estagiário não encontrado.";
             }
 
-            TempData["SuccessMessage"] = "Estagiário excluído com sucesso!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -299,12 +343,80 @@ namespace EstagioGO.Controllers
             return context.Estagiarios.Any(e => e.Id == id);
         }
 
+        // Em EstagiariosController.cs
+
+        // POST: Estagiarios/ResetPassword/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(int id)
+        {
+            var estagiario = await context.Estagiarios.Include(e => e.User).FirstOrDefaultAsync(e => e.Id == id);
+            if (estagiario?.User == null)
+            {
+                TempData["ErrorMessage"] = "Usuário associado ao estagiário não encontrado.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Força o usuário a redefinir a senha no próximo login
+            estagiario.User.PrimeiroAcessoConcluido = false;
+            await userManager.UpdateAsync(estagiario.User);
+
+            // Envia o e-mail com o link de redefinição
+            await SendFirstAccessEmail(estagiario.User);
+
+            TempData["SuccessMessage"] = $"Link para redefinição de senha enviado para {estagiario.User.Email}.";
+            return RedirectToAction(nameof(Edit), new { id = estagiario.Id });
+        }
+
+        // --- MÉTODOS AUXILIARES ---
+        private static string GenerateTemporaryPassword()
+        {
+            const string uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const string lowercase = "abcdefghijklmnopqrstuvwxyz";
+            const string digits = "0123456789";
+            const string special = "!@#$%^&*()_-+={[]}|:;?";
+            const string allChars = uppercase + lowercase + digits + special;
+
+            var password = new char[12];
+            var random = new Random();
+
+            // Garante que a senha tenha pelo menos um de cada tipo de caractere
+            password[0] = uppercase[random.Next(uppercase.Length)];
+            password[1] = lowercase[random.Next(lowercase.Length)];
+            password[2] = digits[random.Next(digits.Length)];
+            password[3] = special[random.Next(special.Length)];
+
+            // Preenche o resto da senha com caracteres aleatórios
+            for (int i = 4; i < 12; i++)
+            {
+                password[i] = allChars[random.Next(allChars.Length)];
+            }
+
+            // Embaralha o resultado final para que os caracteres especiais não fiquem sempre no início
+            return new string([.. password.OrderBy(x => random.Next())]);
+        }
+
+        private async Task SendFirstAccessEmail(ApplicationUser user)
+        {
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+            var callbackUrl = Url.Page(
+                "/Account/ResetPassword",
+                pageHandler: null,
+                values: new { area = "Identity", code = token },
+                protocol: Request.Scheme);
+
+            await emailSender.SendEmailAsync(user.Email,
+                "Sua conta no Sistema de Gestão de Estágios foi criada!",
+                $"Olá {user.NomeCompleto},<br/><br/>Sua conta foi criada com sucesso. Por favor, defina sua senha de acesso clicando <a href='{callbackUrl}'>aqui</a>.");
+        }
+
         private async Task<(bool recursosDisponiveis, string? mensagemErro, string? redirecionarPara)> CarregarViewBags(string? userIdAtual = null)
         {
             try
             {
                 // Buscar supervisores
-                var supervisores = await _userManager.GetUsersInRoleAsync("Supervisor");
+                var supervisores = await userManager.GetUsersInRoleAsync("Supervisor");
                 if (!supervisores.Any())
                 {
                     return (false,
@@ -314,7 +426,7 @@ namespace EstagioGO.Controllers
                 ViewBag.SupervisorId = new SelectList(supervisores, "Id", "NomeCompleto");
 
                 // Buscar usuários com role "Estagiario"
-                var estagiariosUsers = await _userManager.GetUsersInRoleAsync("Estagiario");
+                var estagiariosUsers = await userManager.GetUsersInRoleAsync("Estagiario");
 
                 // Verificar se há usuários com role de estagiário
                 if (!estagiariosUsers.Any())
@@ -357,7 +469,6 @@ namespace EstagioGO.Controllers
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Erro ao carregar ViewBags: {ex.Message}");
                 ViewBag.SupervisorId = new SelectList(new List<ApplicationUser>(), "Id", "NomeCompleto");
                 ViewBag.UserId = new SelectList(new List<ApplicationUser>(), "Id", "NomeCompleto");
                 return (false, "Ocorreu um erro ao carregar os dados. Tente novamente.", null);

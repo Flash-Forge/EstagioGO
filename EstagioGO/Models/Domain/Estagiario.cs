@@ -19,6 +19,11 @@ namespace EstagioGO.Models.Domain
         [Display(Name = "CPF")]
         public required string CPF { get; set; }
 
+        [Required(ErrorMessage ="A data de nascimento é obrigatória")]
+        [Display(Name = "Data de Nascimento")]
+        [DataType(DataType.Date)]
+        public DateTime DataNascimento { get; set; }
+
         [Required(ErrorMessage = "O telefone é obrigatório")]
         [StringLength(15, ErrorMessage = "O telefone deve ter 15 caracteres")]
         [Phone(ErrorMessage = "Telefone inválido")]

@@ -21,9 +21,11 @@ namespace EstagioGO.Models.Domain
         [DataType(DataType.Date)]
         public DateTime Data { get; set; }
 
+    
         [DataType(DataType.Time)]
         public TimeSpan? HoraEntrada { get; set; }
 
+        
         [DataType(DataType.Time)]
         public TimeSpan? HoraSaida { get; set; }
 
@@ -50,7 +52,7 @@ namespace EstagioGO.Models.Domain
         public string RegistradoPorId { get; set; }
 
         [ForeignKey("RegistradoPorId")]
-        [ValidateNever] // Adicionar esta linha
+        [ValidateNever] 
         public ApplicationUser RegistradoPor { get; set; }
 
         // Validação condicional: Se presente == false, justificativa obrigatória

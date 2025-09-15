@@ -107,13 +107,14 @@
 
     <script>
         // Controle da exibição dos campos baseado na presença
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const presenteSim = document.getElementById('presenteSim');
             const presenteNao = document.getElementById('presenteNao');
             const camposPresenca = document.getElementById('camposPresenca');
             const camposAusencia = document.getElementById('camposAusencia');
 
             function toggleCampos() {
+
                 if (presenteSim && presenteSim.checked) {
                     camposPresenca.style.display = 'block';
                     if (camposAusencia) camposAusencia.style.display = 'none';
@@ -121,6 +122,7 @@
                     // Tornar campos de hora obrigatórios
                     document.querySelector('#HoraEntrada').setAttribute('required', 'required');
                     document.querySelector('#HoraSaida').setAttribute('required', 'required');
+
                 } else if (presenteNao && presenteNao.checked) {
                     camposPresenca.style.display = 'none';
                     if (camposAusencia) camposAusencia.style.display = 'block';

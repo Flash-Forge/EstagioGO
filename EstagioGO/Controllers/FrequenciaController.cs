@@ -244,6 +244,12 @@ namespace EstagioGO.Controllers
                 ModelState.AddModelError("HoraSaida", "A hora de saída não pode ser anterior à hora de entrada.");
             }
 
+            // Validação se estagiário está ativo
+            if(estagiario.Ativo == false)
+            {
+                ModelState.AddModelError("Ativo", "O estagiário deve estar ativo para que seja registrada uma frequência para ele");
+            }
+
             // Para estagiários, forçar presença = true e remover justificativa
             if (isEstagiario)
             {

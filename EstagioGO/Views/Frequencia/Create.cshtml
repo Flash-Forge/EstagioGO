@@ -50,13 +50,16 @@
                         </label>
                     </div>
                 </div>
+
+
             }
 
             <div class="form-group mb-3">
-                <label asp-for="Data" class="control-label"></label>
-                <input asp-for="Data" class="form-control" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
-                <span asp-validation-for="Data" class="text-danger"></span>
+                    <label asp-for="Data" class="control-label"></label>
+                    <input asp-for="Data" class="form-control" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    <span asp-validation-for="Data" class="text-danger"></span>
             </div>
+            
 
             <div id="camposPresenca">
                 <div class="form-group mb-3">

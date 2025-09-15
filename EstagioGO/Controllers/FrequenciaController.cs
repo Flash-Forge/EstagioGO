@@ -48,7 +48,7 @@ namespace EstagioGO.Controllers
                         .Take(10) // Últimos 10 registros
                         .ToListAsync();
 
-                    return View("IndexEstagiario", frequencias);
+                    return View("Index", frequencias);
                 }
                 else
                 {
@@ -175,8 +175,8 @@ namespace EstagioGO.Controllers
                     Presente = true,
                     DataRegistro = DateTime.Now,
                     RegistradoPorId = user!.Id,
-                    Motivo = null,
-                    Detalhamento = null
+                    Motivo = "",
+                    Detalhamento = ""
                 };
 
                 return View(model);
@@ -254,8 +254,9 @@ namespace EstagioGO.Controllers
             if (isEstagiario)
             {
                 frequencia.Presente = true;
-                frequencia.Motivo = null;
-                frequencia.Detalhamento = null;
+                frequencia.Data = DateTime.Today;
+                frequencia.Motivo = "";
+                frequencia.Detalhamento = "";
 
                 // Verificar se o estagiário está tentando registrar para si mesmo
                 if (estagiario == null || frequencia.EstagiarioId != estagiario.Id)

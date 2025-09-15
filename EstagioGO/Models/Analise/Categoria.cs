@@ -8,16 +8,16 @@ namespace EstagioGO.Models.Analise
 
         [Required(ErrorMessage = "O nome da categoria é obrigatório")]
         [StringLength(100, ErrorMessage = "O nome não pode ter mais de 100 caracteres")]
-        public string Nome { get; set; }
+        public required string Nome { get; set; }
 
         [StringLength(500, ErrorMessage = "A descrição não pode ter mais de 500 caracteres")]
-        public string Descricao { get; set; }
+        public string? Descricao { get; set; }
 
         public int OrdemExibicao { get; set; }
 
         public bool Ativo { get; set; } = true;
 
         // Relacionamento com Competencias
-        public virtual ICollection<Competencia> Competencias { get; set; } = new HashSet<Competencia>();
+        public virtual ICollection<Competencia> Competencias { get; set; } = [];
     }
 }

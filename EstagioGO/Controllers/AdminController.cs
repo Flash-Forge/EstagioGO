@@ -27,7 +27,6 @@ namespace EstagioGO.Controllers
             var usersQuery = userManager.Users;
 
             // A consulta que combina usuários com suas roles.
-            // CORREÇÃO: Voltamos a usar 'from' em vez de 'join' para a propriedade de navegação UserRoles.
             var usersWithRolesQuery = from user in usersQuery
                                       from userRole in user.UserRoles
                                       join role in roleManager.Roles on userRole.RoleId equals role.Id
@@ -149,12 +148,10 @@ namespace EstagioGO.Controllers
                 return View(model);
             }
 
-            // --- LÓGICA DE ATUALIZAÇÃO DE E-MAIL (REINSERIDA E MELHORADA) ---
-
             var emailChanged = !string.Equals(userToEdit.Email, model.Email, StringComparison.OrdinalIgnoreCase);
             if (emailChanged)
             {
-                // 1. Validar se o novo e-mail já está em uso por outro usuário
+                // Validar se o novo e-mail já está em uso por outro usuário
                 var ownerOfEmail = await userManager.FindByEmailAsync(model.Email);
                 if (ownerOfEmail != null && ownerOfEmail.Id != userToEdit.Id)
                 {
@@ -163,14 +160,12 @@ namespace EstagioGO.Controllers
                     return View(model);
                 }
 
-                // 2. Atualizar todos os campos relacionados ao e-mail
+                // Atualizar todos os campos relacionados ao e-mail
                 userToEdit.Email = model.Email.ToLowerInvariant();
                 userToEdit.UserName = model.Email.ToLowerInvariant();
                 userToEdit.NormalizedEmail = userManager.NormalizeEmail(model.Email);
                 userToEdit.NormalizedUserName = userManager.NormalizeName(model.Email);
             }
-
-            // --- FIM DA LÓGICA DE E-MAIL ---
 
             // Atualiza as outras propriedades
             userToEdit.NomeCompleto = model.NomeCompleto;
@@ -183,7 +178,7 @@ namespace EstagioGO.Controllers
             {
                 if (emailChanged)
                 {
-                    // 3. (BOA PRÁTICA) Atualiza o selo de segurança para invalidar logins antigos
+                    // (BOA PRÁTICA) Atualiza o selo de segurança para invalidar logins antigos
                     await userManager.UpdateSecurityStampAsync(userToEdit);
                 }
 
@@ -260,7 +255,6 @@ namespace EstagioGO.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteUserConfirmed(string id)
         {
-            // REATORAÇÃO: Reutiliza a mesma lógica de autorização
             var (isAuthorized, result, user) = await AuthorizeAdminAction(id);
             if (!isAuthorized || user == null)
             {
@@ -380,7 +374,8 @@ namespace EstagioGO.Controllers
             var callbackUrl = Url.Page(
                 "/Account/ResetPassword",
                 pageHandler: null,
-                values: new { area = "Identity", code = token },
+                // Adiciona o e-mail aos valores da rota
+                values: new { area = "Identity", code = token, email = user.Email },
                 protocol: Request.Scheme);
 
             var subject = "Bem-vindo(a) ao Sistema de Gestão de Estágios - Defina sua Senha";

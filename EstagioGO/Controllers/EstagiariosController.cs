@@ -403,7 +403,8 @@ namespace EstagioGO.Controllers
             var callbackUrl = Url.Page(
                 "/Account/ResetPassword",
                 pageHandler: null,
-                values: new { area = "Identity", code = token },
+                // Adiciona o e-mail aos valores da rota
+                values: new { area = "Identity", code = token, email = user.Email },
                 protocol: Request.Scheme);
 
             await emailSender.SendEmailAsync(user.Email,

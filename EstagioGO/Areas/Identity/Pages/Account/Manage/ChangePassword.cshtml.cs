@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using EstagioGO.Constants;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
@@ -52,20 +53,45 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
             return Page();
         }
 
+        // Em ChangePassword.cshtml.cs
+
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
-
             var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return NotFound($"Não foi possível carregar o usuário com ID '{userManager.GetUserId(User)}'.");
             }
 
-            var changePasswordResult = await userManager.ChangePasswordAsync(user, Input.OldPassword, Input.NewPassword);
+            bool isDefaultAdmin = user.Email!.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase);
+
+            // --- CORREÇÃO APLICADA AQUI ---
+            // Se for o admin padrão no primeiro acesso, removemos a validação da senha antiga
+            if (isDefaultAdmin && !user.PrimeiroAcessoConcluido)
+            {
+                ModelState.Remove("Input.OldPassword");
+            }
+            // --- FIM DA CORREÇÃO ---
+
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
+
+            IdentityResult changePasswordResult;
+
+            if (isDefaultAdmin && !user.PrimeiroAcessoConcluido)
+            {
+                // Usa a lógica de reset para definir a nova senha sem a antiga
+                var token = await userManager.GeneratePasswordResetTokenAsync(user);
+                changePasswordResult = await userManager.ResetPasswordAsync(user, token, Input.NewPassword);
+            }
+            else
+            {
+                // Para todos os outros casos, usa o fluxo normal que exige a senha antiga
+                changePasswordResult = await userManager.ChangePasswordAsync(user, Input.OldPassword, Input.NewPassword);
+            }
+
             if (!changePasswordResult.Succeeded)
             {
                 foreach (var error in changePasswordResult.Errors)
@@ -75,31 +101,17 @@ namespace EstagioGO.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            // Verifica se é o primeiro acesso
-            bool isFirstAccess = !user.PrimeiroAcessoConcluido;
-
-            // Marcar o primeiro acesso como concluído
-            if (isFirstAccess)
+            if (!user.PrimeiroAcessoConcluido)
             {
                 user.PrimeiroAcessoConcluido = true;
-                var updateResult = await userManager.UpdateAsync(user);
-
-                if (!updateResult.Succeeded)
-                {
-                    foreach (var error in updateResult.Errors)
-                    {
-                        ModelState.AddModelError(string.Empty, error.Description);
-                    }
-                    return Page();
-                }
+                await userManager.UpdateAsync(user);
             }
 
             await signInManager.RefreshSignInAsync(user);
-
             StatusMessage = "Sua senha foi alterada com sucesso.";
 
-            // Redirecionar para a página inicial após o primeiro acesso
-            if (isFirstAccess)
+            // Após o primeiro acesso, redireciona para a página inicial
+            if (isDefaultAdmin)
             {
                 return LocalRedirect("~/");
             }

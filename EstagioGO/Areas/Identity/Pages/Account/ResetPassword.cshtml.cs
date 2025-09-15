@@ -11,7 +11,7 @@ using System.Text;
 
 namespace EstagioGO.Areas.Identity.Pages.Account
 {
-    public class ResetPasswordModel(UserManager<ApplicationUser> userManager) : PageModel
+    public class ResetPasswordModel(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager) : PageModel
     {
 
         /// <summary>
@@ -62,17 +62,18 @@ namespace EstagioGO.Areas.Identity.Pages.Account
 
         }
 
-        public IActionResult OnGet(string code = null)
+        public IActionResult OnGet(string code = null, string email = null) // Adiciona email como parâmetro
         {
             if (code == null)
             {
-                return BadRequest("A code must be supplied for password reset.");
+                return BadRequest("Um código deve ser fornecido para redefinir a senha.");
             }
             else
             {
                 Input = new InputModel
                 {
-                    Code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code))
+                    Code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code)),
+                    Email = email // Pré-preenche o e-mail
                 };
                 return Page();
             }
@@ -88,20 +89,23 @@ namespace EstagioGO.Areas.Identity.Pages.Account
             var user = await userManager.FindByEmailAsync(Input.Email);
             if (user == null)
             {
-                // Don't reveal that the user does not exist
+                // Não revela que o usuário não existe por segurança
                 return RedirectToPage("./ResetPasswordConfirmation");
             }
 
             var result = await userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
             if (result.Succeeded)
             {
-                // Se a senha foi redefinida com sucesso, consideramos o primeiro acesso concluído.
                 if (!user.PrimeiroAcessoConcluido)
                 {
                     user.PrimeiroAcessoConcluido = true;
                     await userManager.UpdateAsync(user);
                 }
 
+                // --- CORREÇÃO: FAZ O LOGIN AUTOMÁTICO DO USUÁRIO ---
+                await signInManager.SignInAsync(user, isPersistent: false);
+
+                // Redireciona para uma página de sucesso que então redireciona para a home
                 return RedirectToPage("./ResetPasswordConfirmation");
             }
 

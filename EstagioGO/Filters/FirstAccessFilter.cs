@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using EstagioGO.Constants;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -23,32 +24,46 @@ namespace EstagioGO.Filters
                 var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
                 var user = await userManager.GetUserAsync(context.HttpContext.User);
 
-                // Se o usuário precisa concluir o primeiro acesso
                 if (user != null && !user.PrimeiroAcessoConcluido)
                 {
                     var path = context.HttpContext.Request.Path.Value ?? "";
 
-                    // Lista de caminhos que o usuário PODE acessar
-                    var allowedPaths = new[]
-                    {
-                        "/Identity/Account/Manage/ChangePassword",
-                        "/Identity/Account/Logout"
-                    };
+                    // O admin padrão tem uma página de escolha, então damos a ele mais permissões
+                    bool isAdminDefault = user.Email!.Equals(AppConstants.DefaultAdminEmail, StringComparison.OrdinalIgnoreCase);
 
-                    // Verifica se o caminho atual está na lista de permissões
+                    // Lista de caminhos que o usuário PODE acessar
+                    var allowedPaths = new List<string>
+            {
+                "/Identity/Account/Logout"
+            };
+
+                    string redirectPage;
+
+                    if (isAdminDefault)
+                    {
+                        // Se for o admin padrão, a página de destino é a de escolha
+                        redirectPage = "/Account/Manage/DefaultAdminFirstAccess";
+                        allowedPaths.Add(redirectPage);
+                        // Ele também precisa acessar a página ChangePassword se decidir mudar
+                        allowedPaths.Add("/Identity/Account/Manage/ChangePassword");
+                    }
+                    else
+                    {
+                        // Para os outros, a página de destino é a de redefinição forçada
+                        redirectPage = "/Account/Manage/ChangePassword";
+                        allowedPaths.Add(redirectPage);
+                    }
+
                     bool isPathAllowed = allowedPaths.Any(p => path.Equals(p, StringComparison.OrdinalIgnoreCase));
 
-                    // Se o caminho NÃO for permitido, redireciona
                     if (!isPathAllowed)
                     {
-                        // Usar RedirectToPage com a área especificada é mais seguro
-                        context.Result = new RedirectToPageResult("/Account/Manage/ChangePassword", new { area = "Identity" });
-                        return; // Impede a execução da action original
+                        context.Result = new RedirectToPageResult(redirectPage, new { area = "Identity" });
+                        return;
                     }
                 }
             }
 
-            // Se tudo estiver OK, continua para a action solicitada
             await next();
         }
     }

@@ -9,18 +9,18 @@ namespace EstagioGO.Models.Analise
 
         [Required(ErrorMessage = "A descrição da competência é obrigatória")]
         [StringLength(200, ErrorMessage = "A descrição não pode ter mais de 200 caracteres")]
-        public string Descricao { get; set; }
+        public string? Descricao { get; set; }
 
         [Required]
         public int CategoriaId { get; set; }
 
         [ForeignKey("CategoriaId")]
-        public virtual Categoria Categoria { get; set; }
+        public virtual Categoria? Categoria { get; set; }
 
         public int OrdemExibicao { get; set; }
 
         public bool Ativo { get; set; } = true;
 
-        public virtual ICollection<AvaliacaoCompetencia> AvaliacoesCompetencia { get; set; } = new HashSet<AvaliacaoCompetencia>();
+        public virtual ICollection<AvaliacaoCompetencia> AvaliacoesCompetencia { get; set; } = [];
     }
 }

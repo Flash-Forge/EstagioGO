@@ -1,0 +1,33 @@
+﻿@model string
+
+@if (!String.IsNullOrEmpty(Model))
+{
+    var statusMessageClass = "success";
+    var iconClass = "fas fa-check-circle";
+    var message = Model;
+
+    if (message.StartsWith("Error:"))
+    {
+        statusMessageClass = "danger";
+        iconClass = "fas fa-exclamation-triangle";
+        message = message.Substring(6).Trim(); // Remove o prefixo "Error:"
+    }
+    else if (message.StartsWith("Warning:"))
+    {
+        statusMessageClass = "warning";
+        iconClass = "fas fa-exclamation-circle";
+        message = message.Substring(8).Trim(); // Remove o prefixo "Warning:"
+    }
+    else if (message.StartsWith("Success:"))
+    {
+        message = message.Substring(8).Trim(); // Remove o prefixo "Success:"
+    }
+
+    <div class="alert alert-@statusMessageClass alert-dismissible fade show d-flex align-items-center" role="alert">
+        <i class="@iconClass me-2"></i>
+        <div>
+            @message
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}

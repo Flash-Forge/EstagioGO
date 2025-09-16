@@ -70,6 +70,16 @@
                                                        class="btn btn-sm btn-outline-warning" title="Editar">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
+                                                    <form asp-action="ToggleStatus" asp-route-id="@item.Id"
+                                                          method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit"
+                                                                class="btn btn-sm @(item.Ativo ? "btn-outline-secondary" : "btn-outline-success")"
+                                                                title="@(item.Ativo ? "Desativar" : "Ativar")"
+                                                                onclick="return confirm('@(item.Ativo ? "Desativar" : "Ativar") esta categoria?')">
+                                                            <i class="fas @(item.Ativo ? "fa-toggle-off" : "fa-toggle-on")"></i>
+                                                        </button>
+                                                    </form>
                                                     @if (!item.Competencias.Any())
                                                     {
                                                         <a asp-action="Delete" asp-route-id="@item.Id"

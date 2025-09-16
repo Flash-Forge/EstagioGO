@@ -93,6 +93,15 @@
                                                        class="btn btn-sm btn-outline-warning" title="Editar">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
+                                                    <form asp-action="ToggleStatus" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit"
+                                                                class="btn btn-sm @(item.Ativo ? "btn-outline-success" : "btn-outline-secondary")"
+                                                                title="@(item.Ativo ? "Desativar" : "Ativar")"
+                                                                onclick="return confirm('Tem certeza que deseja @(item.Ativo ? "DESATIVAR" : "ATIVAR") esta competência?')">
+                                                            <i class="fas @(item.Ativo ? "fa-toggle-on" : "fa-toggle-off")"></i>
+                                                        </button>
+                                                    </form>
                                                     @if (item.AvaliacoesCompetencia?.Any() != true)
                                                     {
                                                         <a asp-action="Delete" asp-route-id="@item.Id"
